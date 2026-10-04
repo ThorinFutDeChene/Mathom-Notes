@@ -113,6 +113,11 @@ void NoteEditor::setCursorTo(const QPointF &pos)
 void NoteEditor::startSelection(const QPointF &pos)
 {
     if (m_textEdit) {
+        if (auto *focusedTextEdit =
+                dynamic_cast<FocusedTextEdit *>(m_textEdit)) {
+            focusedTextEdit->clearMultiSelection();
+        }
+
         QPointF currentPos = note()->mapFromScene(pos);
         QPointF deltaPos = m_textEdit->pos() - note()->pos();
         m_textEdit->setTextCursor(m_textEdit->cursorForPosition((currentPos - deltaPos).toPoint()));
@@ -387,8 +392,8 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
     connect(textEdit, &FocusedTextEdit::escapePressed, this, &HtmlEditor::askValidation);
 
     connect(InlineEditors::instance()->richTextFont, &QFontComboBox::currentFontChanged, this, &HtmlEditor::onFontSelectionChanged);
-    connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::sizeChanged, textEdit, &FocusedTextEdit::setFontPointSize);
-    connect(InlineEditors::instance()->richTextColor, &KColorCombo::activated, textEdit, &FocusedTextEdit::setTextColor);
+    connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::sizeChanged, textEdit, &FocusedTextEdit::applyFontPointSize);
+    connect(InlineEditors::instance()->richTextColor, &KColorCombo::activated, textEdit, &FocusedTextEdit::applyTextColor);
 
     connect(InlineEditors::instance()->focusWidgetFilter, &FocusWidgetFilter::escapePressed, textEdit, [&textEdit]() {
         textEdit->setFocus();
@@ -422,8 +427,8 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
     connect(textEdit, &QTextEdit::currentCharFormatChanged, this, &HtmlEditor::charFormatChanged);
 
     connect(InlineEditors::instance()->richTextBold, &QAction::triggered, this, &HtmlEditor::setBold);
-    connect(InlineEditors::instance()->richTextItalic, &QAction::triggered, textEdit, &QTextEdit::setFontItalic);
-    connect(InlineEditors::instance()->richTextUnderline, &QAction::triggered, textEdit, &QTextEdit::setFontUnderline);
+    connect(InlineEditors::instance()->richTextItalic, &QAction::triggered, textEdit, &FocusedTextEdit::applyFontItalic);
+    connect(InlineEditors::instance()->richTextUnderline, &QAction::triggered, textEdit, &FocusedTextEdit::applyFontUnderline);
     connect(InlineEditors::instance()->richTextLeft, &QAction::triggered, this, &HtmlEditor::setLeft);
     connect(InlineEditors::instance()->richTextCenter, &QAction::triggered, this, &HtmlEditor::setCentered);
     connect(InlineEditors::instance()->richTextRight, &QAction::triggered, this, &HtmlEditor::setRight);
@@ -542,15 +547,26 @@ void HtmlEditor::setBlock()
 
 void HtmlEditor::onFontSelectionChanged(const QFont &font)
 {
-    // Change font family only. QTextEdit applies it to the current
-    // selection, or to subsequently typed text when there is no selection.
-    textEdit()->setFontFamily(font.family());
+    if (auto *editor =
+            dynamic_cast<FocusedTextEdit *>(textEdit())) {
+        editor->applyFontFamily(font.family());
+    } else {
+        textEdit()->setFontFamily(font.family());
+    }
 }
 
 void HtmlEditor::setBold(bool isChecked)
 {
     qCWarning(BASKET_LOG) << "setBold " << isChecked;
-    textEdit()->setFontWeight(isChecked ? QFont::Bold : QFont::Normal);
+
+    if (auto *editor =
+            dynamic_cast<FocusedTextEdit *>(textEdit())) {
+        editor->applyFontWeight(
+            isChecked ? QFont::Bold : QFont::Normal);
+    } else {
+        textEdit()->setFontWeight(
+            isChecked ? QFont::Bold : QFont::Normal);
+    }
 }
 
 HtmlEditor::~HtmlEditor() = default;

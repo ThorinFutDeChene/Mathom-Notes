@@ -2985,6 +2985,19 @@ void BasketScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
         return;
     }
 
+    // Ctrl+double-click is reserved for additive word selection.
+    // Swallow its first click so the existing text selection is not
+    // collapsed before the double-click reaches FocusedTextEdit.
+    if (m_editor
+        && clickInsideEditor
+        && m_editor->textEdit()
+        && controlPressed
+        && !shiftPressed
+        && event->button() == Qt::LeftButton) {
+        m_noActionOnMouseRelease = true;
+        return;
+    }
+
     // if we are editing and no control key are pressed
     if (m_editor && !shiftPressed && !controlPressed) {
         // if the mouse is over the editor or one of its embedded popup children

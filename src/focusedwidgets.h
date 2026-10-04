@@ -8,9 +8,14 @@
 
 #include <KTextEdit>
 #include <QClipboard>
+#include <QList>
+#include <QTextCursor>
 
+class QColor;
 class QEvent;
 class QKeyEvent;
+class QMouseEvent;
+class QTextCharFormat;
 class QWheelEvent;
 
 class FocusedTextEdit : public KTextEdit
@@ -20,10 +25,27 @@ public:
     explicit FocusedTextEdit(bool disableUpdatesOnKeyPress, QWidget *parent = nullptr);
     ~FocusedTextEdit() override;
     void paste(QClipboard::Mode mode);
+
+    bool hasMultiSelection() const
+    {
+        return !m_multiSelectionCursors.isEmpty();
+    }
+
+    void clearMultiSelection();
+
 public Q_SLOTS:
     void onSelectionChanged(); //!< Put selected text into the global mouse selection
+
+    void applyFontFamily(const QString &family);
+    void applyFontPointSize(qreal size);
+    void applyTextColor(const QColor &color);
+    void applyFontWeight(int weight);
+    void applyFontItalic(bool italic);
+    void applyFontUnderline(bool underline);
+
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+    void mouseDoubleClickEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void enterEvent(QEnterEvent *event) override;
     void insertFromMimeData(const QMimeData *source) override;
@@ -32,7 +54,12 @@ Q_SIGNALS:
     void mouseEntered();
 
 private:
+    void addMultiSelection(const QTextCursor &cursor);
+    void refreshMultiSelectionHighlights();
+    void mergeFormatIntoSelection(const QTextCharFormat &format);
+
     bool m_disableUpdatesOnKeyPress;
+    QList<QTextCursor> m_multiSelectionCursors;
 };
 
 /** class FocusWidgetFilter
