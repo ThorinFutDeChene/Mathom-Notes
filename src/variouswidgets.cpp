@@ -453,7 +453,7 @@ FontSizeCombo::FontSizeCombo(bool rw, bool withDefault, QWidget *parent)
         addItem(QString::number(*it));
 
     // connect(this, &FontSizeCombo::activated, this, &FontSizeCombo::textChangedInCombo);
-    connect(this, &FontSizeCombo::editTextChanged, this, &FontSizeCombo::textChangedInCombo);
+    connect(this, &FontSizeCombo::currentTextChanged, this, &FontSizeCombo::textChangedInCombo);
 
     // TODO: 01617 void KFontSizeAction::setFontSize( int size )
 }

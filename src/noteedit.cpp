@@ -1397,6 +1397,14 @@ void InlineEditors::initToolBars(KActionCollection *ac)
     richTextFont->setFixedWidth(richTextFont->sizeHint().width() * 2 / 3);
     richTextFont->setCurrentFont(defaultFont.family());
 
+    // The font selector is a formatting control, not a text-entry field.
+    // It must never capture typing intended for the active Mathom.
+    richTextFont->setFocusPolicy(Qt::NoFocus);
+    if (richTextFont->lineEdit()) {
+        richTextFont->lineEdit()->setReadOnly(true);
+        richTextFont->lineEdit()->setFocusPolicy(Qt::NoFocus);
+    }
+
     auto *action = new QWidgetAction(ac);
     ac->addAction(QStringLiteral("richtext_font"), action);
     action->setDefaultWidget(richTextFont);
@@ -1405,6 +1413,14 @@ void InlineEditors::initToolBars(KActionCollection *ac)
 
     richTextFontSize = new FontSizeCombo(/*rw=*/true, /*withDefault=*/false);
     richTextFontSize->setFontSize(defaultFont.pointSize());
+
+    // Keep the editable display capability for arbitrary existing sizes,
+    // but prevent the toolbar field from receiving keyboard input.
+    richTextFontSize->setFocusPolicy(Qt::NoFocus);
+    if (richTextFontSize->lineEdit()) {
+        richTextFontSize->lineEdit()->setReadOnly(true);
+        richTextFontSize->lineEdit()->setFocusPolicy(Qt::NoFocus);
+    }
     action = new QWidgetAction(ac);
     ac->addAction(QStringLiteral("richtext_font_size"), action);
     action->setDefaultWidget(richTextFontSize);
