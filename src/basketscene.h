@@ -693,7 +693,9 @@ private:
 
     // State used by the application-wide Undo/Redo history.
     QString m_lastEditorUndoState;
+    bool m_lastEditorUndoStateWasEmpty = true;
     bool m_editorUndoStateValid = false;
+    bool m_editorUndoWasNewMathom = false;
     bool m_applyingGlobalUndoRedo = false;
 
 public:
@@ -714,6 +716,18 @@ public:
         Note *note,
         const QString &snapshot,
         bool richText);
+
+    void suspendMathomForUndo(
+        Note *note);
+
+    void restoreSuspendedMathom(
+        Note *note,
+        Note *parent,
+        Note *previous,
+        Note *next);
+
+    void discardSuspendedMathom(
+        Note *note);
 
 protected Q_SLOTS:
     void inactivityAutoSaveTimeout();

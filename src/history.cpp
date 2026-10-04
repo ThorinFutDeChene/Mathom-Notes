@@ -116,24 +116,62 @@ MathomTextEditCommand::MathomTextEditCommand(
     const QString &oldState,
     const QString &newState,
     bool richText,
+    bool newMathom,
+    bool oldStateWasEmpty,
     QUndoCommand *parent)
     : QUndoCommand(parent)
+    , m_basket(note ? note->basket() : nullptr)
     , m_note(note)
+    , m_parentNote(note ? note->parentNote() : nullptr)
+    , m_previousNote(note ? note->prev() : nullptr)
+    , m_nextNote(note ? note->next() : nullptr)
     , m_oldState(oldState)
     , m_newState(newState)
     , m_richText(richText)
+    , m_newMathom(newMathom)
+    , m_oldStateWasEmpty(oldStateWasEmpty)
     , m_timestampMs(
           QDateTime::currentMSecsSinceEpoch())
 {
     setText(i18n("Edit Mathom"));
 }
 
+MathomTextEditCommand::~MathomTextEditCommand()
+{
+    /*
+     * If creation was undone and the redo branch is later abandoned,
+     * the suspended Mathom is no longer useful and can finally be
+     * destroyed.
+     */
+    if (m_mathomSuspended
+        && m_basket
+        && m_note) {
+        m_basket->discardSuspendedMathom(
+            m_note);
+    }
+}
+
 void MathomTextEditCommand::undo()
 {
-    if (!m_note || !m_note->basket())
+    if (!m_basket || !m_note)
         return;
 
-    m_note->basket()->applyTextEditSnapshot(
+    /*
+     * The first text modification of a brand-new Mathom represents
+     * creation of that Mathom. Going back to its initial empty state
+     * must therefore remove the Mathom itself, not leave a blank row.
+     */
+    if (m_newMathom
+        && m_oldStateWasEmpty) {
+
+        m_basket->suspendMathomForUndo(
+            m_note);
+
+        m_mathomSuspended = true;
+        return;
+    }
+
+    m_basket->applyTextEditSnapshot(
         m_note,
         m_oldState,
         m_richText);
@@ -151,10 +189,29 @@ void MathomTextEditCommand::redo()
         return;
     }
 
-    if (!m_note || !m_note->basket())
+    if (!m_basket || !m_note)
         return;
 
-    m_note->basket()->applyTextEditSnapshot(
+    if (m_mathomSuspended) {
+        /*
+         * Restore the contents before making the Mathom visible again.
+         */
+        m_basket->applyTextEditSnapshot(
+            m_note,
+            m_newState,
+            m_richText);
+
+        m_basket->restoreSuspendedMathom(
+            m_note,
+            m_parentNote,
+            m_previousNote,
+            m_nextNote);
+
+        m_mathomSuspended = false;
+        return;
+    }
+
+    m_basket->applyTextEditSnapshot(
         m_note,
         m_newState,
         m_richText);

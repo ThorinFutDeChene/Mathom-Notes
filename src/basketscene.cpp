@@ -5495,11 +5495,19 @@ void BasketScene::contentChangedInEditor()
                             note,
                             m_lastEditorUndoState,
                             currentState,
-                            richText));
+                            richText,
+                            m_editorUndoWasNewMathom,
+                            m_lastEditorUndoStateWasEmpty));
             }
 
             m_lastEditorUndoState =
                 currentState;
+
+            m_lastEditorUndoStateWasEmpty =
+                m_editor
+                    ->textEdit()
+                    ->toPlainText()
+                    .isEmpty();
 
             m_editorUndoStateValid = true;
         }
@@ -5613,6 +5621,11 @@ void BasketScene::applyTextEditSnapshot(
                   editor->document())
             : editor->toPlainText();
 
+        m_lastEditorUndoStateWasEmpty =
+            editor
+                ->toPlainText()
+                .isEmpty();
+
         m_editorUndoStateValid = true;
 
         placeEditorAndEnsureVisible();
@@ -5624,6 +5637,141 @@ void BasketScene::applyTextEditSnapshot(
         filterAgain(
             /*andEnsureVisible=*/false);
     }
+}
+
+void BasketScene::suspendMathomForUndo(
+    Note *note)
+{
+    if (!note
+        || note->basket() != this)
+        return;
+
+    /*
+     * Close the inline editor without deleting the empty Mathom.
+     * The Undo command must keep the Note object alive for Redo.
+     */
+    if (m_editor
+        && m_editor->note() == note) {
+        closeEditor(
+            /*deleteEmptyNote=*/false);
+    }
+
+    note->setSelectedRecursively(false);
+
+    m_count -= note->count();
+    m_countFounds -=
+        note->newFilter(
+            decoration()->filterData());
+
+    Note *parent =
+        note->parentNote();
+
+    Note *previous =
+        note->prev();
+
+    Note *next =
+        note->next();
+
+    if (previous) {
+        previous->setNext(next);
+    } else if (parent
+               && parent->firstChild() == note) {
+        parent->setFirstChild(next);
+    } else if (!parent
+               && m_firstNote == note) {
+        m_firstNote = next;
+    }
+
+    if (next)
+        next->setPrev(previous);
+
+    note->setParentNote(nullptr);
+    note->setPrev(nullptr);
+    note->setNext(nullptr);
+    note->setVisible(false);
+
+    if (m_focusedNote == note)
+        m_focusedNote = nullptr;
+
+    if (m_hoveredNote == note)
+        m_hoveredNote = nullptr;
+
+    signalCountsChanged();
+    relayoutNotes();
+    filterAgain(
+        /*andEnsureVisible=*/false);
+    save();
+}
+
+void BasketScene::restoreSuspendedMathom(
+    Note *note,
+    Note *parent,
+    Note *previous,
+    Note *next)
+{
+    if (!note
+        || note->basket() != this)
+        return;
+
+    /*
+     * Redo is executed in chronological order, so the surrounding
+     * structure should again be the one captured when this Mathom was
+     * originally created.
+     */
+    note->setParentNote(parent);
+    note->setPrev(previous);
+    note->setNext(next);
+
+    if (previous) {
+        previous->setNext(note);
+    } else if (parent) {
+        parent->setFirstChild(note);
+    } else {
+        m_firstNote = note;
+    }
+
+    if (next)
+        next->setPrev(note);
+
+    note->setVisible(true);
+
+    m_count += note->count();
+    m_countFounds +=
+        note->newFilter(
+            decoration()->filterData());
+
+    signalCountsChanged();
+
+    filterAgain(
+        /*andEnsureVisible=*/false);
+
+    relayoutNotes();
+    save();
+}
+
+void BasketScene::discardSuspendedMathom(
+    Note *note)
+{
+    if (!note)
+        return;
+
+    /*
+     * This happens when creation was undone and the user performs a new
+     * action instead of Redo. The detached Mathom then becomes genuinely
+     * obsolete.
+     */
+    QString contentFile;
+
+    if (note->content()
+        && note->content()->useFile()) {
+        contentFile =
+            note->content()->fullPath();
+    }
+
+    delete note;
+
+    if (!contentFile.isEmpty())
+        QFile::remove(contentFile);
 }
 
 void BasketScene::inactivityAutoSaveTimeout()
@@ -5763,7 +5911,9 @@ bool BasketScene::closeEditor(bool deleteEmptyNote /* =true*/)
     m_redirectEditActions = false;
 
     m_lastEditorUndoState.clear();
+    m_lastEditorUndoStateWasEmpty = true;
     m_editorUndoStateValid = false;
+    m_editorUndoWasNewMathom = false;
 
     m_editorWidth = -1;
     m_editorHeight = -1;
@@ -5976,6 +6126,8 @@ void BasketScene::noteEdit(Note *note, bool justAdded, const QPointF &clickedPoi
          */
         m_editorUndoStateValid = false;
         m_lastEditorUndoState.clear();
+        m_lastEditorUndoStateWasEmpty = true;
+        m_editorUndoWasNewMathom = justAdded;
 
         if (m_editor->textEdit()) {
             if (dynamic_cast<HtmlContent *>(
@@ -5986,6 +6138,12 @@ void BasketScene::noteEdit(Note *note, bool justAdded, const QPointF &clickedPoi
                             ->textEdit()
                             ->document());
 
+                m_lastEditorUndoStateWasEmpty =
+                    m_editor
+                        ->textEdit()
+                        ->toPlainText()
+                        .isEmpty();
+
                 m_editorUndoStateValid = true;
             } else if (dynamic_cast<TextContent *>(
                            note->content())) {
@@ -5993,6 +6151,12 @@ void BasketScene::noteEdit(Note *note, bool justAdded, const QPointF &clickedPoi
                     m_editor
                         ->textEdit()
                         ->toPlainText();
+
+                m_lastEditorUndoStateWasEmpty =
+                    m_editor
+                        ->textEdit()
+                        ->toPlainText()
+                        .isEmpty();
 
                 m_editorUndoStateValid = true;
             }

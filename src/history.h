@@ -83,7 +83,11 @@ public:
         const QString &oldState,
         const QString &newState,
         bool richText,
+        bool newMathom,
+        bool oldStateWasEmpty,
         QUndoCommand *parent = nullptr);
+
+    ~MathomTextEditCommand() override;
 
     void undo() override;
     void redo() override;
@@ -93,10 +97,22 @@ public:
         const QUndoCommand *other) override;
 
 private:
+    QPointer<BasketScene> m_basket;
     QPointer<Note> m_note;
+
+    // Exact location of a newly created Mathom.
+    QPointer<Note> m_parentNote;
+    QPointer<Note> m_previousNote;
+    QPointer<Note> m_nextNote;
+
     QString m_oldState;
     QString m_newState;
+
     bool m_richText;
+    bool m_newMathom = false;
+    bool m_oldStateWasEmpty = false;
+    bool m_mathomSuspended = false;
+
     bool m_firstRedo = true;
     qint64 m_timestampMs = 0;
 };
