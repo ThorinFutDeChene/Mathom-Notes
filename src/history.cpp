@@ -17,6 +17,54 @@
 
 #include <QDateTime>
 
+namespace
+{
+
+void revealBasketForHistory(
+    BasketScene *basket,
+    const QString &pageId = QString())
+{
+    if (!basket
+        || !Global::bnpView) {
+        return;
+    }
+
+    /*
+     * A Basket can temporarily exist outside the visible tree while a
+     * creation command is undone. Never try to activate such a detached
+     * location.
+     */
+    if (!Global::bnpView
+             ->listViewItemForBasket(basket)) {
+        return;
+    }
+
+    /*
+     * Undo/Redo is application-wide. The visible interface must follow
+     * the command being executed so the user can actually see the
+     * modification happen.
+     *
+     * Use setCurrentBasket(), not setCurrentBasketInHistory():
+     * this visual move must not pollute the navigation history.
+     */
+    Global::bnpView->setCurrentBasket(
+        basket);
+
+    /*
+     * If the operation concerns a Mathom or a specific Page, also show
+     * the Page containing it. Otherwise the correct Shelf could be open
+     * while the modification remains invisible.
+     */
+    if (!pageId.isEmpty()
+        && basket->currentPageId()
+            != pageId) {
+        basket->setCurrentPageId(
+            pageId);
+    }
+}
+
+}
+
 HistorySetBasket::HistorySetBasket(BasketScene *basket, QUndoCommand *parent)
     : QUndoCommand(parent)
 {
@@ -63,6 +111,10 @@ void PageRenameCommand::undo()
     if (!m_basket)
         return;
 
+    revealBasketForHistory(
+        m_basket,
+        m_pageId);
+
     m_basket->renamePage(
         m_pageId,
         m_oldTitle);
@@ -72,6 +124,10 @@ void PageRenameCommand::redo()
 {
     if (!m_basket)
         return;
+
+    revealBasketForHistory(
+        m_basket,
+        m_pageId);
 
     m_basket->renamePage(
         m_pageId,
@@ -97,6 +153,9 @@ void PageReorderCommand::undo()
     if (!m_basket)
         return;
 
+    revealBasketForHistory(
+        m_basket);
+
     m_basket->reorderPages(
         m_oldOrder);
 }
@@ -105,6 +164,9 @@ void PageReorderCommand::redo()
 {
     if (!m_basket)
         return;
+
+    revealBasketForHistory(
+        m_basket);
 
     m_basket->reorderPages(
         m_newOrder);
@@ -154,6 +216,10 @@ void MathomTextEditCommand::undo()
     if (!m_basket || !m_note)
         return;
 
+    revealBasketForHistory(
+        m_basket,
+        m_note->pageId());
+
     /*
      * The first text modification of a brand-new Mathom represents
      * creation of that Mathom. Going back to its initial empty state
@@ -176,6 +242,10 @@ void MathomTextEditCommand::undo()
             m_basket->closeEditor(
                 /*deleteEmptyNote=*/false);
         }
+
+        revealBasketForHistory(
+            m_basket,
+            m_note->pageId());
 
         m_parentNote =
             m_note->parentNote();
@@ -213,6 +283,10 @@ void MathomTextEditCommand::redo()
 
     if (!m_basket || !m_note)
         return;
+
+    revealBasketForHistory(
+        m_basket,
+        m_note->pageId());
 
     if (m_mathomSuspended) {
         /*
@@ -328,6 +402,16 @@ void MathomDeleteCommand::undo()
     if (!m_basket || !m_deleted)
         return;
 
+    for (const DeletedMathomPosition &position :
+         m_positions) {
+        if (position.note) {
+            revealBasketForHistory(
+                m_basket,
+                position.note->pageId());
+            break;
+        }
+    }
+
     /*
      * Restore in reverse order. This is important when several adjacent
      * Mathoms were deleted: later Mathoms can still refer to an earlier
@@ -357,6 +441,16 @@ void MathomDeleteCommand::redo()
 {
     if (!m_basket)
         return;
+
+    for (const DeletedMathomPosition &position :
+         m_positions) {
+        if (position.note) {
+            revealBasketForHistory(
+                m_basket,
+                position.note->pageId());
+            break;
+        }
+    }
 
     for (const DeletedMathomPosition &position :
          m_positions) {
@@ -447,6 +541,13 @@ void BasketCreateCommand::undo()
     if (!item)
         return;
 
+    /*
+     * Show the created Shelf/Mathom-House before removing it so the
+     * visual interface follows the global Undo command.
+     */
+    revealBasketForHistory(
+        m_basket);
+
     m_detachedItem =
         m_view->detachBasketForUndo(
             item);
@@ -523,6 +624,9 @@ void BasketPropertiesCommand::apply(
 {
     if (!m_basket)
         return;
+
+    revealBasketForHistory(
+        m_basket);
 
     m_basket->setShortcut(
         state.shortcut,
