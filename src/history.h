@@ -12,6 +12,7 @@
 #include <QUndoCommand>
 
 class BasketScene;
+class Note;
 
 class HistorySetBasket : public QUndoCommand
 {
@@ -69,6 +70,33 @@ private:
     QPointer<BasketScene> m_basket;
     QStringList m_oldOrder;
     QStringList m_newOrder;
+};
+
+
+class MathomTextEditCommand : public QUndoCommand
+{
+public:
+    MathomTextEditCommand(
+        Note *note,
+        const QString &oldState,
+        const QString &newState,
+        bool richText,
+        QUndoCommand *parent = nullptr);
+
+    void undo() override;
+    void redo() override;
+
+    int id() const override;
+    bool mergeWith(
+        const QUndoCommand *other) override;
+
+private:
+    QPointer<Note> m_note;
+    QString m_oldState;
+    QString m_newState;
+    bool m_richText;
+    bool m_firstRedo = true;
+    qint64 m_timestampMs = 0;
 };
 
 #endif // HISTORY_H

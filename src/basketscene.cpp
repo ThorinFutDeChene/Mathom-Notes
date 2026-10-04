@@ -45,6 +45,7 @@
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSaveFile>
+#include <QSignalBlocker>
 #include <QScrollBar>
 #include <QStringList>
 #include <QTextDocument>
@@ -90,8 +91,10 @@
 #include "focusedwidgets.h"
 #include "gitwrapper.h"
 #include "global.h"
+#include "history.h"
 #include "mathomicons.h"
 #include "note.h"
+#include "notecontent.h"
 #include "notedrag.h"
 #include "noteedit.h"
 #include "notefactory.h"
@@ -5445,16 +5448,182 @@ void BasketScene::selectionChangedInEditor()
 
 void BasketScene::contentChangedInEditor()
 {
-    // Do not wait 3 seconds, because we need the note to expand as needed (if a line is too wider... the note should grow wider):
+    if (!m_editor)
+        return;
+
+    /*
+     * Feed text and rich-text modifications into the application's
+     * global chronological Undo/Redo history.
+     */
+    if (m_editor->textEdit()
+        && !m_applyingGlobalUndoRedo) {
+
+        Note *note = m_editor->note();
+
+        const bool richText =
+            note
+            && dynamic_cast<HtmlContent *>(
+                   note->content());
+
+        const bool plainText =
+            note
+            && dynamic_cast<TextContent *>(
+                   note->content());
+
+        if (richText || plainText) {
+            const QString currentState =
+                richText
+                ? Tools::textDocumentToMinimalHTML(
+                      m_editor
+                          ->textEdit()
+                          ->document())
+                : m_editor
+                      ->textEdit()
+                      ->toPlainText();
+
+            if (m_editorUndoStateValid
+                && currentState
+                    != m_lastEditorUndoState
+                && Global::bnpView
+                && Global::bnpView
+                       ->globalUndoStack()) {
+
+                Global::bnpView
+                    ->globalUndoStack()
+                    ->push(
+                        new MathomTextEditCommand(
+                            note,
+                            m_lastEditorUndoState,
+                            currentState,
+                            richText));
+            }
+
+            m_lastEditorUndoState =
+                currentState;
+
+            m_editorUndoStateValid = true;
+        }
+    }
+
+    // Do not wait 3 seconds, because we need the Mathom to expand
+    // immediately as its contents change.
     if (m_editor->textEdit())
-        m_editor->autoSave(/*toFileToo=*/false);
-    //  else {
+        m_editor->autoSave(
+            /*toFileToo=*/false);
+
     if (m_inactivityAutoSaveTimer.isActive())
         m_inactivityAutoSaveTimer.stop();
+
     m_inactivityAutoSaveTimer.setSingleShot(true);
     m_inactivityAutoSaveTimer.start(3 * 1000);
+
     Global::bnpView->setUnsavedStatus(true);
-    //  }
+}
+
+void BasketScene::applyTextEditSnapshot(
+    Note *note,
+    const QString &snapshot,
+    bool richText)
+{
+    if (!note
+        || note->basket() != this
+        || !note->content()) {
+        return;
+    }
+
+    m_applyingGlobalUndoRedo = true;
+
+    bool applied = false;
+
+    if (richText) {
+        auto *content =
+            dynamic_cast<HtmlContent *>(
+                note->content());
+
+        if (content) {
+            content->setHtml(snapshot);
+            content->saveToFile();
+            content->setEdited();
+            applied = true;
+        }
+    } else {
+        auto *content =
+            dynamic_cast<TextContent *>(
+                note->content());
+
+        if (content) {
+            content->setText(snapshot);
+            content->saveToFile();
+            content->setEdited();
+            applied = true;
+        }
+    }
+
+    /*
+     * If this Mathom is currently being edited, keep the visible
+     * QTextEdit synchronized with the restored persistent contents.
+     */
+    if (applied
+        && m_editor
+        && m_editor->note() == note
+        && m_editor->textEdit()) {
+
+        KTextEdit *editor =
+            m_editor->textEdit();
+
+        const int oldPosition =
+            editor
+                ->textCursor()
+                .position();
+
+        {
+            const QSignalBlocker blocker(editor);
+
+            if (richText) {
+                editor->setHtml(
+                    Tools::detectCrossReferences(
+                        snapshot,
+                        /*userLink=*/true));
+            } else {
+                editor->setPlainText(snapshot);
+            }
+
+            QTextCursor cursor =
+                editor->textCursor();
+
+            const int maximumPosition =
+                std::max(
+                    0,
+                    editor
+                        ->document()
+                        ->characterCount()
+                        - 1);
+
+            cursor.setPosition(
+                std::min(
+                    oldPosition,
+                    maximumPosition));
+
+            editor->setTextCursor(cursor);
+        }
+
+        m_lastEditorUndoState =
+            richText
+            ? Tools::textDocumentToMinimalHTML(
+                  editor->document())
+            : editor->toPlainText();
+
+        m_editorUndoStateValid = true;
+
+        placeEditorAndEnsureVisible();
+    }
+
+    m_applyingGlobalUndoRedo = false;
+
+    if (applied) {
+        filterAgain(
+            /*andEnsureVisible=*/false);
+    }
 }
 
 void BasketScene::inactivityAutoSaveTimeout()
@@ -5592,6 +5761,10 @@ bool BasketScene::closeEditor(bool deleteEmptyNote /* =true*/)
 
     m_editor = nullptr;
     m_redirectEditActions = false;
+
+    m_lastEditorUndoState.clear();
+    m_editorUndoStateValid = false;
+
     m_editorWidth = -1;
     m_editorHeight = -1;
     m_inactivityAutoSaveTimer.stop();
@@ -5795,6 +5968,35 @@ void BasketScene::noteEdit(Note *note, bool justAdded, const QPointF &clickedPoi
             {{QStringLiteral("folder"), folderName()},
              {QStringLiteral("just_added"), justAdded}});
         m_editor = editor;
+
+        /*
+         * Remember the exact state that existed when editing started.
+         * Subsequent changes will be compared with this snapshot and
+         * pushed to the global Undo/Redo stack.
+         */
+        m_editorUndoStateValid = false;
+        m_lastEditorUndoState.clear();
+
+        if (m_editor->textEdit()) {
+            if (dynamic_cast<HtmlContent *>(
+                    note->content())) {
+                m_lastEditorUndoState =
+                    Tools::textDocumentToMinimalHTML(
+                        m_editor
+                            ->textEdit()
+                            ->document());
+
+                m_editorUndoStateValid = true;
+            } else if (dynamic_cast<TextContent *>(
+                           note->content())) {
+                m_lastEditorUndoState =
+                    m_editor
+                        ->textEdit()
+                        ->toPlainText();
+
+                m_editorUndoStateValid = true;
+            }
+        }
 
         addItem(m_editor->graphicsWidget());
 

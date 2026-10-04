@@ -691,6 +691,11 @@ private:
     bool m_doNotCloseEditor;
     QTextCursor m_textCursor;
 
+    // State used by the application-wide Undo/Redo history.
+    QString m_lastEditorUndoState;
+    bool m_editorUndoStateValid = false;
+    bool m_applyingGlobalUndoRedo = false;
+
 public:
     bool isDuringEdit()
     {
@@ -704,6 +709,12 @@ public:
     bool hasSelectedTextInEditor();
     bool selectedAllTextInEditor();
     Note *editedNote();
+
+    void applyTextEditSnapshot(
+        Note *note,
+        const QString &snapshot,
+        bool richText);
+
 protected Q_SLOTS:
     void inactivityAutoSaveTimeout();
 public Q_SLOTS:

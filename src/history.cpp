@@ -9,8 +9,11 @@
 
 #include "basketscene.h"
 #include "bnpview.h"
+#include "note.h"
 
 #include <KLocalizedString>
+
+#include <QDateTime>
 
 HistorySetBasket::HistorySetBasket(BasketScene *basket, QUndoCommand *parent)
     : QUndoCommand(parent)
@@ -103,5 +106,92 @@ void PageReorderCommand::redo()
 
     m_basket->reorderPages(
         m_newOrder);
+}
+
+/** Global Mathom text modification history */
+
+MathomTextEditCommand::MathomTextEditCommand(
+    Note *note,
+    const QString &oldState,
+    const QString &newState,
+    bool richText,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_note(note)
+    , m_oldState(oldState)
+    , m_newState(newState)
+    , m_richText(richText)
+    , m_timestampMs(
+          QDateTime::currentMSecsSinceEpoch())
+{
+    setText(i18n("Edit Mathom"));
+}
+
+void MathomTextEditCommand::undo()
+{
+    if (!m_note || !m_note->basket())
+        return;
+
+    m_note->basket()->applyTextEditSnapshot(
+        m_note,
+        m_oldState,
+        m_richText);
+}
+
+void MathomTextEditCommand::redo()
+{
+    /*
+     * QUndoStack::push() automatically calls redo().
+     * The user's modification is already present when the command
+     * is pushed, so the first redo must do nothing.
+     */
+    if (m_firstRedo) {
+        m_firstRedo = false;
+        return;
+    }
+
+    if (!m_note || !m_note->basket())
+        return;
+
+    m_note->basket()->applyTextEditSnapshot(
+        m_note,
+        m_newState,
+        m_richText);
+}
+
+int MathomTextEditCommand::id() const
+{
+    return 0x4d54;
+}
+
+bool MathomTextEditCommand::mergeWith(
+    const QUndoCommand *command)
+{
+    const auto *other =
+        dynamic_cast<const MathomTextEditCommand *>(
+            command);
+
+    if (!other)
+        return false;
+
+    if (m_note != other->m_note
+        || m_richText != other->m_richText) {
+        return false;
+    }
+
+    const qint64 elapsed =
+        other->m_timestampMs - m_timestampMs;
+
+    /*
+     * Consecutive keystrokes are one natural editing operation.
+     * A pause creates a new Undo step.
+     */
+    if (elapsed < 0 || elapsed > 1200)
+        return false;
+
+    m_newState = other->m_newState;
+    m_timestampMs = other->m_timestampMs;
+
+    return true;
 }
 
