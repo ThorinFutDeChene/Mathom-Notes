@@ -2807,12 +2807,45 @@ void BNPView::delBasket()
     }
 
     QString basketFolderName = basket->folderName();
+
     DiagnosticManager::instance().logEvent(
         QStringLiteral("DELETE_SHELF_BEGIN"),
         {{QStringLiteral("folder"), basketFolderName}});
+
+    /*
+     * Shelf deletion now belongs to the global modification history.
+     *
+     * Keep the complete Shelf subtree alive while the command remains
+     * undoable. This allows Undo to restore the exact same Shelf,
+     * sub-Shelves, Pages and Mathoms.
+     *
+     * Mathom-House deletion keeps the historical path for the moment;
+     * its special "last Mathom-House" case will be handled separately.
+     */
+    if (isShelf
+        && m_undoStack
+        && listViewItemForBasket(basket)) {
+
+        m_undoStack->push(
+            new BasketDeleteCommand(
+                this,
+                basket));
+
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("DELETE_SHELF_OK"),
+            {{QStringLiteral("folder"), basketFolderName}});
+
+        return;
+    }
+
+    /*
+     * Historical fallback, currently used for Mathom-Houses.
+     */
     doBasketDeletion(basket);
 
-    GitWrapper::commitDeleteBasket(basketFolderName);
+    GitWrapper::commitDeleteBasket(
+        basketFolderName);
+
     DiagnosticManager::instance().logEvent(
         QStringLiteral("DELETE_SHELF_OK"),
         {{QStringLiteral("folder"), basketFolderName}});

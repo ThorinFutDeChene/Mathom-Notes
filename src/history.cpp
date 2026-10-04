@@ -601,6 +601,151 @@ void BasketCreateCommand::redo()
 }
 
 
+/** Global Shelf deletion history */
+
+BasketDeleteCommand::BasketDeleteCommand(
+    BNPView *view,
+    BasketScene *basket,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_view(view)
+    , m_basket(basket)
+{
+    if (!m_view || !m_basket)
+        return;
+
+    BasketListViewItem *item =
+        m_view->listViewItemForBasket(
+            m_basket);
+
+    if (!item)
+        return;
+
+    m_parentBasket =
+        m_view->parentBasketOf(
+            m_basket);
+
+    m_folderName =
+        m_basket->folderName();
+
+    if (item->parent()) {
+        m_index =
+            item->parent()
+                ->indexOfChild(item);
+    } else {
+        m_index =
+            item->treeWidget()
+                ->indexOfTopLevelItem(item);
+    }
+
+    setText(
+        m_parentBasket
+            ? i18n(
+                  "Remove Shelf \"%1\"",
+                  m_basket->basketName())
+            : i18n(
+                  "Remove Mathom-House \"%1\"",
+                  m_basket->basketName()));
+}
+
+
+BasketDeleteCommand::~BasketDeleteCommand()
+{
+    /*
+     * While the command remains undoable, the Shelf and all of its
+     * contents stay alive on disk.
+     *
+     * Only when the deletion is still active and the command finally
+     * leaves the Undo history does the deletion become permanent.
+     */
+    if (!m_deleted
+        || !m_view
+        || !m_detachedItem) {
+        return;
+    }
+
+    m_view->discardDetachedBasketForUndo(
+        m_detachedItem);
+
+    m_detachedItem = nullptr;
+
+    if (!m_folderName.isEmpty()) {
+        GitWrapper::commitDeleteBasket(
+            m_folderName);
+    }
+}
+
+
+void BasketDeleteCommand::undo()
+{
+    if (!m_view
+        || !m_basket
+        || !m_deleted
+        || !m_detachedItem) {
+        return;
+    }
+
+    QTreeWidgetItem *parentItem =
+        nullptr;
+
+    if (m_parentBasket) {
+        parentItem =
+            m_view->listViewItemForBasket(
+                m_parentBasket);
+
+        /*
+         * Chronological Undo guarantees that the parent Shelf /
+         * Mathom-House must exist before this deleted Shelf is restored.
+         */
+        if (!parentItem)
+            return;
+    }
+
+    /*
+     * restoreBasketForUndo() restores the whole tree item, therefore all
+     * sub-Shelves and their Mathoms come back together. It also activates
+     * the restored Shelf so the result is immediately visible.
+     */
+    if (m_view->restoreBasketForUndo(
+            m_detachedItem,
+            parentItem,
+            m_index)) {
+
+        m_detachedItem = nullptr;
+        m_deleted = false;
+    }
+}
+
+
+void BasketDeleteCommand::redo()
+{
+    if (!m_view
+        || !m_basket
+        || m_deleted) {
+        return;
+    }
+
+    BasketListViewItem *item =
+        m_view->listViewItemForBasket(
+            m_basket);
+
+    if (!item)
+        return;
+
+    /*
+     * Do not destroy anything yet. Detaching preserves the complete
+     * Shelf, its sub-Shelves, Pages and Mathoms for a future Undo.
+     */
+    m_detachedItem =
+        m_view->detachBasketForUndo(
+            item);
+
+    if (m_detachedItem) {
+        m_deleted = true;
+    }
+}
+
+
 /** Global Mathom-House / Shelf properties history */
 
 BasketPropertiesCommand::BasketPropertiesCommand(

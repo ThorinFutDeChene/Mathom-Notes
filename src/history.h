@@ -186,6 +186,33 @@ private:
 };
 
 
+class BasketDeleteCommand : public QUndoCommand
+{
+public:
+    BasketDeleteCommand(
+        BNPView *view,
+        BasketScene *basket,
+        QUndoCommand *parent = nullptr);
+
+    ~BasketDeleteCommand() override;
+
+    void undo() override;
+    void redo() override;
+
+private:
+    BNPView *m_view = nullptr;
+
+    QPointer<BasketScene> m_basket;
+    QPointer<BasketScene> m_parentBasket;
+
+    BasketListViewItem *m_detachedItem = nullptr;
+
+    QString m_folderName;
+    int m_index = -1;
+    bool m_deleted = false;
+};
+
+
 class BasketPropertiesCommand : public QUndoCommand
 {
 public:
