@@ -45,7 +45,7 @@ QString BasketFactory::newFolderName()
     return folderName;
 }
 
-void BasketFactory::newBasket(
+BasketScene *BasketFactory::newBasket(
     const QString &icon,
     const QString &name,
     BasketScene *parent)
@@ -65,7 +65,7 @@ void BasketFactory::newBasket(
             i18n(
                 "Sorry, but the folder creation for this new location has failed."),
             i18n("Location Creation Failed"));
-        return;
+        return nullptr;
     }
 
     QDomDocument document(
@@ -119,14 +119,14 @@ void BasketFactory::newBasket(
             i18n("Location Creation Failed"));
 
         dir.removeRecursively();
-        return;
+        return nullptr;
     }
 
     QTextStream stream(&file);
     document.save(stream, 2);
     file.close();
 
-    Global::bnpView->loadNewBasket(
+    return Global::bnpView->loadNewBasket(
         folderName,
         properties,
         parent);

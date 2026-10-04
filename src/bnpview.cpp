@@ -1203,13 +1203,25 @@ BasketListViewItem *BNPView::appendBasket(BasketScene *basket, QTreeWidgetItem *
     return newBasketItem;
 }
 
-void BNPView::loadNewBasket(const QString &folderName, const QDomElement &properties, BasketScene *parent)
+BasketScene *BNPView::loadNewBasket(
+    const QString &folderName,
+    const QDomElement &properties,
+    BasketScene *parent)
 {
-    BasketScene *basket = loadBasket(folderName);
-    appendBasket(basket, (basket ? listViewItemForBasket(parent) : nullptr));
+    BasketScene *basket =
+        loadBasket(folderName);
+
+    if (!basket)
+        return nullptr;
+
+    appendBasket(
+        basket,
+        listViewItemForBasket(parent));
+
     basket->loadProperties(properties);
     setCurrentBasketInHistory(basket);
-    //  save();
+
+    return basket;
 }
 
 int BNPView::topLevelItemCount()
@@ -1642,6 +1654,254 @@ void BNPView::removeBasket(BasketScene *basket)
         save();
     }
 }
+
+BasketListViewItem *BNPView::detachBasketForUndo(
+    BasketListViewItem *item)
+{
+    if (!item)
+        return nullptr;
+
+    QList<BasketListViewItem *> subtree;
+    subtree.append(item);
+
+    for (int i = 0;
+         i < subtree.size();
+         ++i) {
+
+        BasketListViewItem *current =
+            subtree.at(i);
+
+        for (int child = 0;
+             child < current->childCount();
+             ++child) {
+            subtree.append(
+                static_cast<BasketListViewItem *>(
+                    current->child(child)));
+        }
+    }
+
+    BasketScene *fallback = nullptr;
+
+    auto *parentItem =
+        static_cast<BasketListViewItem *>(
+            item->parent());
+
+    if (parentItem) {
+        fallback =
+            parentItem->basket();
+    } else {
+        const int index =
+            m_tree->indexOfTopLevelItem(item);
+
+        if (index > 0) {
+            fallback =
+                static_cast<BasketListViewItem *>(
+                    m_tree->topLevelItem(index - 1))
+                    ->basket();
+        } else if (index + 1
+                   < m_tree->topLevelItemCount()) {
+            fallback =
+                static_cast<BasketListViewItem *>(
+                    m_tree->topLevelItem(index + 1))
+                    ->basket();
+        }
+    }
+
+    bool currentInsideSubtree = false;
+
+    for (BasketListViewItem *subItem :
+         subtree) {
+        if (subItem->basket()
+            == currentBasket()) {
+            currentInsideSubtree = true;
+            break;
+        }
+    }
+
+    /*
+     * A normally created Mathom-House always has another root available
+     * (at minimum General). Refuse an impossible detach rather than leave
+     * the application without a current location.
+     */
+    if (currentInsideSubtree
+        && !fallback) {
+        return nullptr;
+    }
+
+    for (BasketListViewItem *subItem :
+         subtree) {
+        BasketScene *basket =
+            subItem->basket();
+
+        if (basket
+            && basket->isDuringEdit()) {
+            basket->closeEditor();
+        }
+    }
+
+    if (currentInsideSubtree)
+        setCurrentBasket(fallback);
+
+    for (BasketListViewItem *subItem :
+         subtree) {
+        BasketScene *basket =
+            subItem->basket();
+
+        if (basket
+            && basket->decoration()) {
+            m_stack->removeWidget(
+                basket->decoration());
+        }
+    }
+
+    if (parentItem) {
+        const int index =
+            parentItem->indexOfChild(item);
+
+        parentItem->takeChild(index);
+    } else {
+        const int index =
+            m_tree->indexOfTopLevelItem(item);
+
+        m_tree->takeTopLevelItem(index);
+    }
+
+    save();
+    updateNavigationBar();
+    m_tree->viewport()->update();
+
+    return item;
+}
+
+
+bool BNPView::restoreBasketForUndo(
+    BasketListViewItem *item,
+    QTreeWidgetItem *parentItem,
+    int index)
+{
+    if (!item)
+        return false;
+
+    if (parentItem) {
+        const int safeIndex =
+            qBound(
+                0,
+                index,
+                parentItem->childCount());
+
+        parentItem->insertChild(
+            safeIndex,
+            item);
+
+        parentItem->setExpanded(true);
+    } else {
+        const int safeIndex =
+            qBound(
+                0,
+                index,
+                m_tree->topLevelItemCount());
+
+        m_tree->insertTopLevelItem(
+            safeIndex,
+            item);
+    }
+
+    QList<BasketListViewItem *> subtree;
+    subtree.append(item);
+
+    for (int i = 0;
+         i < subtree.size();
+         ++i) {
+
+        BasketListViewItem *current =
+            subtree.at(i);
+
+        BasketScene *basket =
+            current->basket();
+
+        if (basket
+            && basket->decoration()
+            && m_stack->indexOf(
+                   basket->decoration()) < 0) {
+            m_stack->addWidget(
+                basket->decoration());
+        }
+
+        for (int child = 0;
+             child < current->childCount();
+             ++child) {
+            subtree.append(
+                static_cast<BasketListViewItem *>(
+                    current->child(child)));
+        }
+    }
+
+    setCurrentBasket(
+        item->basket());
+
+    save();
+    updateNavigationBar();
+    m_tree->viewport()->update();
+
+    return true;
+}
+
+
+void BNPView::discardDetachedBasketForUndo(
+    BasketListViewItem *item)
+{
+    if (!item)
+        return;
+
+    QList<BasketScene *> baskets;
+    QList<BasketListViewItem *> subtree;
+
+    subtree.append(item);
+
+    for (int i = 0;
+         i < subtree.size();
+         ++i) {
+
+        BasketListViewItem *current =
+            subtree.at(i);
+
+        if (current->basket())
+            baskets.append(
+                current->basket());
+
+        for (int child = 0;
+             child < current->childCount();
+             ++child) {
+            subtree.append(
+                static_cast<BasketListViewItem *>(
+                    current->child(child)));
+        }
+    }
+
+    /*
+     * The tree item is already detached. Delete its visual hierarchy,
+     * then permanently remove the BasketScenes from disk/memory.
+     */
+    delete item;
+
+    for (int i = baskets.size() - 1;
+         i >= 0;
+         --i) {
+
+        BasketScene *basket =
+            baskets.at(i);
+
+        if (!basket)
+            continue;
+
+        basket->closeEditor();
+        basket->deleteFiles();
+
+        delete basket->m_action;
+        delete basket->decoration();
+    }
+}
+
 
 void BNPView::toggleTreeVisibility()
 {

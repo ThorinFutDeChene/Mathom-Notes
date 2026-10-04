@@ -8,6 +8,7 @@
 #include "global.h"
 #include "gitwrapper.h"
 
+#include "basketlistview.h"
 #include "basketscene.h"
 #include "bnpview.h"
 #include "note.h"
@@ -368,6 +369,134 @@ void MathomDeleteCommand::redo()
     }
 
     m_deleted = true;
+}
+
+
+/** Global Mathom-House / Shelf creation history */
+
+BasketCreateCommand::BasketCreateCommand(
+    BNPView *view,
+    BasketScene *basket,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_view(view)
+    , m_basket(basket)
+{
+    if (!m_view || !m_basket)
+        return;
+
+    BasketListViewItem *item =
+        m_view->listViewItemForBasket(
+            m_basket);
+
+    if (!item)
+        return;
+
+    m_parentBasket =
+        m_view->parentBasketOf(
+            m_basket);
+
+    if (item->parent()) {
+        m_index =
+            item->parent()
+                ->indexOfChild(item);
+    } else {
+        m_index =
+            item->treeWidget()
+                ->indexOfTopLevelItem(item);
+    }
+
+    setText(
+        m_parentBasket
+            ? i18n(
+                  "Create Shelf \"%1\"",
+                  m_basket->basketName())
+            : i18n(
+                  "Create Mathom-House \"%1\"",
+                  m_basket->basketName()));
+}
+
+BasketCreateCommand::~BasketCreateCommand()
+{
+    /*
+     * If creation is currently undone and the user abandons the Redo
+     * branch, the detached location becomes permanently obsolete.
+     */
+    if (m_detached
+        && m_view
+        && m_detachedItem) {
+        m_view->discardDetachedBasketForUndo(
+            m_detachedItem);
+
+        m_detachedItem = nullptr;
+    }
+}
+
+void BasketCreateCommand::undo()
+{
+    if (!m_view
+        || !m_basket
+        || m_detached) {
+        return;
+    }
+
+    BasketListViewItem *item =
+        m_view->listViewItemForBasket(
+            m_basket);
+
+    if (!item)
+        return;
+
+    m_detachedItem =
+        m_view->detachBasketForUndo(
+            item);
+
+    if (m_detachedItem)
+        m_detached = true;
+}
+
+void BasketCreateCommand::redo()
+{
+    /*
+     * QUndoStack::push() calls redo() immediately. The Mathom-House or
+     * Shelf already exists at that moment, so the first redo is a no-op.
+     */
+    if (m_firstRedo) {
+        m_firstRedo = false;
+        return;
+    }
+
+    if (!m_view
+        || !m_basket
+        || !m_detached
+        || !m_detachedItem) {
+        return;
+    }
+
+    QTreeWidgetItem *parentItem =
+        nullptr;
+
+    if (m_parentBasket) {
+        parentItem =
+            m_view->listViewItemForBasket(
+                m_parentBasket);
+
+        /*
+         * In normal chronological Redo, the parent has already been
+         * restored before its child Shelf.
+         */
+        if (!parentItem)
+            return;
+    }
+
+    if (m_view->restoreBasketForUndo(
+            m_detachedItem,
+            parentItem,
+            m_index)) {
+
+        m_detachedItem = nullptr;
+        m_detached = false;
+    }
 }
 
 

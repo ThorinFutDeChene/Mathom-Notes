@@ -70,6 +70,19 @@ public:
     void setCurrentBasket(BasketScene *basket);
     void setCurrentBasketInHistory(BasketScene *basket);
     void removeBasket(BasketScene *basket);
+
+    // Helpers used by the global Undo/Redo history.
+    BasketListViewItem *detachBasketForUndo(
+        BasketListViewItem *item);
+
+    bool restoreBasketForUndo(
+        BasketListViewItem *item,
+        QTreeWidgetItem *parentItem,
+        int index);
+
+    void discardDetachedBasketForUndo(
+        BasketListViewItem *item);
+
     /// For NewBasketDialog (and later some other classes):
     int topLevelItemCount();
     ///
@@ -94,7 +107,10 @@ public Q_SLOTS:
     void saveSubHierarchy(QTreeWidgetItem *item, QXmlStreamWriter &stream, bool recursive);
     void load();
     void load(QTreeWidgetItem *item, const QDomElement &baskets);
-    void loadNewBasket(const QString &folderName, const QDomElement &properties, BasketScene *parent);
+    BasketScene *loadNewBasket(
+        const QString &folderName,
+        const QDomElement &properties,
+        BasketScene *parent);
     void goToPreviousBasket();
     void goToNextBasket();
     void foldBasket();

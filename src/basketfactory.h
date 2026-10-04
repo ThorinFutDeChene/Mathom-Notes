@@ -13,7 +13,7 @@ class BasketScene;
 namespace BasketFactory
 {
 
-void newBasket(
+BasketScene *newBasket(
     const QString &icon,
     const QString &name,
     BasketScene *parent = nullptr);

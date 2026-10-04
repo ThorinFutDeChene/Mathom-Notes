@@ -11,6 +11,7 @@
 #include <QLabel>
 #include <QLineEdit>
 #include <QPushButton>
+#include <QUndoStack>
 #include <QVBoxLayout>
 
 #include <KComboBox>
@@ -26,6 +27,7 @@
 #include "basketscene.h"
 #include "bnpview.h"
 #include "global.h"
+#include "history.h"
 #include "mathomicons.h"
 #include "tools.h"
 
@@ -260,11 +262,24 @@ void NewBasketDialog::slotOk()
                 : QStringLiteral("mathom-shelf");
     }
 
-    BasketFactory::newBasket(
-        selectedIcon,
-        m_name->text().trimmed(),
-        m_basketsMap.value(
-            m_createIn->currentIndex()));
+    BasketScene *createdBasket =
+        BasketFactory::newBasket(
+            selectedIcon,
+            m_name->text().trimmed(),
+            m_basketsMap.value(
+                m_createIn->currentIndex()));
+
+    if (createdBasket
+        && Global::bnpView
+        && Global::bnpView->globalUndoStack()) {
+
+        Global::bnpView
+            ->globalUndoStack()
+            ->push(
+                new BasketCreateCommand(
+                    Global::bnpView,
+                    createdBasket));
+    }
 
     if (Global::activeMainWindow())
         Global::activeMainWindow()->show();

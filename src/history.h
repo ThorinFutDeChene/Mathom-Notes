@@ -14,6 +14,8 @@
 #include <QUndoCommand>
 
 class BasketScene;
+class BasketListViewItem;
+class BNPView;
 class Note;
 
 class HistorySetBasket : public QUndoCommand
@@ -155,6 +157,32 @@ private:
     QPointer<BasketScene> m_basket;
     QList<DeletedMathomPosition> m_positions;
     bool m_deleted = false;
+};
+
+
+class BasketCreateCommand : public QUndoCommand
+{
+public:
+    BasketCreateCommand(
+        BNPView *view,
+        BasketScene *basket,
+        QUndoCommand *parent = nullptr);
+
+    ~BasketCreateCommand() override;
+
+    void undo() override;
+    void redo() override;
+
+private:
+    BNPView *m_view = nullptr;
+    QPointer<BasketScene> m_basket;
+    QPointer<BasketScene> m_parentBasket;
+
+    BasketListViewItem *m_detachedItem = nullptr;
+
+    int m_index = -1;
+    bool m_firstRedo = true;
+    bool m_detached = false;
 };
 
 
