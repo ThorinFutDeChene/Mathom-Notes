@@ -7,6 +7,8 @@
 #ifndef HISTORY_H
 #define HISTORY_H
 
+#include <QColor>
+#include <QKeySequence>
 #include <QPointer>
 #include <QStringList>
 #include <QUndoCommand>
@@ -97,6 +99,39 @@ private:
     bool m_richText;
     bool m_firstRedo = true;
     qint64 m_timestampMs = 0;
+};
+
+
+struct BasketPropertiesState
+{
+    QString icon;
+    QString name;
+    QColor tabColor;
+    bool tabColorAutomatic = true;
+    QKeySequence shortcut;
+    int shortcutAction = 0;
+};
+
+
+class BasketPropertiesCommand : public QUndoCommand
+{
+public:
+    BasketPropertiesCommand(
+        BasketScene *basket,
+        const BasketPropertiesState &oldState,
+        const BasketPropertiesState &newState,
+        QUndoCommand *parent = nullptr);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    void apply(
+        const BasketPropertiesState &state);
+
+    QPointer<BasketScene> m_basket;
+    BasketPropertiesState m_oldState;
+    BasketPropertiesState m_newState;
 };
 
 #endif // HISTORY_H

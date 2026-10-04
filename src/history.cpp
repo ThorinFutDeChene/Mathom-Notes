@@ -6,6 +6,7 @@
 
 #include "history.h"
 #include "global.h"
+#include "gitwrapper.h"
 
 #include "basketscene.h"
 #include "bnpview.h"
@@ -193,5 +194,59 @@ bool MathomTextEditCommand::mergeWith(
     m_timestampMs = other->m_timestampMs;
 
     return true;
+}
+
+/** Global Mathom-House / Shelf properties history */
+
+BasketPropertiesCommand::BasketPropertiesCommand(
+    BasketScene *basket,
+    const BasketPropertiesState &oldState,
+    const BasketPropertiesState &newState,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_basket(basket)
+    , m_oldState(oldState)
+    , m_newState(newState)
+{
+    setText(
+        i18n(
+            "Modify properties of \"%1\"",
+            oldState.name));
+}
+
+void BasketPropertiesCommand::apply(
+    const BasketPropertiesState &state)
+{
+    if (!m_basket)
+        return;
+
+    m_basket->setShortcut(
+        state.shortcut,
+        state.shortcutAction);
+
+    m_basket->setTabColor(
+        state.tabColor,
+        state.tabColorAutomatic);
+
+    /*
+     * Keep this last: setShelfIdentity() emits propertiesChanged(),
+     * which refreshes the organization tree and persists baskets.xml.
+     */
+    m_basket->setShelfIdentity(
+        state.icon,
+        state.name);
+
+    m_basket->save();
+    GitWrapper::commitBasket(m_basket);
+}
+
+void BasketPropertiesCommand::undo()
+{
+    apply(m_oldState);
+}
+
+void BasketPropertiesCommand::redo()
+{
+    apply(m_newState);
 }
 

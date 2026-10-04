@@ -10,6 +10,7 @@
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QPushButton>
+#include <QUndoStack>
 
 #include <KIconLoader>
 #include <KLocalizedString>
@@ -18,7 +19,10 @@
 #include <algorithm>
 
 #include "basketscene.h"
+#include "bnpview.h"
 #include "gitwrapper.h"
+#include "global.h"
+#include "history.h"
 #include "kcolorcombo2.h"
 #include "variouswidgets.h"
 
@@ -145,34 +149,115 @@ bool BasketPropertiesDialog::event(QEvent *event)
 
 void BasketPropertiesDialog::applyChanges()
 {
-    if (m_ui->showBasket->isChecked()) {
-        m_basket->setShortcut(m_ui->shortcut->shortcut()[0], 0);
-    } else if (m_ui->globalButton->isChecked()) {
-        m_basket->setShortcut(m_ui->shortcut->shortcut()[0], 1);
+    BasketPropertiesState oldState;
+
+    oldState.icon =
+        m_basket->icon();
+
+    oldState.name =
+        m_basket->basketName();
+
+    oldState.tabColor =
+        m_basket->tabColor();
+
+    oldState.tabColorAutomatic =
+        m_basket->tabColorAutomatic();
+
+    oldState.shortcut =
+        m_basket->shortcut();
+
+    oldState.shortcutAction =
+        m_basket->shortcutAction();
+
+
+    BasketPropertiesState newState;
+
+    newState.icon =
+        m_ui->icon->icon();
+
+    newState.name =
+        m_ui->name->text();
+
+    const QList<QKeySequence> shortcuts =
+        m_ui->shortcut->shortcut();
+
+    newState.shortcut =
+        shortcuts.isEmpty()
+            ? QKeySequence()
+            : shortcuts.first();
+
+    if (m_ui->globalButton->isChecked()) {
+        newState.shortcutAction = 1;
     } else if (m_ui->switchButton->isChecked()) {
-        m_basket->setShortcut(m_ui->shortcut->shortcut()[0], 2);
-    }
-
-    if (m_tabColorAutomatic->isChecked()) {
-        // Preserve an existing automatic color. If the user explicitly
-        // switches from custom back to automatic, invalidate it so the
-        // navigation bar computes a new well-separated color.
-        if (!m_basket->tabColorAutomatic())
-            m_basket->setTabColor(QColor(), true);
+        newState.shortcutAction = 2;
     } else {
-        m_basket->setTabColor(
-            m_tabColor->color(),
-            false);
+        newState.shortcutAction = 0;
     }
 
-    // Called last because it emits propertiesChanged() so the
-    // navigation tree also refreshes the name, icon, shortcut
-    // and shelf tab color.
+    newState.tabColorAutomatic =
+        m_tabColorAutomatic->isChecked();
+
+    if (newState.tabColorAutomatic) {
+        /*
+         * If automatic mode was already active, preserve its current
+         * generated color. If the user switches back from custom to
+         * automatic, invalidate it so Mathom generates a new one.
+         */
+        newState.tabColor =
+            oldState.tabColorAutomatic
+                ? oldState.tabColor
+                : QColor();
+    } else {
+        newState.tabColor =
+            m_tabColor->color();
+    }
+
+    const bool changed =
+        oldState.icon
+            != newState.icon
+        || oldState.name
+            != newState.name
+        || oldState.tabColor
+            != newState.tabColor
+        || oldState.tabColorAutomatic
+            != newState.tabColorAutomatic
+        || oldState.shortcut
+            != newState.shortcut
+        || oldState.shortcutAction
+            != newState.shortcutAction;
+
+    if (!changed)
+        return;
+
+    if (Global::bnpView
+        && Global::bnpView->globalUndoStack()) {
+
+        Global::bnpView
+            ->globalUndoStack()
+            ->push(
+                new BasketPropertiesCommand(
+                    m_basket,
+                    oldState,
+                    newState));
+
+        return;
+    }
+
+    // Fallback if no global history is available.
+    m_basket->setShortcut(
+        newState.shortcut,
+        newState.shortcutAction);
+
+    m_basket->setTabColor(
+        newState.tabColor,
+        newState.tabColorAutomatic);
+
     m_basket->setShelfIdentity(
-        m_ui->icon->icon(),
-        m_ui->name->text());
-    GitWrapper::commitBasket(m_basket);
+        newState.icon,
+        newState.name);
+
     m_basket->save();
+    GitWrapper::commitBasket(m_basket);
 }
 
 void BasketPropertiesDialog::capturedShortcut(const QList<QKeySequence> &sc)
