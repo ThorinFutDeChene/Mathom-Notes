@@ -318,6 +318,11 @@ public Q_SLOTS:
         return m_actionCollection;
     };
 
+    QUndoStack *globalUndoStack() const
+    {
+        return m_undoStack;
+    }
+
     void populateTagsMenu();
     void populateTagsMenu(QMenu &menu, Note *referenceNote);
     void connectTagsMenu();
@@ -370,7 +375,8 @@ private:
     KXMLGUIClient *m_guiClient;
     BasketStatusBar *m_statusbar;
 
-    QUndoStack *m_history;
+    QUndoStack *m_navigationHistory;
+    QUndoStack *m_undoStack;
     KMainWindow *m_HiddenMainWindow;
 };
 

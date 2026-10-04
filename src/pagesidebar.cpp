@@ -17,11 +17,15 @@
 #include <QSignalBlocker>
 #include <QStringList>
 #include <QToolButton>
+#include <QUndoStack>
 #include <QVBoxLayout>
 
 #include <KLocalizedString>
 
 #include "basketscene.h"
+#include "bnpview.h"
+#include "global.h"
+#include "history.h"
 
 namespace
 {
@@ -114,15 +118,91 @@ PageSidebar::PageSidebar(QWidget *parent)
         if (m_rebuilding || !m_basket || !item)
             return;
 
-        m_basket->renamePage(
-            item->data(PageIdRole).toString(),
-            item->text().trimmed());
+        const QString pageId =
+            item->data(PageIdRole).toString();
+
+        const QString newTitle =
+            item->text().trimmed();
+
+        QString oldTitle;
+
+        for (const BasketScene::PageInfo &page :
+             m_basket->pages()) {
+            if (page.id == pageId) {
+                oldTitle = page.title;
+                break;
+            }
+        }
+
+        if (oldTitle.isEmpty()
+            || newTitle.isEmpty()
+            || oldTitle == newTitle) {
+            rebuild();
+            return;
+        }
+
+        if (Global::bnpView
+            && Global::bnpView->globalUndoStack()) {
+            Global::bnpView
+                ->globalUndoStack()
+                ->push(
+                    new PageRenameCommand(
+                        m_basket,
+                        pageId,
+                        oldTitle,
+                        newTitle));
+        } else {
+            m_basket->renamePage(
+                pageId,
+                newTitle);
+        }
     });
 
     connect(m_list->model(), &QAbstractItemModel::rowsMoved, this,
             [this](const QModelIndex &, int, int, const QModelIndex &, int) {
-                if (!m_rebuilding && m_sortMode == SortMode::Manual)
-                    syncManualOrder();
+                if (m_rebuilding
+                    || m_sortMode != SortMode::Manual
+                    || !m_basket)
+                    return;
+
+                QStringList oldOrder;
+                oldOrder.reserve(
+                    m_basket->pages().size());
+
+                for (const BasketScene::PageInfo &page :
+                     m_basket->pages()) {
+                    oldOrder.append(page.id);
+                }
+
+                QStringList newOrder;
+                newOrder.reserve(m_list->count());
+
+                for (int row = 0;
+                     row < m_list->count();
+                     ++row) {
+                    newOrder.append(
+                        m_list
+                            ->item(row)
+                            ->data(PageIdRole)
+                            .toString());
+                }
+
+                if (oldOrder == newOrder)
+                    return;
+
+                if (Global::bnpView
+                    && Global::bnpView->globalUndoStack()) {
+                    Global::bnpView
+                        ->globalUndoStack()
+                        ->push(
+                            new PageReorderCommand(
+                                m_basket,
+                                oldOrder,
+                                newOrder));
+                } else {
+                    m_basket->reorderPages(
+                        newOrder);
+                }
             });
 }
 

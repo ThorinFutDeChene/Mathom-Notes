@@ -440,13 +440,6 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
     // QTimer::singleShot(0, this, &HtmlEditor::cursorPositionChanged);
     InlineEditors::instance()->enableRichTextToolBar();
 
-    connect(InlineEditors::instance()->richTextUndo, &QAction::triggered, textEdit, &QTextEdit::undo);
-    connect(InlineEditors::instance()->richTextRedo, &QAction::triggered, textEdit, &QTextEdit::redo);
-    connect(textEdit, &QTextEdit::undoAvailable, InlineEditors::instance()->richTextUndo, &QAction::setEnabled);
-    connect(textEdit, &QTextEdit::redoAvailable, InlineEditors::instance()->richTextRedo, &QAction::setEnabled);
-    connect(textEdit, &QTextEdit::textChanged, this, &HtmlEditor::editTextChanged);
-    InlineEditors::instance()->richTextUndo->setEnabled(false);
-    InlineEditors::instance()->richTextRedo->setEnabled(false);
 
     connect(textEdit, &QTextEdit::cursorPositionChanged, htmlContent->note()->basket(), &BasketScene::editorCursorPositionChanged);
     // In case it is a very big note, the top is displayed and Enter is pressed: the cursor is on bottom, we should enure it visible:
@@ -1562,8 +1555,6 @@ void InlineEditors::enableRichTextToolBar()
     richTextCenter->setEnabled(true);
     richTextRight->setEnabled(true);
     richTextJustified->setEnabled(true);
-    richTextUndo->setEnabled(true);
-    richTextRedo->setEnabled(true);
 }
 
 void InlineEditors::disableRichTextToolBar()
@@ -1578,8 +1569,6 @@ void InlineEditors::disableRichTextToolBar()
     disconnect(richTextCenter);
     disconnect(richTextRight);
     disconnect(richTextJustified);
-    disconnect(richTextUndo);
-    disconnect(richTextRedo);
 
     richTextFont->setEnabled(false);
     richTextFontSize->setEnabled(false);
@@ -1591,8 +1580,6 @@ void InlineEditors::disableRichTextToolBar()
     richTextCenter->setEnabled(false);
     richTextRight->setEnabled(false);
     richTextJustified->setEnabled(false);
-    richTextUndo->setEnabled(false);
-    richTextRedo->setEnabled(false);
 
     // Return to a "proper" state:
     QFont defaultFont;

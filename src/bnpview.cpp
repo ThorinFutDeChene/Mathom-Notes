@@ -124,7 +124,12 @@ BNPView::BNPView(QWidget *parent, KXMLGUIClient *aGUIClient, KActionCollection *
     Global::backgroundManager = new BackgroundManager();
 
     setupGlobalShortcuts();
-    m_history = new QUndoStack(this);
+
+    // Navigation history (Previous / Next) and modification history
+    // (Undo / Redo) are two completely different concepts.
+    m_navigationHistory = new QUndoStack(this);
+    m_undoStack = new QUndoStack(this);
+
     initialize();
     QTimer::singleShot(0, this, &BNPView::lateInit);
 }
@@ -150,8 +155,11 @@ BNPView::~BNPView()
     Global::bnpView = nullptr;
 
     delete m_statusbar;
-    delete m_history;
-    m_history = nullptr;
+    delete m_navigationHistory;
+    m_navigationHistory = nullptr;
+
+    delete m_undoStack;
+    m_undoStack = nullptr;
 
     NoteDrag::createAndEmptyCuttingTmpFolder(); // Clean the temporary folder we used
 }
@@ -513,8 +521,8 @@ void BNPView::initialize()
                 &BNPView::updateNavigationBar);
         });
 
-    connect(m_history, &QUndoStack::canRedoChanged, this, &BNPView::canUndoRedoChanged);
-    connect(m_history, &QUndoStack::canUndoChanged, this, &BNPView::canUndoRedoChanged);
+    connect(m_navigationHistory, &QUndoStack::canRedoChanged, this, &BNPView::canUndoRedoChanged);
+    connect(m_navigationHistory, &QUndoStack::canUndoChanged, this, &BNPView::canUndoRedoChanged);
 
     setupActions();
 
@@ -915,6 +923,49 @@ void BNPView::setupActions()
 #endif
 
     InlineEditors::instance()->initToolBars(actionCollection());
+
+    // The two buttons historically belonged to the rich-text editor.
+    // They are now the application's global Undo / Redo controls.
+    m_actUndo = InlineEditors::instance()->richTextUndo;
+    m_actRedo = InlineEditors::instance()->richTextRedo;
+
+    connect(
+        m_actUndo,
+        &QAction::triggered,
+        this,
+        &BNPView::undo);
+
+    connect(
+        m_actRedo,
+        &QAction::triggered,
+        this,
+        &BNPView::redo);
+
+    connect(
+        m_undoStack,
+        &QUndoStack::canUndoChanged,
+        m_actUndo,
+        &QAction::setEnabled);
+
+    connect(
+        m_undoStack,
+        &QUndoStack::canRedoChanged,
+        m_actRedo,
+        &QAction::setEnabled);
+
+    m_actionCollection->setDefaultShortcuts(
+        m_actUndo,
+        KStandardShortcut::shortcut(
+            KStandardShortcut::Undo));
+
+    m_actionCollection->setDefaultShortcuts(
+        m_actRedo,
+        KStandardShortcut::shortcut(
+            KStandardShortcut::Redo));
+
+    m_actUndo->setEnabled(m_undoStack->canUndo());
+    m_actRedo->setEnabled(m_undoStack->canRedo());
+
     /** Help : ****************************************************************/
 
     a = ac->addAction(QStringLiteral("help_welcome_baskets"), this, &BNPView::addWelcomeBaskets);
@@ -1168,14 +1219,14 @@ int BNPView::topLevelItemCount()
 
 void BNPView::goToPreviousBasket()
 {
-    if (m_history->canUndo())
-        m_history->undo();
+    if (m_navigationHistory->canUndo())
+        m_navigationHistory->undo();
 }
 
 void BNPView::goToNextBasket()
 {
-    if (m_history->canRedo())
-        m_history->redo();
+    if (m_navigationHistory->canRedo())
+        m_navigationHistory->redo();
 }
 
 void BNPView::foldBasket()
@@ -1495,7 +1546,7 @@ void BNPView::setCurrentBasketInHistory(BasketScene *basket)
     if (currentBasket() == basket)
         return;
 
-    m_history->push(new HistorySetBasket(basket));
+    m_navigationHistory->push(new HistorySetBasket(basket));
 }
 
 void BNPView::setCurrentBasket(BasketScene *basket)
@@ -2434,12 +2485,14 @@ void BNPView::setFiltering(bool filtering)
 
 void BNPView::undo()
 {
-    // TODO
+    if (m_undoStack && m_undoStack->canUndo())
+        m_undoStack->undo();
 }
 
 void BNPView::redo()
 {
-    // TODO
+    if (m_undoStack && m_undoStack->canRedo())
+        m_undoStack->redo();
 }
 
 void BNPView::pasteToBasket(int /*index*/, QClipboard::Mode /*mode*/)
@@ -2648,9 +2701,9 @@ void BNPView::slotBasketChanged()
 
 void BNPView::canUndoRedoChanged()
 {
-    if (m_history) {
-        m_actPreviousBasket->setEnabled(m_history->canUndo());
-        m_actNextBasket->setEnabled(m_history->canRedo());
+    if (m_navigationHistory) {
+        m_actPreviousBasket->setEnabled(m_navigationHistory->canUndo());
+        m_actNextBasket->setEnabled(m_navigationHistory->canRedo());
     }
 }
 

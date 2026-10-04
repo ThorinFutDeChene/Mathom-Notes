@@ -38,6 +38,9 @@
   </Menu>
   <Menu name="edit" >
    <text>&amp;Edit</text>
+   <Action name="richtext_undo" />
+   <Action name="richtext_redo" />
+   <Separator/>
    <Action name="edit_cut" />
    <Action name="edit_copy" />
    <Action name="edit_paste" />
