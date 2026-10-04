@@ -414,8 +414,8 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
         QTimer::singleShot(100, basket, &BasketScene::focusEditor);
     });
 
-    connect(InlineEditors::instance()->richTextColor, &KColorCombo::activated, textEdit, [textEdit](const QColor &) {
-        textEdit->setFocus();
+    connect(InlineEditors::instance()->richTextColor, &KColorCombo::activated, textEdit, [basket](const QColor &) {
+        QTimer::singleShot(100, basket, &BasketScene::focusEditor);
     });
 
     connect(textEdit, &QTextEdit::cursorPositionChanged, this, &HtmlEditor::cursorPositionChanged);
@@ -1431,6 +1431,14 @@ void InlineEditors::initToolBars(KActionCollection *ac)
     richTextColor->installEventFilter(focusWidgetFilter);
     richTextColor->setFixedWidth(richTextColor->sizeHint().height() * 2);
     richTextColor->setColor(textColor);
+
+    // The color selector is a formatting control, not a text-entry field.
+    // Do not let it capture typing intended for the active Mathom.
+    richTextColor->setFocusPolicy(Qt::NoFocus);
+    if (richTextColor->lineEdit()) {
+        richTextColor->lineEdit()->setReadOnly(true);
+        richTextColor->lineEdit()->setFocusPolicy(Qt::NoFocus);
+    }
     action = new QWidgetAction(ac);
     ac->addAction(QStringLiteral("richtext_color"), action);
     action->setDefaultWidget(richTextColor);
