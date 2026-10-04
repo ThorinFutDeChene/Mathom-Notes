@@ -122,9 +122,6 @@ MathomTextEditCommand::MathomTextEditCommand(
     : QUndoCommand(parent)
     , m_basket(note ? note->basket() : nullptr)
     , m_note(note)
-    , m_parentNote(note ? note->parentNote() : nullptr)
-    , m_previousNote(note ? note->prev() : nullptr)
-    , m_nextNote(note ? note->next() : nullptr)
     , m_oldState(oldState)
     , m_newState(newState)
     , m_richText(richText)
@@ -163,6 +160,30 @@ void MathomTextEditCommand::undo()
      */
     if (m_newMathom
         && m_oldStateWasEmpty) {
+
+        /*
+         * A newly created Mathom can still be in its provisional
+         * insertion position while its editor is open.
+         *
+         * Closing the editor first finalizes its Page assignment and
+         * its real position in the Page layout. Capture that final
+         * structure only afterwards, otherwise Redo can restore a
+         * visually present but structurally detached "ghost" Mathom.
+         */
+        if (m_basket->isDuringEdit()
+            && m_basket->editedNote() == m_note) {
+            m_basket->closeEditor(
+                /*deleteEmptyNote=*/false);
+        }
+
+        m_parentNote =
+            m_note->parentNote();
+
+        m_previousNote =
+            m_note->prev();
+
+        m_nextNote =
+            m_note->next();
 
         m_basket->suspendMathomForUndo(
             m_note);
