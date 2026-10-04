@@ -2917,10 +2917,26 @@ void BasketScene::setFocusIfNotInPopupMenu()
 {
     if (!qApp->activePopupWidget()) {
         if (isDuringEdit())
-            m_editor->graphicsWidget()->setFocus();
+            focusEditor();
         else
             setFocus();
     }
+}
+
+void BasketScene::focusEditor()
+{
+    if (!isDuringEdit() || !m_editor->graphicsWidget())
+        return;
+
+    // The inline editor lives inside a QGraphicsProxyWidget.
+    // Restore focus to both levels: the graphics proxy and the real
+    // text widget embedded inside it.
+    m_editor->graphicsWidget()->setFocus(Qt::OtherFocusReason);
+
+    if (m_editor->textEdit())
+        m_editor->textEdit()->setFocus(Qt::OtherFocusReason);
+    else if (m_editor->lineEdit())
+        m_editor->lineEdit()->setFocus(Qt::OtherFocusReason);
 }
 
 void BasketScene::mousePressEvent(QGraphicsSceneMouseEvent *event)

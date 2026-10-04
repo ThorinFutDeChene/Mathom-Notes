@@ -396,28 +396,22 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
     connect(InlineEditors::instance()->focusWidgetFilter, &FocusWidgetFilter::returnPressed, textEdit, [&textEdit]() {
         textEdit->setFocus();
     });
-    connect(InlineEditors::instance()->richTextFont, &QFontComboBox::activated, textEdit, [textEdit]() {
-        QTimer::singleShot(100, textEdit, [textEdit]() {
-            textEdit->setFocus(Qt::OtherFocusReason);
-        });
+    BasketScene *basket = htmlContent->note()->basket();
+
+    connect(InlineEditors::instance()->richTextFont, &QFontComboBox::activated, textEdit, [basket]() {
+        QTimer::singleShot(100, basket, &BasketScene::focusEditor);
     });
 
-    connect(InlineEditors::instance()->richTextFontSize, &QComboBox::activated, textEdit, [textEdit]() {
-        QTimer::singleShot(100, textEdit, [textEdit]() {
-            textEdit->setFocus(Qt::OtherFocusReason);
-        });
+    connect(InlineEditors::instance()->richTextFontSize, &QComboBox::activated, textEdit, [basket]() {
+        QTimer::singleShot(100, basket, &BasketScene::focusEditor);
     });
 
-    connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::returnPressed2, textEdit, [textEdit]() {
-        QTimer::singleShot(100, textEdit, [textEdit]() {
-            textEdit->setFocus(Qt::OtherFocusReason);
-        });
+    connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::returnPressed2, textEdit, [basket]() {
+        QTimer::singleShot(100, basket, &BasketScene::focusEditor);
     });
 
-    connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::escapePressed, textEdit, [textEdit]() {
-        QTimer::singleShot(100, textEdit, [textEdit]() {
-            textEdit->setFocus(Qt::OtherFocusReason);
-        });
+    connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::escapePressed, textEdit, [basket]() {
+        QTimer::singleShot(100, basket, &BasketScene::focusEditor);
     });
 
     connect(InlineEditors::instance()->richTextColor, &KColorCombo::activated, textEdit, [textEdit](const QColor &) {

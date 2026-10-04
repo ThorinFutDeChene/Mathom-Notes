@@ -710,6 +710,7 @@ public Q_SLOTS:
     void selectionChangedInEditor();
     void contentChangedInEditor();
     void editorCursorPositionChanged();
+    void focusEditor();
 
 private:
     qreal m_editorX;
