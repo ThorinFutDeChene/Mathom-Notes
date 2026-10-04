@@ -397,25 +397,25 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
         textEdit->setFocus();
     });
     connect(InlineEditors::instance()->richTextFont, &QFontComboBox::activated, textEdit, [textEdit]() {
-        QTimer::singleShot(0, textEdit, [textEdit]() {
+        QTimer::singleShot(100, textEdit, [textEdit]() {
             textEdit->setFocus(Qt::OtherFocusReason);
         });
     });
 
     connect(InlineEditors::instance()->richTextFontSize, &QComboBox::activated, textEdit, [textEdit]() {
-        QTimer::singleShot(0, textEdit, [textEdit]() {
+        QTimer::singleShot(100, textEdit, [textEdit]() {
             textEdit->setFocus(Qt::OtherFocusReason);
         });
     });
 
     connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::returnPressed2, textEdit, [textEdit]() {
-        QTimer::singleShot(0, textEdit, [textEdit]() {
+        QTimer::singleShot(100, textEdit, [textEdit]() {
             textEdit->setFocus(Qt::OtherFocusReason);
         });
     });
 
     connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::escapePressed, textEdit, [textEdit]() {
-        QTimer::singleShot(0, textEdit, [textEdit]() {
+        QTimer::singleShot(100, textEdit, [textEdit]() {
             textEdit->setFocus(Qt::OtherFocusReason);
         });
     });

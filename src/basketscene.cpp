@@ -4092,11 +4092,26 @@ void BasketScene::mouseDoubleClickEvent(QGraphicsSceneMouseEvent *event)
     Note *clicked = noteAt(event->scenePos());
     Note::Zone zone = (clicked ? clicked->zoneAt(event->scenePos() - QPointF(clicked->x(), clicked->y())) : Note::None);
 
+    // Let the embedded text editor handle double-clicks natively.
+    // QTextEdit then performs its standard word selection, and the following
+    // mouse release must also remain native so BasketScene does not collapse
+    // the selection back to a single cursor position.
+    if (event->button() == Qt::LeftButton
+        && m_editor
+        && m_editor->textEdit()
+        && m_editor->graphicsWidget()
+        && m_editor->graphicsWidget()->sceneBoundingRect().contains(event->scenePos())) {
+        m_editorNativeMouseEvent = true;
+        QGraphicsScene::mouseDoubleClickEvent(event);
+        return;
+    }
+
     if (event->button() == Qt::LeftButton && (zone == Note::Group || zone == Note::Handle)) {
         doCopy(CopyToSelection);
         m_noActionOnMouseRelease = true;
-    } else
+    } else {
         mousePressEvent(event);
+    }
 }
 
 void BasketScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
