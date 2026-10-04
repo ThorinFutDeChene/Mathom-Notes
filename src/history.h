@@ -129,6 +129,35 @@ struct BasketPropertiesState
 };
 
 
+struct DeletedMathomPosition
+{
+    QPointer<Note> note;
+    QPointer<Note> parent;
+    QPointer<Note> previous;
+    QPointer<Note> next;
+};
+
+
+class MathomDeleteCommand : public QUndoCommand
+{
+public:
+    MathomDeleteCommand(
+        BasketScene *basket,
+        const QList<Note *> &notes,
+        QUndoCommand *parent = nullptr);
+
+    ~MathomDeleteCommand() override;
+
+    void undo() override;
+    void redo() override;
+
+private:
+    QPointer<BasketScene> m_basket;
+    QList<DeletedMathomPosition> m_positions;
+    bool m_deleted = false;
+};
+
+
 class BasketPropertiesCommand : public QUndoCommand
 {
 public:

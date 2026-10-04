@@ -46,6 +46,7 @@
 #include <QResizeEvent>
 #include <QSaveFile>
 #include <QSignalBlocker>
+#include <functional>
 #include <QScrollBar>
 #include <QStringList>
 #include <QTextDocument>
@@ -5771,7 +5772,8 @@ void BasketScene::discardSuspendedMathom(
     delete note;
 
     if (!contentFile.isEmpty())
-        QFile::remove(contentFile);
+        Tools::deleteRecursively(
+            contentFile);
 }
 
 void BasketScene::inactivityAutoSaveTimeout()
@@ -6308,7 +6310,78 @@ void BasketScene::focusANonSelectedNoteAboveOrThenBelow()
 
 void BasketScene::noteDeleteWithoutConfirmation(bool deleteFilesToo)
 {
-    // If the currently focused note is selected, it will be deleted.
+    /*
+     * A normal user deletion belongs to the global Undo/Redo history.
+     *
+     * Cut currently keeps its historical file-moving behaviour and will
+     * be integrated separately.
+     */
+    if (deleteFilesToo
+        && Global::bnpView
+        && Global::bnpView->globalUndoStack()) {
+
+        QList<Note *> selectedMathoms;
+
+        std::function<void(Note *)> collectSelected =
+            [&](Note *first) {
+                for (Note *note = first;
+                     note;
+                     note = note->next()) {
+
+                    if (note->content()) {
+                        if (note->isSelected())
+                            selectedMathoms.append(note);
+                    } else {
+                        collectSelected(
+                            note->firstChild());
+                    }
+                }
+            };
+
+        collectSelected(firstNote());
+
+        /*
+         * Manual groups need their own structural Undo command because
+         * deleting a child can automatically ungroup its parent.
+         *
+         * For now only ordinary Mathoms (top-level/free layout or direct
+         * children of Page columns) use this command.
+         */
+        bool simpleStructure =
+            !selectedMathoms.isEmpty();
+
+        for (Note *note : selectedMathoms) {
+            for (Note *parent = note->parentNote();
+                 parent;
+                 parent = parent->parentNote()) {
+
+                if (!parent->isColumn()) {
+                    simpleStructure = false;
+                    break;
+                }
+            }
+
+            if (!simpleStructure)
+                break;
+        }
+
+        if (simpleStructure) {
+            focusANonSelectedNoteBelowOrThenAbove();
+
+            Global::bnpView
+                ->globalUndoStack()
+                ->push(
+                    new MathomDeleteCommand(
+                        this,
+                        selectedMathoms));
+
+            relayoutNotes(true);
+            save();
+            return;
+        }
+    }
+
+    // Historical fallback, notably for grouped Mathoms and Cut.
     focusANonSelectedNoteBelowOrThenAbove();
 
     // Do the deletion:

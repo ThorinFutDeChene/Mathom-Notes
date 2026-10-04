@@ -274,6 +274,103 @@ bool MathomTextEditCommand::mergeWith(
     return true;
 }
 
+/** Global Mathom deletion history */
+
+MathomDeleteCommand::MathomDeleteCommand(
+    BasketScene *basket,
+    const QList<Note *> &notes,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_basket(basket)
+{
+    for (Note *note : notes) {
+        if (!note)
+            continue;
+
+        DeletedMathomPosition position;
+
+        position.note = note;
+        position.parent = note->parentNote();
+        position.previous = note->prev();
+        position.next = note->next();
+
+        m_positions.append(position);
+    }
+
+    setText(
+        m_positions.size() == 1
+            ? i18n("Delete Mathom")
+            : i18n("Delete Mathoms"));
+}
+
+MathomDeleteCommand::~MathomDeleteCommand()
+{
+    /*
+     * While the deletion is active, the Mathoms are deliberately kept
+     * alive so Undo can restore the exact same objects. When the command
+     * finally leaves the history, the deletion becomes definitive.
+     */
+    if (!m_deleted || !m_basket)
+        return;
+
+    for (const DeletedMathomPosition &position :
+         m_positions) {
+        if (position.note) {
+            m_basket->discardSuspendedMathom(
+                position.note);
+        }
+    }
+}
+
+void MathomDeleteCommand::undo()
+{
+    if (!m_basket || !m_deleted)
+        return;
+
+    /*
+     * Restore in reverse order. This is important when several adjacent
+     * Mathoms were deleted: later Mathoms can still refer to an earlier
+     * deleted Mathom as their previous neighbour.
+     */
+    for (int i = m_positions.size() - 1;
+         i >= 0;
+         --i) {
+
+        const DeletedMathomPosition &position =
+            m_positions.at(i);
+
+        if (!position.note)
+            continue;
+
+        m_basket->restoreSuspendedMathom(
+            position.note,
+            position.parent,
+            position.previous,
+            position.next);
+    }
+
+    m_deleted = false;
+}
+
+void MathomDeleteCommand::redo()
+{
+    if (!m_basket)
+        return;
+
+    for (const DeletedMathomPosition &position :
+         m_positions) {
+
+        if (!position.note)
+            continue;
+
+        m_basket->suspendMathomForUndo(
+            position.note);
+    }
+
+    m_deleted = true;
+}
+
+
 /** Global Mathom-House / Shelf properties history */
 
 BasketPropertiesCommand::BasketPropertiesCommand(
