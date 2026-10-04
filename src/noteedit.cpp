@@ -23,6 +23,7 @@
 #include <QLineEdit>
 #include <QPushButton>
 #include <QScrollBar>
+#include <QSignalBlocker>
 #include <QTextCharFormat>
 #include <QTableWidget>
 #include <QHeaderView>
@@ -402,6 +403,18 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
         textEdit->setFocus();
     });
 
+    connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::returnPressed2, textEdit, [textEdit]() {
+        textEdit->setFocus();
+    });
+
+    connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::escapePressed, textEdit, [textEdit]() {
+        textEdit->setFocus();
+    });
+
+    connect(InlineEditors::instance()->richTextColor, &KColorCombo::activated, textEdit, [textEdit](const QColor &) {
+        textEdit->setFocus();
+    });
+
     connect(textEdit, &QTextEdit::cursorPositionChanged, this, &HtmlEditor::cursorPositionChanged);
     connect(textEdit, &QTextEdit::currentCharFormatChanged, this, &HtmlEditor::charFormatChanged);
 
@@ -434,7 +447,11 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
 
 void HtmlEditor::cursorPositionChanged()
 {
-    InlineEditors::instance()->richTextFont->setCurrentFont(textEdit()->currentFont().family());
+    {
+        QSignalBlocker blocker(InlineEditors::instance()->richTextFont);
+        InlineEditors::instance()->richTextFont->setCurrentFont(textEdit()->currentFont());
+    }
+
     if (InlineEditors::instance()->richTextColor->color() != textEdit()->textColor())
         InlineEditors::instance()->richTextColor->setColor(textEdit()->textColor());
     InlineEditors::instance()->richTextBold->setChecked((textEdit()->fontWeight() >= QFont::Bold));
@@ -522,10 +539,9 @@ void HtmlEditor::setBlock()
 
 void HtmlEditor::onFontSelectionChanged(const QFont &font)
 {
-    // Change font family only
+    // Change font family only. QTextEdit applies it to the current
+    // selection, or to subsequently typed text when there is no selection.
     textEdit()->setFontFamily(font.family());
-    InlineEditors::instance()->richTextFont->clearFocus();
-    // textEdit()->setFocus();
 }
 
 void HtmlEditor::setBold(bool isChecked)

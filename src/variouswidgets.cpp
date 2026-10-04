@@ -23,6 +23,7 @@
 #include <QResizeEvent>
 #include <QSizeGrip>
 #include <QSizePolicy>
+#include <QSignalBlocker>
 #include <QString>
 #include <QVBoxLayout>
 #include <QWhatsThis>
@@ -479,9 +480,18 @@ void FontSizeCombo::keyPressEvent(QKeyEvent *event)
 
 void FontSizeCombo::setFontSize(qreal size)
 {
-    setItemText(currentIndex(), QString::number(size));
+    const QString text = QString::number(size);
 
-    // TODO: SEE KFontSizeAction::setFontSize( int size ) !!! for a more complete method!
+    // This method synchronizes the toolbar with the editor.
+    // It must not emit sizeChanged(), otherwise simply moving the text
+    // cursor can modify the document formatting again.
+    QSignalBlocker blocker(this);
+
+    const int index = findText(text);
+    if (index >= 0)
+        setCurrentIndex(index);
+    else
+        setEditText(text);
 }
 
 qreal FontSizeCombo::fontSize()
