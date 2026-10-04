@@ -5486,13 +5486,21 @@ void BasketScene::editorCursorPositionChanged()
         return;
 
     auto *textEdit = dynamic_cast<FocusedTextEdit *>(m_editor->textEdit());
+    if (!textEdit)
+        return;
 
-    if (textEdit) {
-        QPoint cursorPoint = textEdit->viewport()->mapToGlobal(textEdit->cursorRect().center());
+    const QPoint cursorPoint =
+        textEdit->viewport()->mapToGlobal(textEdit->cursorRect().center());
 
-        // QPointF contentsCursor = m_view->mapToScene( m_view->viewport()->mapFromGlobal(cursorPoint) );
-        // m_view->ensureVisible(contentsCursor.x(), contentsCursor.y(),1,1);
-    }
+    const QPointF contentsCursor =
+        m_view->mapToScene(
+            m_view->viewport()->mapFromGlobal(cursorPoint));
+
+    m_view->ensureVisible(
+        contentsCursor.x() - 10,
+        contentsCursor.y() - 20,
+        20,
+        40);
 }
 
 void BasketScene::closeEditorDelayed()
