@@ -26,6 +26,7 @@
 #include <QSignalBlocker>
 #include <QTextCharFormat>
 #include <QTableWidget>
+#include <QTimer>
 #include <QHeaderView>
 #include <QVBoxLayout>
 #include <QWidgetAction>
@@ -396,19 +397,27 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
         textEdit->setFocus();
     });
     connect(InlineEditors::instance()->richTextFont, &QFontComboBox::activated, textEdit, [textEdit]() {
-        textEdit->setFocus();
+        QTimer::singleShot(0, textEdit, [textEdit]() {
+            textEdit->setFocus(Qt::OtherFocusReason);
+        });
     });
 
     connect(InlineEditors::instance()->richTextFontSize, &QComboBox::activated, textEdit, [textEdit]() {
-        textEdit->setFocus();
+        QTimer::singleShot(0, textEdit, [textEdit]() {
+            textEdit->setFocus(Qt::OtherFocusReason);
+        });
     });
 
     connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::returnPressed2, textEdit, [textEdit]() {
-        textEdit->setFocus();
+        QTimer::singleShot(0, textEdit, [textEdit]() {
+            textEdit->setFocus(Qt::OtherFocusReason);
+        });
     });
 
     connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::escapePressed, textEdit, [textEdit]() {
-        textEdit->setFocus();
+        QTimer::singleShot(0, textEdit, [textEdit]() {
+            textEdit->setFocus(Qt::OtherFocusReason);
+        });
     });
 
     connect(InlineEditors::instance()->richTextColor, &KColorCombo::activated, textEdit, [textEdit](const QColor &) {
