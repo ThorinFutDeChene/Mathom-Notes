@@ -1535,11 +1535,11 @@ msgstr "Souligné"
 
 #: src/noteedit.cpp:1119
 msgid "Superscript"
-msgstr "Superscript"
+msgstr "Exposant"
 
 #: src/noteedit.cpp:1125
 msgid "Subscript"
-msgstr "Sous-script"
+msgstr "Indice"
 
 #: src/noteedit.cpp:1132
 msgid "Align Left"
@@ -4564,3 +4564,11 @@ msgstr "Masquer les pages"
 msgid "Show pages"
 msgstr "Afficher les pages"
 
+
+#: src/noteedit.cpp
+msgid "Convert the selected text to superscript"
+msgstr "Convertir le texte sélectionné en exposant"
+
+#: src/noteedit.cpp
+msgid "Convert the selected text to subscript"
+msgstr "Convertir le texte sélectionné en indice"
