@@ -44,8 +44,8 @@ void revealBasketForHistory(
      * the command being executed so the user can actually see the
      * modification happen.
      *
-     * Use setCurrentBasket(), not setCurrentBasketInHistory():
-     * this visual move must not pollute the navigation history.
+     * Activate the relevant location directly so Undo/Redo remains focused
+     * exclusively on modifications to user data.
      */
     Global::bnpView->setCurrentBasket(
         basket);
@@ -63,26 +63,6 @@ void revealBasketForHistory(
     }
 }
 
-}
-
-HistorySetBasket::HistorySetBasket(BasketScene *basket, QUndoCommand *parent)
-    : QUndoCommand(parent)
-{
-    setText(i18n("Set current location to %1", basket->basketName()));
-    m_folderNameOld = Global::bnpView->currentBasket()->folderName();
-    m_folderNameNew = basket->folderName();
-}
-
-void HistorySetBasket::undo()
-{
-    BasketScene *oldBasket = Global::bnpView->basketForFolderName(m_folderNameOld);
-    Global::bnpView->setCurrentBasket(oldBasket);
-}
-
-void HistorySetBasket::redo()
-{
-    BasketScene *curBasket = Global::bnpView->basketForFolderName(m_folderNameNew);
-    Global::bnpView->setCurrentBasket(curBasket);
 }
 
 /** Global Page modification history */
