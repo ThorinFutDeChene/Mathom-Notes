@@ -793,6 +793,51 @@ UnknownEditor::UnknownEditor(UnknownContent *unknownContent, QWidget *parent)
 
 /*********************************************************************/
 
+namespace
+{
+QString scriptCharacters(const QString &text, bool superscript)
+{
+    static const QString normalDigits = QStringLiteral("0123456789+-=()");
+    static const QString superDigits = QStringLiteral("⁰¹²³⁴⁵⁶⁷⁸⁹⁺⁻⁼⁽⁾");
+    static const QString subDigits = QStringLiteral("₀₁₂₃₄₅₆₇₈₉₊₋₌₍₎");
+
+    static const QString normalSuperLetters = QStringLiteral("abcdefghijklmnoprstuvwxyz");
+    static const QString superLetters = QStringLiteral("ᵃᵇᶜᵈᵉᶠᵍʰⁱʲᵏˡᵐⁿᵒᵖʳˢᵗᵘᵛʷˣʸᶻ");
+
+    static const QString normalSubLetters = QStringLiteral("aehijklmnoprstx");
+    static const QString subLetters = QStringLiteral("ₐₑₕᵢⱼₖₗₘₙₒₚᵣₛₜₓ");
+
+    QString result;
+    result.reserve(text.size());
+
+    for (const QChar character : text) {
+        int index = normalDigits.indexOf(character);
+        if (index >= 0) {
+            result.append(superscript ? superDigits.at(index) : subDigits.at(index));
+            continue;
+        }
+
+        const QChar lower = character.toLower();
+        if (superscript) {
+            index = normalSuperLetters.indexOf(lower);
+            if (index >= 0) {
+                result.append(superLetters.at(index));
+                continue;
+            }
+        } else {
+            index = normalSubLetters.indexOf(lower);
+            if (index >= 0) {
+                result.append(subLetters.at(index));
+                continue;
+            }
+        }
+
+        result.append(character);
+    }
+
+    return result;
+}
+}
 
 /** class SpreadsheetEditor: */
 
@@ -835,10 +880,18 @@ SpreadsheetEditor::SpreadsheetEditor(SpreadsheetContent *spreadsheetContent, QWi
 
     m_formulaEdit->setPlaceholderText(i18n("Value or formula, for example =A1+B1"));
     auto *applyFormula = new QPushButton(i18n("Apply"), container);
+    auto *superscriptButton = new QPushButton(QStringLiteral("x²"), container);
+    auto *subscriptButton = new QPushButton(QStringLiteral("x₂"), container);
+    superscriptButton->setToolTip(i18n("Convert the selected text to superscript"));
+    subscriptButton->setToolTip(i18n("Convert the selected text to subscript"));
+    superscriptButton->setMaximumWidth(superscriptButton->sizeHint().width() + 8);
+    subscriptButton->setMaximumWidth(subscriptButton->sizeHint().width() + 8);
 
     formulaBar->addWidget(m_cellAddress);
     formulaBar->addWidget(m_functionCombo);
     formulaBar->addWidget(m_formulaEdit, 1);
+    formulaBar->addWidget(superscriptButton);
+    formulaBar->addWidget(subscriptButton);
     formulaBar->addWidget(applyFormula);
     layout->addLayout(formulaBar);
 
@@ -875,6 +928,12 @@ SpreadsheetEditor::SpreadsheetEditor(SpreadsheetContent *spreadsheetContent, QWi
     });
 
     connect(m_formulaEdit, &QLineEdit::returnPressed, this, &SpreadsheetEditor::commitFormulaBar);
+    connect(superscriptButton, &QPushButton::clicked, this, [this]() {
+        applyScriptToFormulaSelection(true);
+    });
+    connect(subscriptButton, &QPushButton::clicked, this, [this]() {
+        applyScriptToFormulaSelection(false);
+    });
     connect(applyFormula, &QPushButton::clicked, this, &SpreadsheetEditor::commitFormulaBar);
     connect(m_functionCombo, &QComboBox::activated, this, [this](int index) {
         const QString functionName = m_functionCombo->itemData(index).toString();
@@ -958,6 +1017,37 @@ void SpreadsheetEditor::commitFormulaBar()
     ensureCellExists(row, column);
     m_table->item(row, column)->setText(m_formulaEdit->text());
     m_table->setFocus();
+}
+
+void SpreadsheetEditor::applyScriptToFormulaSelection(bool superscript)
+{
+    if (m_formulaEdit->text().trimmed().startsWith(QLatin1Char('='))) {
+        m_formulaEdit->setFocus();
+        return;
+    }
+
+    int start = m_formulaEdit->selectionStart();
+    QString selected = m_formulaEdit->selectedText();
+
+    if (selected.isEmpty()) {
+        const int cursor = m_formulaEdit->cursorPosition();
+        if (cursor <= 0) {
+            m_formulaEdit->setFocus();
+            return;
+        }
+
+        start = cursor - 1;
+        selected = m_formulaEdit->text().mid(start, 1);
+    }
+
+    const QString converted = scriptCharacters(selected, superscript);
+    QString value = m_formulaEdit->text();
+    value.replace(start, selected.size(), converted);
+
+    m_formulaEdit->setText(value);
+    m_formulaEdit->setSelection(start, converted.size());
+    commitFormulaBar();
+    m_formulaEdit->setFocus();
 }
 
 void SpreadsheetEditor::insertFunction(const QString &functionName)
