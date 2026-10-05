@@ -180,6 +180,8 @@ public Q_SLOTS:
     void charFormatChanged(const QTextCharFormat &format);
 protected Q_SLOTS:
     void setBold(bool isChecked);
+    void setSuperscript(bool isChecked);
+    void setSubscript(bool isChecked);
     void setLeft();
     void setCentered();
     void setRight();
@@ -375,8 +377,8 @@ public:
     KToggleAction *richTextBold;
     KToggleAction *richTextItalic;
     KToggleAction *richTextUnderline;
-    //  KToggleAction     *richTextSuper;
-    //  KToggleAction     *richTextSub;
+    KToggleAction *richTextSuper;
+    KToggleAction *richTextSub;
     KToggleAction *richTextLeft;
     KToggleAction *richTextCenter;
     KToggleAction *richTextRight;
