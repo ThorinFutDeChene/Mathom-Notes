@@ -178,6 +178,13 @@ void FocusedTextEdit::applyFontUnderline(bool underline)
     mergeFormatIntoSelection(format);
 }
 
+void FocusedTextEdit::applyVerticalAlignment(QTextCharFormat::VerticalAlignment alignment)
+{
+    QTextCharFormat format;
+    format.setVerticalAlignment(alignment);
+    mergeFormatIntoSelection(format);
+}
+
 void FocusedTextEdit::keyPressEvent(QKeyEvent *event)
 {
     // A normal typing/navigation action leaves multi-selection mode.
