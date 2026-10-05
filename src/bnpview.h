@@ -68,7 +68,6 @@ public:
     BasketScene *currentBasket();
     BasketScene *parentBasketOf(BasketScene *basket);
     void setCurrentBasket(BasketScene *basket);
-    void setCurrentBasketInHistory(BasketScene *basket);
     void removeBasket(BasketScene *basket);
 
     // Helpers used by the global Undo/Redo history.
@@ -111,8 +110,6 @@ public Q_SLOTS:
         const QString &folderName,
         const QDomElement &properties,
         BasketScene *parent);
-    void goToPreviousBasket();
-    void goToNextBasket();
     void foldBasket();
     void expandBasket();
     void closeAllEditors();
@@ -214,7 +211,6 @@ public Q_SLOTS:
 private Q_SLOTS:
     void updateNotesActions();
     void slotBasketChanged();
-    void canUndoRedoChanged();
     void currentBasketChanged();
     void isLockedChanged();
     void lateInit();
@@ -280,8 +276,6 @@ private:
     KToggleAction *m_actShowFilter;
     QAction *m_actResetFilter;
     // Go actions :
-    QAction *m_actPreviousBasket;
-    QAction *m_actNextBasket;
     QAction *m_actFoldBasket;
     QAction *m_actExpandBasket;
     //      QAction *m_convertTexts; // FOR_BETA_PURPOSE
@@ -391,7 +385,6 @@ private:
     KXMLGUIClient *m_guiClient;
     BasketStatusBar *m_statusbar;
 
-    QUndoStack *m_navigationHistory;
     QUndoStack *m_undoStack;
     KMainWindow *m_HiddenMainWindow;
 };
