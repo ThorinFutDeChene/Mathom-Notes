@@ -429,6 +429,8 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
     connect(InlineEditors::instance()->richTextBold, &QAction::triggered, this, &HtmlEditor::setBold);
     connect(InlineEditors::instance()->richTextItalic, &QAction::triggered, textEdit, &FocusedTextEdit::applyFontItalic);
     connect(InlineEditors::instance()->richTextUnderline, &QAction::triggered, textEdit, &FocusedTextEdit::applyFontUnderline);
+    connect(InlineEditors::instance()->richTextSuper, &QAction::triggered, this, &HtmlEditor::setSuperscript);
+    connect(InlineEditors::instance()->richTextSub, &QAction::triggered, this, &HtmlEditor::setSubscript);
     connect(InlineEditors::instance()->richTextLeft, &QAction::triggered, this, &HtmlEditor::setLeft);
     connect(InlineEditors::instance()->richTextCenter, &QAction::triggered, this, &HtmlEditor::setCentered);
     connect(InlineEditors::instance()->richTextRight, &QAction::triggered, this, &HtmlEditor::setRight);
@@ -489,37 +491,51 @@ void HtmlEditor::editTextChanged()
 void HtmlEditor::charFormatChanged(const QTextCharFormat &format)
 {
     InlineEditors::instance()->richTextFontSize->setFontSize(format.font().pointSize());
+
+    const auto alignment = format.verticalAlignment();
+    {
+        QSignalBlocker blocker(InlineEditors::instance()->richTextSuper);
+        InlineEditors::instance()->richTextSuper->setChecked(alignment == QTextCharFormat::AlignSuperScript);
+    }
+    {
+        QSignalBlocker blocker(InlineEditors::instance()->richTextSub);
+        InlineEditors::instance()->richTextSub->setChecked(alignment == QTextCharFormat::AlignSubScript);
+    }
 }
 
-/*void HtmlEditor::slotVerticalAlignmentChanged(QTextEdit::VerticalAlignment align)
+void HtmlEditor::setSuperscript(bool isChecked)
 {
-    QTextEdit::VerticalAlignment align = textEdit()
-    switch (align) {
-        case KTextEdit::AlignSuperScript:
-            InlineEditors::instance()->richTextSuper->setChecked(true);
-            InlineEditors::instance()->richTextSub->setChecked(false);
-            break;
-        case KTextEdit::AlignSubScript:
-            InlineEditors::instance()->richTextSuper->setChecked(false);
-            InlineEditors::instance()->richTextSub->setChecked(true);
-            break;
-        default:
-            InlineEditors::instance()->richTextSuper->setChecked(false);
-            InlineEditors::instance()->richTextSub->setChecked(false);
+    auto *editor = dynamic_cast<FocusedTextEdit *>(textEdit());
+    if (!editor)
+        return;
+
+    if (isChecked) {
+        QSignalBlocker blocker(InlineEditors::instance()->richTextSub);
+        InlineEditors::instance()->richTextSub->setChecked(false);
     }
 
-    NoteHtmlEditor::buttonToggled(int id) :
-        case 106:
-            if (isChecked && m_toolbar->isButtonOn(107))
-                m_toolbar->setButton(107, false);
-            m_text->setVerticalAlignment(isChecked ? KTextEdit::AlignSuperScript : KTextEdit::AlignNormal);
-            break;
-        case 107:
-            if (isChecked && m_toolbar->isButtonOn(106))
-                m_toolbar->setButton(106, false);
-            m_text->setVerticalAlignment(isChecked ? KTextEdit::AlignSubScript   : KTextEdit::AlignNormal);
-            break;
-}*/
+    editor->applyVerticalAlignment(
+        isChecked ? QTextCharFormat::AlignSuperScript : QTextCharFormat::AlignNormal);
+
+    QTimer::singleShot(0, note()->basket(), &BasketScene::focusEditor);
+}
+
+void HtmlEditor::setSubscript(bool isChecked)
+{
+    auto *editor = dynamic_cast<FocusedTextEdit *>(textEdit());
+    if (!editor)
+        return;
+
+    if (isChecked) {
+        QSignalBlocker blocker(InlineEditors::instance()->richTextSuper);
+        InlineEditors::instance()->richTextSuper->setChecked(false);
+    }
+
+    editor->applyVerticalAlignment(
+        isChecked ? QTextCharFormat::AlignSubScript : QTextCharFormat::AlignNormal);
+
+    QTimer::singleShot(0, note()->basket(), &BasketScene::focusEditor);
+}
 
 void HtmlEditor::setLeft()
 {
@@ -1475,19 +1491,17 @@ void InlineEditors::initToolBars(KActionCollection *ac)
     ac->setDefaultShortcut(ta, QKeySequence(Qt::CTRL | Qt::Key_U));
     richTextUnderline = ta;
 
-#if 0
     ta = new KToggleAction(ac);
-    ac->addAction("richtext_super", ta);
+    ac->addAction(QStringLiteral("richtext_super"), ta);
     ta->setText(i18n("Superscript"));
     ta->setIcon(MathomIcons::icon(QStringLiteral("format-text-superscript")));
     richTextSuper = ta;
 
     ta = new KToggleAction(ac);
-    ac->addAction("richtext_sub", ta);
+    ac->addAction(QStringLiteral("richtext_sub"), ta);
     ta->setText(i18n("Subscript"));
     ta->setIcon(MathomIcons::icon(QStringLiteral("format-text-subscript")));
     richTextSub = ta;
-#endif
 
     ta = new KToggleAction(ac);
     ac->addAction(QStringLiteral("richtext_left"), ta);
@@ -1551,6 +1565,8 @@ void InlineEditors::enableRichTextToolBar()
     richTextBold->setEnabled(true);
     richTextItalic->setEnabled(true);
     richTextUnderline->setEnabled(true);
+    richTextSuper->setEnabled(true);
+    richTextSub->setEnabled(true);
     richTextLeft->setEnabled(true);
     richTextCenter->setEnabled(true);
     richTextRight->setEnabled(true);
@@ -1565,6 +1581,8 @@ void InlineEditors::disableRichTextToolBar()
     disconnect(richTextBold);
     disconnect(richTextItalic);
     disconnect(richTextUnderline);
+    disconnect(richTextSuper);
+    disconnect(richTextSub);
     disconnect(richTextLeft);
     disconnect(richTextCenter);
     disconnect(richTextRight);
@@ -1576,6 +1594,8 @@ void InlineEditors::disableRichTextToolBar()
     richTextBold->setEnabled(false);
     richTextItalic->setEnabled(false);
     richTextUnderline->setEnabled(false);
+    richTextSuper->setEnabled(false);
+    richTextSub->setEnabled(false);
     richTextLeft->setEnabled(false);
     richTextCenter->setEnabled(false);
     richTextRight->setEnabled(false);
@@ -1590,6 +1610,8 @@ void InlineEditors::disableRichTextToolBar()
     richTextBold->setChecked(false);
     richTextItalic->setChecked(false);
     richTextUnderline->setChecked(false);
+    richTextSuper->setChecked(false);
+    richTextSub->setChecked(false);
     richTextLeft->setChecked(false);
     richTextCenter->setChecked(false);
     richTextRight->setChecked(false);
