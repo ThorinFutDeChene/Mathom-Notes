@@ -855,21 +855,6 @@ private Q_SLOTS:
     void watchedFileDeleted(const QString &fullPath);
     void updateModifiedNotes();
 
-    /// FROM OLD ARCHITECTURE **********************
-
-public Q_SLOTS:
-
-    void showFrameInsertTo()
-    {
-    }
-    void resetInsertTo()
-    {
-    }
-
-    void computeInsertPlace(const QPointF & /*cursorPosition*/)
-    {
-    }
-
 public:
     friend class SystemTray;
 

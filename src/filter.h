@@ -62,7 +62,6 @@ Q_SIGNALS:
 public Q_SLOTS:
     void repopulateTagsCombo();
     void reset();
-    void inAllBaskets();
     void setEditFocus();
     void filterTag(Tag *tag);
     void filterState(State *state);

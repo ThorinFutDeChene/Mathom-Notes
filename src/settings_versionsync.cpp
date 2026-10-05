@@ -15,7 +15,7 @@
 #include <KMessageBox>
 #include <QDir>
 #include <QPointer>
-#include <QtConcurrent/QtConcurrentRun>
+#include <QThreadPool>
 
 //! Compute size of .git folder and invoke VersionSyncPage::setHistorySize
 void showHistorySize(QPointer<VersionSyncPage> versionSyncPage)
@@ -34,7 +34,10 @@ VersionSyncPage::VersionSyncPage(QObject *parent, const KPluginMetaData &data)
 
 #if HAVE_LIBGIT2
     ui->labelWithoutVersionControlSupport->setVisible(false);
-    QtConcurrent::run(showHistorySize, this);
+    QThreadPool::globalInstance()->start(
+        [versionSyncPage = QPointer<VersionSyncPage>(this)]() {
+            showHistorySize(versionSyncPage);
+        });
 #else
     ui->checkBoxEnable->setEnabled(false);
     ui->groupBoxControl->setVisible(false);

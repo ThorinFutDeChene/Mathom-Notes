@@ -228,9 +228,22 @@ void BackupDialog::backup()
     BackupThread thread(destination, Global::savesFolder());
     thread.start();
     while (thread.isRunning()) {
-        dialog.setValue(dialog.value() + 1); // Or else, the animation is not played!
+        dialog.setValue(dialog.value() + 1);
         qApp->processEvents();
-        usleep(300); // Not too long because if the backup process is finished, we wait for nothing
+        usleep(300);
+    }
+
+    thread.wait();
+
+    if (!thread.success()) {
+        QFile::remove(destination);
+
+        KMessageBox::error(
+            nullptr,
+            i18n("The Mathom backup could not be created."),
+            i18n("Backup Error"));
+
+        return;
     }
 
     Settings::setLastBackup(QDate::currentDate());
@@ -404,18 +417,42 @@ BackupThread::BackupThread(const QString &tarFile, const QString &folderToBackup
 
 void BackupThread::run()
 {
+    m_success = false;
+
     KTar tar(m_tarFile, QStringLiteral("application/x-gzip"));
-    tar.open(QIODevice::WriteOnly);
-    tar.addLocalDirectory(m_folderToBackup, backupMagicFolder);
-    // KArchive does not add hidden files. Basket description files (".basket") are hidden, we add them manually:
-    QDir dir(m_folderToBackup + QStringLiteral("baskets/"));
-    QStringList baskets = dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    for (QStringList::Iterator it = baskets.begin(); it != baskets.end(); ++it) {
-        tar.addLocalFile(m_folderToBackup + QStringLiteral("baskets/") + *it + QStringLiteral("/.basket"),
-                         backupMagicFolder + QStringLiteral("/baskets/") + *it + QStringLiteral("/.basket"));
+
+    if (!tar.open(QIODevice::WriteOnly))
+        return;
+
+    if (!tar.addLocalDirectory(
+            m_folderToBackup,
+            backupMagicFolder)) {
+        tar.close();
+        return;
     }
-    // We finished:
-    tar.close();
+
+    // KArchive does not add hidden files. Basket description files
+    // (".basket") are hidden, so add them manually.
+    QDir dir(m_folderToBackup + QStringLiteral("baskets/"));
+    const QStringList baskets =
+        dir.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
+
+    for (const QString &basket : baskets) {
+        if (!tar.addLocalFile(
+                m_folderToBackup
+                    + QStringLiteral("baskets/")
+                    + basket
+                    + QStringLiteral("/.basket"),
+                backupMagicFolder
+                    + QStringLiteral("/baskets/")
+                    + basket
+                    + QStringLiteral("/.basket"))) {
+            tar.close();
+            return;
+        }
+    }
+
+    m_success = tar.close();
 }
 
 /** class RestoreThread: */
@@ -429,19 +466,28 @@ RestoreThread::RestoreThread(const QString &tarFile, const QString &destFolder)
 void RestoreThread::run()
 {
     m_success = false;
+
     KTar tar(m_tarFile, QStringLiteral("application/x-gzip"));
-    tar.open(QIODevice::ReadOnly);
-    if (tar.isOpen()) {
-        const KArchiveDirectory *directory = tar.directory();
-        if (directory->entries().contains(backupMagicFolder)) {
-            const KArchiveEntry *entry = directory->entry(backupMagicFolder);
-            if (entry->isDirectory()) {
-                ((const KArchiveDirectory *)entry)->copyTo(m_destFolder);
-                m_success = true;
-            }
+
+    if (!tar.open(QIODevice::ReadOnly))
+        return;
+
+    const KArchiveDirectory *directory = tar.directory();
+
+    if (directory
+        && directory->entries().contains(backupMagicFolder)) {
+        const KArchiveEntry *entry =
+            directory->entry(backupMagicFolder);
+
+        if (entry && entry->isDirectory()) {
+            static_cast<const KArchiveDirectory *>(entry)
+                ->copyTo(m_destFolder);
+
+            m_success = true;
         }
-        tar.close();
     }
+
+    tar.close();
 }
 
 #include "moc_backup.cpp"

@@ -308,14 +308,6 @@ void BNPView::setupGlobalShortcuts()
         i18n("Grab a screen zone as an image mathom in the current location without "
              "having to open the main window."));
 
-#if 0
-    a = ac->addAction("global_note_add_text", this,
-                      &BNPView::addNoteText);
-    a->setText(i18n("Insert plain text mathom"));
-    a->setStatusTip(
-        i18n("Add a plain text mathom to the current location without having to "
-             "open the main window."));
-#endif
 }
 
 void BNPView::initialize()
@@ -645,14 +637,6 @@ void BNPView::setupActions()
 
     /** Insert : **************************************************************/
 
-#if 0
-    a = ac->addAction("insert_text");
-    a->setText(i18n("Plai&n Text"));
-    a->setIcon(MathomIcons::icon("text"));
-    m_actionCollection->setDefaultShortcut(a, QKeySequence(Qt::CTRL | Qt::Key_T));
-    m_actInsertText = a;
-#endif
-
     a = ac->addAction(QStringLiteral("insert_html"));
     a->setText(i18n("&Text"));
     a->setIcon(MathomIcons::icon(QStringLiteral("text-html")));
@@ -705,7 +689,6 @@ void BNPView::setupActions()
     a->setIcon(MathomIcons::icon(QStringLiteral("document-import")));
     m_actLoadFile = a;
 
-    //  connect( m_actInsertText, QAction::triggered, this, [this] () { insertEmpty(NoteType::Text); });
     connect(m_actInsertHtml, &QAction::triggered, this, [this]() {
         insertEmpty(NoteType::Html);
     });
@@ -750,7 +733,6 @@ void BNPView::setupActions()
     m_actGrabScreenshot = a;
 #endif
 
-    //  m_insertActions.append( m_actInsertText     );
     m_insertActions.append(m_actInsertHtml);
     m_insertActions.append(m_actInsertLink);
     m_insertActions.append(m_actInsertCrossReference);
@@ -882,14 +864,6 @@ void BNPView::setupActions()
     a->setIcon(MathomIcons::icon(QStringLiteral("go-down")));
     m_actionCollection->setDefaultShortcut(a, QKeySequence(Qt::ALT | Qt::Key_Down));
     m_actExpandBasket = a;
-
-#if 0
-    // FOR_BETA_PURPOSE:
-    a = ac->addAction("beta_convert_texts", this, &BNPView::convertTexts);
-    a->setText(i18n("Convert text mathoms to rich text mathoms"));
-    a->setIcon(MathomIcons::icon("run-build-file"));
-    m_convertTexts = a;
-#endif
 
     InlineEditors::instance()->initToolBars(actionCollection());
 
@@ -1224,6 +1198,9 @@ void BNPView::closeAllEditors()
     }
 }
 
+// Legacy compatibility helper.
+// Intentionally kept: allows conversion of plain-text Mathoms
+// across all locations if a manual migration tool is needed again.
 bool BNPView::convertTexts()
 {
     bool convertedNotes = false;
@@ -1390,7 +1367,8 @@ void BNPView::updateNavigationBar()
 
         houses.append({
             item->basket()->basketName(),
-            item->basket()
+            item->basket(),
+            QColor()
         });
     }
 
@@ -1487,7 +1465,8 @@ void BNPView::updateNavigationBar()
     while (cursor) {
         breadcrumb.prepend({
             cursor->basket()->basketName(),
-            cursor->basket()
+            cursor->basket(),
+            QColor()
         });
 
         cursor =
@@ -2701,12 +2680,6 @@ void BNPView::redo()
         m_undoStack->redo();
 }
 
-void BNPView::pasteToBasket(int /*index*/, QClipboard::Mode /*mode*/)
-{
-    // TODO: REMOVE!
-    // basketAt(index)->pasteNote(mode);
-}
-
 void BNPView::propBasket()
 {
     BasketPropertiesDialog dialog(currentBasket(), this);
@@ -3002,11 +2975,6 @@ void BNPView::pasteSelInCurrentBasket()
     currentBasket()->pasteNote(QClipboard::Selection);
 }
 
-void BNPView::addNoteText()
-{
-    showMainWindow();
-    currentBasket()->insertEmptyNote(NoteType::Text);
-}
 void BNPView::addNoteHtml()
 {
     showMainWindow();

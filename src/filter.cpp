@@ -52,7 +52,7 @@ FilterBar::FilterBar(QWidget *parent)
     label2->setBuddy(m_tagsBox);
     m_inAllBasketsButton = new QToolButton(this);
     m_inAllBasketsButton->setIcon(inAllIcon);
-    m_inAllBasketsButton->setText(i18n("Filter All Locations")); //, /*groupText=*/QString(), this, &FilterBar::inAllBaskets, 0);
+    m_inAllBasketsButton->setText(i18n("Filter All Locations"));
     m_inAllBasketsButton->setAutoRaise(true);
 
     // Configure the Tags combobox:
@@ -79,7 +79,6 @@ FilterBar::FilterBar(QWidget *parent)
     connect(m_lineEdit, &QLineEdit::textChanged, this, &FilterBar::changeFilter);
     connect(m_tagsBox, &QComboBox::activated, this, &FilterBar::tagChanged);
 
-    // connect(m_inAllBasketsButton, &QAbstractButton::clicked, this, &FilterBar::inAllBaskets);
     m_inAllBasketsButton->setDefaultAction(Global::bnpView->m_actFilterAllBaskets);
 
     auto *lineEditF = new FocusWidgetFilter(m_lineEdit);
@@ -228,11 +227,6 @@ void FilterBar::filterState(State *state)
         m_tagsBox->setCurrentIndex(index);
         tagChanged(index);
     }
-}
-
-void FilterBar::inAllBaskets()
-{
-    // TODO!
 }
 
 void FilterBar::setEditFocus()

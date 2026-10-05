@@ -44,7 +44,6 @@
 #include <KMessageBox>
 #include <KService>
 #include <KToggleAction>
-#include <KToolBar>
 #include <KUrlRequester>
 
 #include "basketlistview.h"
@@ -436,7 +435,6 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
     connect(InlineEditors::instance()->richTextRight, &QAction::triggered, this, &HtmlEditor::setRight);
     connect(InlineEditors::instance()->richTextJustified, &QAction::triggered, this, &HtmlEditor::setBlock);
 
-    //  InlineEditors::instance()->richTextToolBar()->show();
     cursorPositionChanged();
     charFormatChanged(textEdit->currentCharFormat());
     // QTimer::singleShot(0, this, &HtmlEditor::cursorPositionChanged);
@@ -609,8 +607,6 @@ void HtmlEditor::validate()
     graphicsWidget()->disconnect();
     if (InlineEditors::instance()) {
         InlineEditors::instance()->disableRichTextToolBar();
-        //      if (InlineEditors::instance()->richTextToolBar())
-        //          InlineEditors::instance()->richTextToolBar()->hide();
     }
 
     if (graphicsWidget()) {
@@ -1636,15 +1632,6 @@ void InlineEditors::initToolBars(KActionCollection *ac)
     richTextRedo = ta;
 
     disableRichTextToolBar();
-}
-
-KToolBar *InlineEditors::richTextToolBar()
-{
-    if (Global::activeMainWindow()) {
-        Global::activeMainWindow()->toolBar(); // Make sure we create the main toolbar FIRST, so it will be on top of the edit toolbar!
-        return Global::activeMainWindow()->toolBar(QStringLiteral("richTextEditToolBar"));
-    } else
-        return nullptr;
 }
 
 void InlineEditors::enableRichTextToolBar()

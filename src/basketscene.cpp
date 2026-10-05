@@ -215,7 +215,6 @@ void BasketScene::appendNoteAfter(Note *note, Note *after)
         for (Note *n = note; n; n = n->next())
             n->inheritTagsOf(after);
 
-    //  if (!alreadyInBasket)
     preparePlug(note);
 
     Note *last = note->lastSibling();
@@ -237,7 +236,6 @@ void BasketScene::appendNoteAfter(Note *note, Note *after)
         //      last->setNext(0);
     }
 
-    //  if (!alreadyInBasket)
     if (m_loaded)
         signalCountsChanged();
 }
@@ -336,12 +334,10 @@ void BasketScene::unplugNote(Note *note)
     if (!note)
         return;
 
-    //  if (!willBeReplugged) {
     note->setSelectedRecursively(false); // To removeSelectedNote() and decrease the selectedsCount.
     m_count -= note->count();
     m_countFounds -= note->newFilter(decoration()->filterData());
     signalCountsChanged();
-    //  }
 
     // If it was the first note, change the first note:
     if (m_firstNote == note)
@@ -431,7 +427,6 @@ void BasketScene::groupNoteBefore(Note *note, Note *with)
         // No note to group or nowhere to group it:
         return;
 
-    //  if (m_loaded && before && !with->isFree() && !with->isColumn())
     for (Note *n = note; n; n = n->next())
         n->inheritTagsOf(with);
 
@@ -479,13 +474,11 @@ void BasketScene::groupNoteAfter(Note *note, Note *with)
         // No note to group or nowhere to group it:
         return;
 
-    //  if (m_loaded && before && !with->isFree() && !with->isColumn())
     for (Note *n = note; n; n = n->next())
         n->inheritTagsOf(with);
 
     preparePlug(note);
 
-    //  Note *last = note->lastSibling();
 
     Note *group = new Note(this);
 
@@ -2859,7 +2852,6 @@ BasketScene::BasketScene(QWidget *parent, const QString &folderName)
     ac->setShortcutsConfigurable(m_action, false);
     KGlobalAccel::setGlobalShortcut(m_action, (QKeySequence()));
 
-    //    setDragAutoScroll(true);
 
     // By default, there is no corner widget: we set one for the corner area to be painted!
     // If we don't set one and there are two scrollbars present, slowly resizing up the window show graphical glitches in that area!
@@ -2875,7 +2867,9 @@ BasketScene::BasketScene(QWidget *parent, const QString &folderName)
     m_watcher = new KDirWatch(this);
 
     connect(m_watcher, &KDirWatch::dirty, this, &BasketScene::watchedFileModified);
-    // connect(m_watcher, &KDirWatch::deleted, this, &BasketScene::watchedFileDeleted);
+    // Intentionally disabled: editors may temporarily remove/replace a file
+    // while saving it. Treating KDirWatch::deleted as a real deletion could
+    // therefore remove a Mathom unexpectedly.
     connect(&m_watcherTimer, &QTimer::timeout, this, &BasketScene::updateModifiedNotes);
 
     // Various Connections:
@@ -3310,8 +3304,6 @@ QRectF BasketScene::noteVisibleRect(Note *note)
 
     // Now, rect contain the global note rectangle on the screen.
     // We have to clip it by the basket widget :
-    //    if (rect.bottom() > basketPoint.y() + visibleHeight() + 1) { // Bottom too... bottom
-    //        rect.setBottom(basketPoint.y() + visibleHeight() + 1);
     if (rect.bottom() > basketPoint.y() + m_view->viewport()->height() + 1) { // Bottom too... bottom
         rect.setBottom(basketPoint.y() + m_view->viewport()->height() + 1);
         if (rect.height() <= 0) // Have at least one visible pixel of height
@@ -3322,8 +3314,6 @@ QRectF BasketScene::noteVisibleRect(Note *note)
         if (rect.height() <= 0)
             rect.setBottom(rect.top());
     }
-    //    if (rect.right() > basketPoint.x() + visibleWidth() + 1) { // Right too... right
-    //        rect.setRight(basketPoint.x() + visibleWidth() + 1);
     if (rect.right() > basketPoint.x() + m_view->viewport()->width() + 1) { // Right too... right
         rect.setRight(basketPoint.x() + m_view->viewport()->width() + 1);
         if (rect.width() <= 0) // Have at least one visible pixel of width
@@ -3496,20 +3486,13 @@ void BasketScene::dragEnterEvent(QGraphicsSceneDragDropEvent *event)
 
 void BasketScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event)
 {
-    //  m_isDuringDrag = true;
 
     //  if (isLocked())
     //      return;
 
-    //  FIXME: viewportToContents does NOT work !!!
-    //  QPoint pos = viewportToContents(event->pos());
-    //  QPoint pos( event->pos().x() + contentsX(), event->pos().y() + contentsY() );
 
-    //  if (insertAtCursorPos())
-    //      computeInsertPlace(pos);
     doHoverEffects(event->scenePos());
 
-    //  showFrameInsertTo();
     if (isFreeLayout() || noteAt(event->scenePos())) // Cursor before rightLimit() or hovering the dragged source notes
         acceptDropEvent(event);
     else {
@@ -3523,14 +3506,10 @@ void BasketScene::dragMoveEvent(QGraphicsSceneDragDropEvent *event)
         } else
             acceptDropEvent(event);*/
 
-    // A workaround since QScrollView::dragAutoScroll seem to have no effect :
-    //  ensureVisible(event->pos().x() + contentsX(), event->pos().y() + contentsY(), 30, 30);
-    //  QScrollView::dragMoveEvent(event);
 }
 
 void BasketScene::dragLeaveEvent(QGraphicsSceneDragDropEvent *)
 {
-    //  resetInsertTo();
     m_isDuringDrag = false;
     m_draggedNotes.clear();
     NoteDrag::selectedNotes.clear();
@@ -3607,7 +3586,6 @@ void BasketScene::dropEvent(QGraphicsSceneDragDropEvent *event)
         //          don't want it.
         //      }
 
-        //      resetInsertTo();
         //      doHoverEffects(); called by insertNote()
         save();
     }
@@ -3815,8 +3793,7 @@ void BasketScene::insertCreatedNote(Note *note, bool assignPage)
     insertNote(note, clicked, zone, pos);
     //  ensureNoteVisible(lastInsertedNote());
     removeInserter(); // Case: user clicked below a column to insert, the note is inserted and doHoverEffects() put a new inserter below. We don't want it.
-                      //  resetInsertTo();
-    save();
+                      save();
 }
 
 void BasketScene::saveInsertionData()
@@ -4249,8 +4226,6 @@ void BasketScene::doAutoScrollSelection()
         m_selectionRect.setLeft(0);
     if (m_selectionRect.top() < 0)
         m_selectionRect.setTop(0);
-    //    if (m_selectionRect.right() >= contentsWidth())    m_selectionRect.setRight(contentsWidth() - 1);
-    //    if (m_selectionRect.bottom() >= contentsHeight())  m_selectionRect.setBottom(contentsHeight() - 1);
     if (m_selectionRect.right() >= sceneRect().width())
         m_selectionRect.setRight(sceneRect().width() - 1);
     if (m_selectionRect.bottom() >= sceneRect().height())
@@ -4277,13 +4252,7 @@ void BasketScene::doAutoScrollSelection()
         return;
     }
 
-    // Do the auto-scrolling:
-    // FIXME: It's still flickering
-
-    //    QRectF insideRect(AUTO_SCROLL_MARGIN, AUTO_SCROLL_MARGIN, visibleWidth() - 2*AUTO_SCROLL_MARGIN, visibleHeight() - 2*AUTO_SCROLL_MARGIN);
-    // QRectF insideRect(AUTO_SCROLL_MARGIN, AUTO_SCROLL_MARGIN, m_view->viewport()->width() - 2 * AUTO_SCROLL_MARGIN, m_view->viewport()->height() - 2 *
-    // AUTO_SCROLL_MARGIN);
-
+    // Auto-scroll the view while the selection reaches a viewport edge.
     int dx = 0;
     int dy = 0;
 
@@ -4291,23 +4260,28 @@ void BasketScene::doAutoScrollSelection()
         dy = pos.y() - AUTO_SCROLL_MARGIN;
     else if (pos.y() > m_view->viewport()->height() - AUTO_SCROLL_MARGIN)
         dy = pos.y() - m_view->viewport()->height() + AUTO_SCROLL_MARGIN;
-    //    else if (pos.y() > visibleHeight() - AUTO_SCROLL_MARGIN)
-    //        dy = pos.y() - visibleHeight() + AUTO_SCROLL_MARGIN;
 
     if (pos.x() < AUTO_SCROLL_MARGIN)
         dx = pos.x() - AUTO_SCROLL_MARGIN;
     else if (pos.x() > m_view->viewport()->width() - AUTO_SCROLL_MARGIN)
         dx = pos.x() - m_view->viewport()->width() + AUTO_SCROLL_MARGIN;
-    //    else if (pos.x() > visibleWidth() - AUTO_SCROLL_MARGIN)
-    //        dx = pos.x() - visibleWidth() + AUTO_SCROLL_MARGIN;
 
     if (dx || dy) {
-        qApp->sendPostedEvents(); // Do the repaints, because the scrolling will make the area to repaint to be wrong
-                                  //        scrollBy(dx, dy);
+        qApp->sendPostedEvents();
+
+        if (dx)
+            m_view->horizontalScrollBar()->setValue(
+                m_view->horizontalScrollBar()->value() + dx);
+
+        if (dy)
+            m_view->verticalScrollBar()->setValue(
+                m_view->verticalScrollBar()->value() + dy);
+
         if (!m_autoScrollSelectionTimer.isActive())
             m_autoScrollSelectionTimer.start(AUTO_SCROLL_DELAY);
-    } else
+    } else {
         stopAutoScrollSelection();
+    }
 }
 
 void BasketScene::stopAutoScrollSelection()
@@ -6861,7 +6835,6 @@ void BasketScene::moveSelectionTo(Note *here, bool below /* = true*/)
     //  else {
     //      // TODO: Also allow to move notes on top of a group!!!!!!!
     //      insertNote(fakeNote, 0, Note::BottomInsert, QPoint(0, 0), /*animateNewPosition=*/false);
-    //  }
     insertSelection(selection, fakeNote);
     unplugNote(fakeNote);
     delete fakeNote;
@@ -7198,13 +7171,11 @@ void BasketScene::keyPressEvent(QKeyEvent *event)
         toFocus = (isFreeLayout() ? noteOn(BOTTOM_SIDE) : m_focusedNote->nextShownInStack());
         if (toFocus)
             break;
-        //        scrollBy(0, 30); // This cases do not move focus to another note...
         return;
     case Qt::Key_Up:
         toFocus = (isFreeLayout() ? noteOn(TOP_SIDE) : m_focusedNote->prevShownInStack());
         if (toFocus)
             break;
-        //	scrollBy(0, -30); // This cases do not move focus to another note...
         return;
     case Qt::Key_PageDown:
         if (isFreeLayout()) {
@@ -7222,8 +7193,6 @@ void BasketScene::keyPressEvent(QKeyEvent *event)
             toFocus = (isFreeLayout() ? noteOnEnd() : lastNoteShownInStack());
         if (toFocus && toFocus != m_focusedNote)
             break;
-        //        scrollBy(0, visibleHeight() / 2); // This cases do not move focus to another note...
-        //        scrollBy(0, viewport()->height() / 2); // This cases do not move focus to another note...
         return;
     case Qt::Key_PageUp:
         if (isFreeLayout()) {
@@ -7241,8 +7210,6 @@ void BasketScene::keyPressEvent(QKeyEvent *event)
             toFocus = (isFreeLayout() ? noteOnHome() : firstNoteShownInStack());
         if (toFocus && toFocus != m_focusedNote)
             break;
-        //        scrollBy(0, - visibleHeight() / 2); // This cases do not move focus to another note...
-        //	  scrollBy(0, - viewport()->height() / 2); // This cases do not move focus to another note...
         return;
     case Qt::Key_Home:
         toFocus = noteOnHome();
@@ -7257,14 +7224,12 @@ void BasketScene::keyPressEvent(QKeyEvent *event)
             break;
         if ((toFocus = firstNoteInGroup()))
             break;
-        //        scrollBy(-30, 0); // This cases do not move focus to another note...
         return;
     case Qt::Key_Right:
         if (m_focusedNote->tryExpandParent())
             return;
         if ((toFocus = noteOn(RIGHT_SIDE)))
             break;
-        //	scrollBy(30, 0); // This cases do not move focus to another note...
         return;
     case Qt::Key_Space: // This case do not move focus to another note...
         if (m_focusedNote) {
@@ -7401,12 +7366,6 @@ void BasketScene::ensureNoteVisible(Note *note)
         return;
 
     m_view->ensureVisible(note);
-    /*//    int bottom = note->y() + std::min(note->height(),                                             visibleHeight());
-    //    int finalRight  = note->x() + std::min(note->width() + (note->hasResizer() ? Note::RESIZER_WIDTH : 0),  visibleWidth());
-        qreal bottom = note->y() + std::min(note->height(),                                             (qreal)m_view->viewport()->height());
-        qreal finalRight  = note->x() + std::min(note->width() + (note->hasResizer() ? Note::RESIZER_WIDTH : 0),  (qreal)m_view->viewport()->width());
-        m_view->ensureVisible(finalRight,     bottom,    0, 0);
-        m_view->ensureVisible(note->x(), note->y(), 0, 0);*/
 }
 
 void BasketScene::addWatchedFile(const QString &fullPath)

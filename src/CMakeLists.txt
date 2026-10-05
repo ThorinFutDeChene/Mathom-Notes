@@ -91,7 +91,6 @@ target_link_libraries(LibBasket
     KF6::JobWidgets
     KF6::KCMUtils
     KF6::KIOWidgets
-    KF6::Notifications
     KF6::Parts
     KF6::TextWidgets
     KF6::XmlGui

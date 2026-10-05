@@ -67,7 +67,7 @@ Note *NoteFactory::createNoteText(const QString &text, BasketScene *parent, bool
 {
     QList<State *> tags;
     int tagsLength = 0;
-    Note *note;
+    Note *note = nullptr;
 
     if (Settings::detectTextTags()) {
         tags = Tools::detectTags(text, tagsLength);
@@ -75,8 +75,14 @@ Note *NoteFactory::createNoteText(const QString &text, BasketScene *parent, bool
     QString textConverted = text.mid(tagsLength);
 
     if (reallyPlainText) {
+        const QString fileName =
+            createFileForNewNote(parent, QStringLiteral("txt"));
+
+        if (fileName.isEmpty())
+            return nullptr;
+
         note = new Note(parent);
-        auto *content = new TextContent(note, createFileForNewNote(parent, QStringLiteral("txt")));
+        auto *content = new TextContent(note, fileName);
         content->setText(text);
         content->saveToFile();
     } else {
@@ -98,8 +104,14 @@ Note *NoteFactory::createNoteText(const QString &text, BasketScene *parent, bool
 
 Note *NoteFactory::createNoteHtml(const QString &html, BasketScene *parent)
 {
+    const QString fileName =
+        createFileForNewNote(parent, QStringLiteral("html"));
+
+    if (fileName.isEmpty())
+        return nullptr;
+
     Note *note = new Note(parent);
-    auto *content = new HtmlContent(note, createFileForNewNote(parent, QStringLiteral("html")));
+    auto *content = new HtmlContent(note, fileName);
     content->setHtml(html);
     content->saveToFile();
     return note;
@@ -142,8 +154,14 @@ Note *NoteFactory::createNoteCrossReference(const QUrl &url, const QString &titl
 
 Note *NoteFactory::createNoteImage(const QPixmap &image, BasketScene *parent)
 {
+    const QString fileName =
+        createFileForNewNote(parent, QStringLiteral("png"));
+
+    if (fileName.isEmpty())
+        return nullptr;
+
     Note *note = new Note(parent);
-    auto *content = new ImageContent(note, createFileForNewNote(parent, QStringLiteral("png")));
+    auto *content = new ImageContent(note, fileName);
     content->setPixmap(image);
     content->saveToFile();
     return note;
@@ -158,8 +176,14 @@ Note *NoteFactory::createNoteColor(const QColor &color, BasketScene *parent)
 
 Note *NoteFactory::createNoteSpreadsheet(BasketScene *parent)
 {
+    const QString fileName =
+        createFileForNewNote(parent, QStringLiteral("mcalc"));
+
+    if (fileName.isEmpty())
+        return nullptr;
+
     Note *note = new Note(parent);
-    auto *content = new SpreadsheetContent(note, createFileForNewNote(parent, QStringLiteral("mcalc")));
+    auto *content = new SpreadsheetContent(note, fileName);
     content->saveToFile();
     return note;
 }
@@ -445,7 +469,12 @@ Note *NoteFactory::dropNote(const QMimeData *source, BasketScene *parent, bool f
 Note *NoteFactory::createNoteUnknown(const QMimeData *source, BasketScene *parent /*, const QString &annotations*/)
 {
     // Save the MimeSource in a file: create and open the file:
-    QString fileName = createFileForNewNote(parent, QStringLiteral("unknown"));
+    const QString fileName =
+        createFileForNewNote(parent, QStringLiteral("unknown"));
+
+    if (fileName.isEmpty())
+        return nullptr;
+
     QFile file(parent->fullPath() + fileName);
     if (!file.open(QIODevice::WriteOnly))
         return nullptr;
@@ -822,12 +851,17 @@ QString NoteFactory::createFileForNewNote(BasketScene *parent, const QString &ex
         fullName = parent->fullPath() + fileName;
     }
 
-    // Create the file
-    //  parent->dontCareOfCreation(fullName);
     QFile file(fullName);
-    file.open(QIODevice::WriteOnly);
-    file.close();
 
+    if (!file.open(QIODevice::WriteOnly)) {
+        qCWarning(BASKET_LOG)
+            << "Failed to create note file:"
+            << fullName
+            << file.errorString();
+        return {};
+    }
+
+    file.close();
     return fileName;
 }
 

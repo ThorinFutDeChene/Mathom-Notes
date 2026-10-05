@@ -68,7 +68,7 @@ Le paquet stable 3.4.1 produit est :
 packaging/mathom_3.4.1-1_amd64.deb
 ~~~
 
-L'ancien script autonome basé sur Flatpak/AppImage n'est plus le chemin de construction de référence.
+L'ancien constructeur Debian autonome basé sur Flatpak/AppImage a été retiré du dépôt.
 
 ## Identité technique
 

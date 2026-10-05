@@ -1,14 +1,21 @@
-set(basketthumbcreator_PART_SRCS basketthumbcreator.cpp basketthumbcreator.h)
+kcoreaddons_add_plugin(
+    basketthumbcreator
+    SOURCES
+        basketthumbcreator.cpp
+        basketthumbcreator.h
+    INSTALL_NAMESPACE
+        "kf6/thumbcreator"
+)
 
-add_library(basketthumbcreator MODULE ${basketthumbcreator_PART_SRCS})
+target_link_libraries(
+    basketthumbcreator
+    PRIVATE
+        Qt::Core
+        Qt::Gui
+        KF6::KIOGui
+)
 
-target_link_libraries(basketthumbcreator
-  Qt::Core Qt::Gui
-  KF6::KIOGui)
-
-install(TARGETS basketthumbcreator DESTINATION ${KDE_INSTALL_PLUGINDIR})
-
-
-########### install files ###############
-
-install(FILES basket.xml DESTINATION ${KDE_INSTALL_MIMEDIR})
+install(
+    FILES basket.xml
+    DESTINATION ${KDE_INSTALL_MIMEDIR}
+)

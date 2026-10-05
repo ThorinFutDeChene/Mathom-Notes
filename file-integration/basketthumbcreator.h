@@ -23,5 +23,11 @@
 
 class BasketThumbCreator : public KIO::ThumbnailCreator
 {
-    KIO::ThumbnailResult create(const KIO::ThumbnailRequest &request) override;
+public:
+    BasketThumbCreator(
+        QObject *parent,
+        const QVariantList &args);
+
+    KIO::ThumbnailResult create(
+        const KIO::ThumbnailRequest &request) override;
 };

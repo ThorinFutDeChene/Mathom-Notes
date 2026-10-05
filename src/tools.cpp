@@ -785,15 +785,6 @@ qint64 Tools::computeSizeRecursively(const QString &path)
     return result;
 }
 
-// TODO: Move it from NoteFactory
-/*QString NoteFactory::iconForURL(const QUrl &url)
-{
-    QString icon = KMimeType::iconNameForUrl(url.url());
-    if ( url.scheme() == "mailto" )
-        icon = "message";
-    return icon;
-}*/
-
 void Tools::printChildren(QObject *parent)
 {
     for (const auto &obj : parent->children()) {

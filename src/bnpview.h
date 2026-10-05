@@ -150,7 +150,6 @@ public Q_SLOTS:
     void slotConvertTexts();
 
     /** Global shortcuts */
-    void addNoteText();
     void addNoteHtml();
     void addNoteImage();
     void addNoteLink();
@@ -165,7 +164,6 @@ public Q_SLOTS:
     void globalPasteInCurrentBasket();
     void pasteInCurrentBasket();
     void pasteSelInCurrentBasket();
-    void pasteToBasket(int index, QClipboard::Mode mode = QClipboard::Clipboard);
     void showHideFilterBar(bool show, bool switchFocus = true);
     /** Insert **/
     void insertEmpty(int type);
@@ -260,7 +258,6 @@ private:
     QAction *m_actUnselectAll;
     QAction *m_actInvertSelection;
     // Insert actions :
-    //      QAction *m_actInsertText;
     QAction *m_actInsertHtml;
     QAction *m_actInsertLink;
     QAction *m_actInsertCrossReference;
@@ -278,7 +275,6 @@ private:
     // Go actions :
     QAction *m_actFoldBasket;
     QAction *m_actExpandBasket;
-    //      QAction *m_convertTexts; // FOR_BETA_PURPOSE
 
     void setupActions();
     void setupGlobalShortcuts();
@@ -305,7 +301,7 @@ public:
     bool isMainWindowActive();
     void showMainWindow();
 
-    // TODO: dcop calls -- dbus these
+    // D-Bus exposed API.
 public Q_SLOTS:
     Q_SCRIPTABLE void newBasket();
     Q_SCRIPTABLE void reloadBasket(const QString &folderName);

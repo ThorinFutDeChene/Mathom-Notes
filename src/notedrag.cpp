@@ -15,7 +15,7 @@
 #include <QMimeData>
 #include <QPainter>
 #include <QPixmap>
-#include <QStringEncoder>
+#include <QStringDecoder>
 #include <QTextStream>
 
 #include <KIO/CopyJob>
@@ -551,14 +551,13 @@ bool ExtendedTextDrag::decode(const QMimeData *e, QString &str, QString &subtype
     str = e->text();
     ok = !str.isNull();
 
-    // Test if it was a UTF-16 string (from eg. Mozilla):
-    if (str.length() >= 2) {
-        if ((str[0] == QLatin1Char(0xFF) && str[1] == QLatin1Char(0xFE)) || (str[0] == QLatin1Char(0xFE) && str[1] == QLatin1Char(0xFF))) {
-            auto fromUtf16 = QStringEncoder(QStringEncoder::Utf8);
-            QByteArray encodedString = fromUtf16(str);
-            str = QString::fromUtf8(encodedString);
-            return true;
-        }
+    // QMimeData::text() already returns Unicode. Some producers may
+    // nevertheless preserve a Unicode byte-order mark at the beginning.
+    if (!str.isEmpty()) {
+        const char16_t firstCharacter = str.front().unicode();
+
+        if (firstCharacter == 0xFEFF || firstCharacter == 0xFFFE)
+            str.remove(0, 1);
     }
 
     // Test if it was empty (sometimes, from GNOME or Mozilla)
@@ -570,7 +569,7 @@ bool ExtendedTextDrag::decode(const QMimeData *e, QString &str, QString &subtype
         }
         if (e->hasFormat(QStringLiteral("text/unicode"))) { // FIXME: It's UTF-16 without order bytes!!!
             QByteArray utf16 = e->data(QStringLiteral("text/unicode"));
-            auto fromUtf16 = QStringDecoder(QStringEncoder::Utf16);
+            auto fromUtf16 = QStringDecoder(QStringConverter::Utf16);
             str = fromUtf16(utf16);
             return true;
         }

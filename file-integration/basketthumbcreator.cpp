@@ -26,9 +26,19 @@
 #include <QTemporaryDir>
 #include <QTextStream>
 
+#include <KPluginFactory>
+
 #include <algorithm>
 
 #include "basketthumbcreator.h"
+
+BasketThumbCreator::BasketThumbCreator(
+    QObject *parent,
+    const QVariantList &args)
+    : KIO::ThumbnailCreator(parent, args)
+{
+}
+
 
 KIO::ThumbnailResult BasketThumbCreator::create(const KIO::ThumbnailRequest &request)
 {
@@ -104,3 +114,10 @@ KIO::ThumbnailResult BasketThumbCreator::create(const KIO::ThumbnailRequest &req
     }
     return KIO::ThumbnailResult::fail();
 }
+
+
+K_PLUGIN_CLASS_WITH_JSON(
+    BasketThumbCreator,
+    "basketthumbcreator.json")
+
+#include "basketthumbcreator.moc"

@@ -217,7 +217,6 @@ public:
      *     @p darkRowCount to a small one for a fewer choice of dark colors, but at least some ones.
      */
     void setRainbowPreset(int colorColumnCount = 12, int lightRowCount = 4, int darkRowCount = 4, bool withGray = true);
-    // void setHsvPreset(QColor hue[], QColor saturation[], QColor value[], bool withGray = true);
 
     /**
      * Returns a pixmap of a colored rounded-rectangle. The four corners are transparent.\n

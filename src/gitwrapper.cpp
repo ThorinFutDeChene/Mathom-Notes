@@ -116,20 +116,22 @@ void GitWrapper::commitCreateBasket()
         int error = git_repository_index(&index, repo);
         if (error < 0) {
             gitErrorHandling();
+            git_repository_free(repo);
             return;
         }
-        // this is kind of hacky because somebody could come in between and we still have stuff open
-        // change basket.xml
+
         const QString basketxml(QStringLiteral("baskets/baskets.xml"));
         QByteArray basketxmlba = basketxml.toUtf8();
         char *basketxmlCString = basketxmlba.data();
         error = git_index_add_bypath(index, basketxmlCString);
         if (error < 0) {
             gitErrorHandling();
+            git_index_free(index);
+            git_repository_free(repo);
             return;
         }
 
-        bool result = commitIndex(repo, index);
+        commitIndex(repo, index);
         git_index_free(index);
     }
 
@@ -148,6 +150,7 @@ void GitWrapper::commitTagsXml()
     int error = git_repository_index(&index, repo);
     if (error < 0) {
         gitErrorHandling();
+        git_repository_free(repo);
         return;
     }
 
@@ -155,10 +158,16 @@ void GitWrapper::commitTagsXml()
     QByteArray tagsxmlba = tagsxml.toUtf8();
     char *tagsxmlCString = tagsxmlba.data();
     error = git_index_add_bypath(index, tagsxmlCString);
+    if (error < 0) {
+        gitErrorHandling();
+        git_index_free(index);
+        git_repository_free(repo);
+        return;
+    }
 
-    bool result = commitIndex(repo, index);
+    commitIndex(repo, index);
+
     git_index_free(index);
-
     git_repository_free(repo);
 }
 
@@ -175,31 +184,34 @@ void GitWrapper::commitDeleteBasket(QString basketFolderName)
     int error = git_repository_index(&index, repo);
     if (error < 0) {
         gitErrorHandling();
+        git_repository_free(repo);
         return;
     }
 
-    // remove the directory
     const QString dir(QStringLiteral("baskets/") + basketFolderName);
     const QByteArray dirba = dir.toUtf8();
     const char *dirCString = dirba.data();
     error = git_index_remove_directory(index, dirCString, 0);
     if (error < 0) {
         gitErrorHandling();
+        git_index_free(index);
+        git_repository_free(repo);
         return;
     }
 
-    // change basket.xml
     const QString basketxml(QStringLiteral("baskets/baskets.xml"));
     QByteArray basketxmlba = basketxml.toUtf8();
     char *basketxmlCString = basketxmlba.data();
     error = git_index_add_bypath(index, basketxmlCString);
     if (error < 0) {
         gitErrorHandling();
+        git_index_free(index);
+        git_repository_free(repo);
         return;
     }
-    removeDeletedFromIndex(repo, index);
 
-    bool result = commitIndex(repo, index);
+    removeDeletedFromIndex(repo, index);
+    commitIndex(repo, index);
 
     git_index_free(index);
     git_repository_free(repo);
@@ -219,11 +231,12 @@ void GitWrapper::commitBasket(BasketScene *basket)
     const QDir basketdir(fullpath);
     bool changed = false;
     QDirIterator it(basketdir);
+
     while (!changed && it.hasNext()) {
         const QFileInfo file(it.next());
-        if (file.fileName() != QStringLiteral(".basket")) {
-            if (file.lastModified() >= gitdate)
-                changed = true;
+        if (file.fileName() != QStringLiteral(".basket")
+            && file.lastModified() >= gitdate) {
+            changed = true;
         }
     }
 
@@ -233,31 +246,41 @@ void GitWrapper::commitBasket(BasketScene *basket)
         int error = git_repository_index(&index, repo);
         if (error < 0) {
             gitErrorHandling();
+            git_repository_free(repo);
             return;
         }
 
-        const QString pattern(QStringLiteral("baskets/") + basket->folderName() + QLatin1Char('*'));
+        const QString pattern(
+            QStringLiteral("baskets/")
+            + basket->folderName()
+            + QLatin1Char('*'));
 
         QByteArray patternba = pattern.toUtf8();
         char *patternCString = patternba.data();
         git_strarray arr = {&patternCString, 1};
+
         error = git_index_add_all(index, &arr, 0, nullptr, nullptr);
         if (error < 0) {
             gitErrorHandling();
+            git_index_free(index);
+            git_repository_free(repo);
             return;
         }
+
         const QString basketxml(QStringLiteral("baskets/baskets.xml"));
         QByteArray basketxmlba = basketxml.toUtf8();
         char *basketxmlCString = basketxmlba.data();
+
         error = git_index_add_bypath(index, basketxmlCString);
         if (error < 0) {
             gitErrorHandling();
+            git_index_free(index);
+            git_repository_free(repo);
             return;
         }
 
         removeDeletedFromIndex(repo, index);
-
-        bool result = commitIndex(repo, index);
+        commitIndex(repo, index);
 
         git_index_free(index);
     }
@@ -280,81 +303,119 @@ bool GitWrapper::commitPattern(git_repository *repo, QString pattern, QString me
     error = git_index_add_all(index, &arr, 0, nullptr, nullptr);
     if (error < 0) {
         gitErrorHandling();
+        git_index_free(index);
         return false;
     }
 
-    bool result = commitIndex(repo, index, message);
+    const bool result = commitIndex(repo, index, message);
 
     git_index_free(index);
 
-    return true;
+    return result;
 }
 
 bool GitWrapper::commitIndex(git_repository *repo, git_index *index, QString message)
 {
-    //  write git index
     git_signature *sig = nullptr;
-    git_oid tree_id;
-    git_oid commit_id;
+    git_commit *commit = nullptr;
     git_tree *tree = nullptr;
 
-    int error = git_signature_now(&sig, "AutoGit", "auto@localhost");
+    git_oid treeId;
+    git_oid commitId;
+    git_oid parentCommitId;
+
+    auto cleanup = [&]() {
+        git_tree_free(tree);
+        git_commit_free(commit);
+        git_signature_free(sig);
+    };
+
+    int error = git_signature_now(
+        &sig,
+        "AutoGit",
+        "auto@localhost");
+
     if (error < 0) {
         gitErrorHandling();
+        cleanup();
         return false;
     }
 
-    error = git_repository_index(&index, repo);
+    error = git_reference_name_to_id(
+        &parentCommitId,
+        repo,
+        "HEAD");
+
     if (error < 0) {
         gitErrorHandling();
+        cleanup();
         return false;
     }
 
-    git_commit *commit = nullptr; /* parent */
-    git_oid oid_parent_commit; /* the SHA1 for last commit */
+    error = git_commit_lookup(
+        &commit,
+        repo,
+        &parentCommitId);
 
-    error = git_reference_name_to_id(&oid_parent_commit, repo, "HEAD");
     if (error < 0) {
         gitErrorHandling();
+        cleanup();
         return false;
     }
 
-    error = git_commit_lookup(&commit, repo, &oid_parent_commit);
-    if (error < 0) {
-        gitErrorHandling();
-        return false;
-    }
-
+    // Persist exactly the index prepared by the caller.
     error = git_index_write(index);
     if (error < 0) {
         gitErrorHandling();
+        cleanup();
         return false;
     }
 
-    error = git_index_write_tree(&tree_id, index);
+    error = git_index_write_tree(
+        &treeId,
+        index);
+
     if (error < 0) {
         gitErrorHandling();
+        cleanup();
         return false;
     }
 
-    error = git_tree_lookup(&tree, repo, &tree_id);
+    error = git_tree_lookup(
+        &tree,
+        repo,
+        &treeId);
+
     if (error < 0) {
         gitErrorHandling();
+        cleanup();
         return false;
     }
 
-    const git_commit *parentarray[] = {const_cast<git_commit *>(commit)};
+    const git_commit *parents[] = {commit};
 
-    QByteArray commitmessageba = message.toUtf8();
-    const char *commitmessageCString = commitmessageba.data();
-    error = git_commit_create(&commit_id, repo, "HEAD", sig, sig, nullptr, commitmessageCString, tree, 1, (const git_commit **)parentarray);
+    const QByteArray commitMessage =
+        message.toUtf8();
+
+    error = git_commit_create(
+        &commitId,
+        repo,
+        "HEAD",
+        sig,
+        sig,
+        nullptr,
+        commitMessage.constData(),
+        tree,
+        1,
+        parents);
+
     if (error < 0) {
         gitErrorHandling();
+        cleanup();
         return false;
     }
 
-    git_signature_free(sig);
-    git_tree_free(tree);
+    cleanup();
     return true;
 }
 

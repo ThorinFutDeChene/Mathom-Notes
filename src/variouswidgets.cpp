@@ -452,10 +452,8 @@ FontSizeCombo::FontSizeCombo(bool rw, bool withDefault, QWidget *parent)
     for (QList<int>::Iterator it = sizes.begin(); it != sizes.end(); ++it)
         addItem(QString::number(*it));
 
-    // connect(this, &FontSizeCombo::activated, this, &FontSizeCombo::textChangedInCombo);
     connect(this, &FontSizeCombo::currentTextChanged, this, &FontSizeCombo::textChangedInCombo);
 
-    // TODO: 01617 void KFontSizeAction::setFontSize( int size )
 }
 
 FontSizeCombo::~FontSizeCombo() = default;
@@ -497,11 +495,7 @@ void FontSizeCombo::setFontSize(qreal size)
 qreal FontSizeCombo::fontSize()
 {
     bool ok = false;
-    int size = currentText().toInt(&ok);
-    if (ok)
-        return size;
-
-    size = currentText().toInt(&ok);
+    const int size = currentText().toInt(&ok);
     if (ok)
         return size;
 

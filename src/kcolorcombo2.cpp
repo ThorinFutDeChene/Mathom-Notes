@@ -670,15 +670,6 @@ void KColorCombo2::showPopup()
     // m_popup->setColor(m_color);
     m_popup->doSelection();
     m_popup->relayout(); // FIXME: In aboutToShow() ?
-#if 0
-//#ifndef QT_NO_EFFECTS
-    if (QApplication::isEffectEnabled(UI_AnimateCombo)) {
-        if (m_popup->y() < mapToGlobal(QPoint(0, 0)).y())
-            qScrollEffect(m_popup, QEffects::UpScroll);
-        else
-            qScrollEffect(m_popup);
-    } else
-#endif
     m_popup->show();
 
     // The combo box is now shown pressed. Make it show not pressed again

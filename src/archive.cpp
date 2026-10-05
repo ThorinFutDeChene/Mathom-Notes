@@ -71,7 +71,16 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     // Create the temporary archive file:
     QString tempDestination = tempFolder + QStringLiteral("temp-archive.tar.gz");
     KTar tar(tempDestination, QStringLiteral("application/x-gzip"));
-    tar.open(QIODevice::WriteOnly);
+    if (!tar.open(QIODevice::WriteOnly)) {
+        KMessageBox::error(
+            nullptr,
+            i18n("Failed to create the temporary Mathom-House archive."),
+            i18n("Mathom-House Archive Error"));
+        QFile::remove(tempDestination);
+        dir.rmdir(tempFolder);
+        return;
+    }
+
     tar.writeDir(QStringLiteral("baskets"), QString(), QString());
 
     dialog.setValue(dialog.value() + 1); // Preparation finished
@@ -471,24 +480,40 @@ Archive::IOErrorCode Archive::extractArchive(const QString &path, const QString 
                 QString tempArchive = tempDir.path() + QDir::separator() + QStringLiteral("temp-archive.tar.gz");
                 QFile archiveFile(tempArchive);
                 file.seek(stream.pos());
-                if (archiveFile.open(QIODevice::WriteOnly)) {
-                    char *buffer = new char[BUFFER_SIZE];
-                    qint64 sizeRead;
-                    while ((sizeRead = file.read(buffer, std::min(BUFFER_SIZE, size))) > 0) {
-                        archiveFile.write(buffer, sizeRead);
-                        size -= sizeRead;
-                    }
-                    archiveFile.close();
-                    delete[] buffer;
 
-                    // Extract the Archive:
-                    KTar tar(tempArchive, QStringLiteral("application/x-gzip"));
-                    tar.open(QIODevice::ReadOnly);
-                    tar.directory()->copyTo(l_destination);
-                    tar.close();
-
-                    stream.seek(file.pos());
+                if (!archiveFile.open(QIODevice::WriteOnly)) {
+                    file.close();
+                    dir.removeRecursively();
+                    return IOErrorCode::FailedToOpenResource;
                 }
+
+                char *buffer = new char[BUFFER_SIZE];
+                qint64 sizeRead;
+
+                while ((sizeRead = file.read(
+                            buffer,
+                            std::min(BUFFER_SIZE, size))) > 0) {
+                    archiveFile.write(buffer, sizeRead);
+                    size -= sizeRead;
+                }
+
+                archiveFile.close();
+                delete[] buffer;
+
+                KTar tar(
+                    tempArchive,
+                    QStringLiteral("application/x-gzip"));
+
+                if (!tar.open(QIODevice::ReadOnly)) {
+                    file.close();
+                    dir.removeRecursively();
+                    return IOErrorCode::CorruptedBasketArchive;
+                }
+
+                tar.directory()->copyTo(l_destination);
+                tar.close();
+
+                stream.seek(file.pos());
             } else if (key.endsWith(QLatin1Char('*'))) {
                 // We do not know what it is, but we should read the embedded-file in
                 // order to discard it:

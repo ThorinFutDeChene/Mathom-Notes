@@ -416,7 +416,7 @@ TagsEditDialog::TagsEditDialog(QWidget *parent, State *stateToEdit, bool addNewT
     // Connect Signals:
     connect(m_ui->tagName, &QLineEdit::textChanged, this, &TagsEditDialog::modified);
     connect(m_ui->shortcut, &KShortcutWidget::shortcutChanged, this, &TagsEditDialog::modified);
-    connect(m_ui->inherit, &QCheckBox::stateChanged, this, &TagsEditDialog::modified);
+    connect(m_ui->inherit, &QCheckBox::checkStateChanged, this, &TagsEditDialog::modified);
     connect(m_ui->allowCrossRefernce, &QCheckBox::clicked, this, &TagsEditDialog::modified);
     connect(m_ui->stateName, &QLineEdit::textChanged, this, &TagsEditDialog::modified);
     connect(m_ui->emblem, &KIconButton::iconChanged, this, &TagsEditDialog::modified);
@@ -429,7 +429,7 @@ TagsEditDialog::TagsEditDialog(QWidget *parent, State *stateToEdit, bool addNewT
     connect(m_ui->font, &QFontComboBox::editTextChanged, this, &TagsEditDialog::modified);
     connect(m_fontSize, &FontSizeCombo::editTextChanged, this, &TagsEditDialog::modified);
     connect(m_ui->textEquivalent, &QLineEdit::textChanged, this, &TagsEditDialog::modified);
-    connect(m_ui->onEveryLines, &QCheckBox::stateChanged, this, &TagsEditDialog::modified);
+    connect(m_ui->onEveryLines, &QCheckBox::checkStateChanged, this, &TagsEditDialog::modified);
 
     connect(m_ui->tags, &TagListView::currentItemChanged, this, &TagsEditDialog::currentItemChanged);
     connect(m_ui->tags, &TagListView::deletePressed, this, &TagsEditDialog::deleteTag);

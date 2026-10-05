@@ -84,10 +84,6 @@ Q_SIGNALS:
     void xChanged();
     void yChanged();
 
-private Q_SLOTS:
-    void xAnimated(const QVariant &x);
-    void yAnimated(const QVariant &y);
-
 public:
     void hideRecursively();
     qreal width() const;
@@ -280,8 +276,6 @@ private:
     NoteAnimation *m_animY;
 
 public:
-    // bool initAnimationLoad(QTimeLine *timeLine);
-    // void animationFinished();
 
     /// USER INTERACTION:
 public:

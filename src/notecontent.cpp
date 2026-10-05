@@ -397,7 +397,7 @@ QPixmap AnimationContent::toPixmap()
     return m_movie->currentPixmap();
 }
 
-void NoteContent::toLink(QUrl *url, QString *title, const QString &cuttedFullPath)
+void NoteContent::toLink(QUrl *url, QString *title, const QString &)
 {
     *url = QUrl();
     title->clear();
@@ -1238,13 +1238,15 @@ bool ImageContent::finishLazyLoad()
     if (FileStorage::loadFromFile(fullPath(), &content)) {
         QBuffer buffer(&content);
 
-        buffer.open(QIODevice::ReadOnly);
-        m_format = QImageReader::imageFormat(&buffer); // See QImageIO to know what formats can be supported.
-        buffer.close();
-        if (!m_format.isNull()) {
-            pixmap.loadFromData(content);
-            setPixmap(pixmap);
-            return true;
+        if (buffer.open(QIODevice::ReadOnly)) {
+            m_format = QImageReader::imageFormat(&buffer);
+            buffer.close();
+
+            if (!m_format.isNull()
+                && pixmap.loadFromData(content)) {
+                setPixmap(pixmap);
+                return true;
+            }
         }
     }
 
@@ -1264,8 +1266,17 @@ bool ImageContent::saveToFile()
     QByteArray ba;
     QBuffer buffer(&ba);
 
-    buffer.open(QIODevice::WriteOnly);
-    m_pixmapItem.pixmap().save(&buffer, m_format.toStdString().c_str());
+    if (!buffer.open(QIODevice::WriteOnly))
+        return false;
+
+    if (!m_pixmapItem.pixmap().save(
+            &buffer,
+            m_format.constData())) {
+        return false;
+    }
+
+    buffer.close();
+
     return FileStorage::saveToFile(fullPath(), ba);
 }
 
@@ -2556,17 +2567,15 @@ void UnknownContent::addAlternateDragObjects(QMimeData *dragObject)
         } while (!line.isEmpty() && !stream.atEnd());
         // Add the streams:
         quint32 size;
-        QByteArray *array;
         for (int i = 0; i < mimes.count(); ++i) {
             // Get the size:
             stream >> size;
-            // Allocate memory to retrieve size bytes and store them:
-            array = new QByteArray;
-            array->resize(size);
-            stream.readRawData(array->data(), size);
-            // Creata and add the QDragObject:
-            dragObject->setData(mimes.at(i), *array);
-            delete array; // FIXME: Should we?
+
+            QByteArray array;
+            array.resize(size);
+            stream.readRawData(array.data(), size);
+
+            dragObject->setData(mimes.at(i), array);
         }
         file.close();
     }

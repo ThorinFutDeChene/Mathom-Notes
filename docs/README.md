@@ -11,6 +11,8 @@ Cette arborescence rassemble la documentation technique et utilisateur du projet
 5. [Compatibilité avec BasKet](compatibilite-basket.md)
 6. [Développement](developpement.md)
 7. [Feuille de route](roadmap.md)
+8. [Code dormant et fonctionnalités à conserver](code-dormant-a-conserver.md)
+9. [Format des archives .baskets](format-archives-baskets.md)
 
 ## Version de référence
 

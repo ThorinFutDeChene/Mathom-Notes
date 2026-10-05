@@ -105,9 +105,6 @@ BASKET_EXPORT qint64 computeSizeRecursively(const QString &path);
 BASKET_EXPORT QString launcherCommandWithoutFieldCodes(
     const QString &command);
 
-// Other:
-// void iconForURL(const QUrl &url);
-
 // Debug
 BASKET_EXPORT void printChildren(QObject *parent);
 }

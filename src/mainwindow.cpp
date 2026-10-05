@@ -56,13 +56,11 @@ MainWindow::MainWindow(QWidget *parent)
     statusBar()->show();
     statusBar()->setSizeGripEnabled(true);
 
-    setAutoSaveSettings(/*groupName=*/QString::fromLatin1("MainWindow"), /*saveWindowSize=*//*FIXME:false:Why was it false??*/ true);
+    setAutoSaveSettings(QStringLiteral("MainWindow"), true);
 
-    //  m_actShowToolbar->setChecked(   toolBar()->isVisible()   );
     m_actShowStatusbar->setChecked(statusBar()->isVisible());
     connect(m_baskets, &BNPView::setWindowCaption, this, &MainWindow::setWindowTitle);
 
-    //  InlineEditors::instance()->richTextToolBar();
     setStandardToolBarMenuEnabled(true);
 
     createGUI(QStringLiteral("mathomui.rc"));
@@ -88,17 +86,12 @@ void MainWindow::setupActions()
     a->setShortcut(0);
 
     /** Settings : ************************************************************/
-    //  m_actShowToolbar = KStandardAction::showToolbar(this, &MainWindow::toggleToolBar, actionCollection());
     m_actShowStatusbar = KStandardAction::showStatusbar(this, &MainWindow::toggleStatusBar, actionCollection());
 
-    //  m_actShowToolbar->setCheckedState( KGuiItem(i18n("Hide &Toolbar")) );
 
     (void)KStandardAction::keyBindings(this, &MainWindow::showShortcutsSettingsDialog, actionCollection());
 
     (void)KStandardAction::configureToolbars(this, &MainWindow::configureToolbars, actionCollection());
-
-    // QAction *actCfgNotifs = KStandardAction::configureNotifications(this, &MainWindow::configureNotifications, actionCollection() );
-    // actCfgNotifs->setEnabled(false); // Not yet implemented !
 
     actAppConfig = KStandardAction::preferences(this, &MainWindow::showSettingsDialog, actionCollection());
 
@@ -218,16 +211,6 @@ SettingsDialog *MainWindow::settings()
     return m_settings;
 }
 
-/*void MainWindow::toggleToolBar()
-{
-    if (toolBar()->isVisible())
-        toolBar()->hide();
-    else
-        toolBar()->show();
-
-    saveMainWindowSettings( KSharedConfig::openConfig(), autoSaveGroup() );
-}*/
-
 void MainWindow::toggleStatusBar()
 {
     if (statusBar()->isVisible())
@@ -249,19 +232,14 @@ void MainWindow::configureToolbars()
     dlg.exec();
 }
 
-void MainWindow::configureNotifications()
-{
-    // TODO
-    // KNotifyDialog *dialog = new KNotifyDialog(this, "KNotifyDialog", false);
-    // dialog->show();
-}
-
 void MainWindow::slotNewToolbarConfig() // This is called when OK or Apply is clicked
 {
-    // ...if you use any action list, use plugActionList on each here...
-    createGUI(QStringLiteral("mathomui.rc")); // TODO: Reconnect tags menu aboutToShow() ??
-    // TODO: Does this do anything?
-    plugActionList(QString::fromLatin1("go_baskets_list"), actBasketsList);
+    createGUI(QStringLiteral("mathomui.rc"));
+
+    // createGUI() can recreate the XMLGUI menus. Reconnect the dynamic
+    // Tags menu to the newly created QMenu instance.
+    m_baskets->connectTagsMenu();
+
     KConfigGroup group = KSharedConfig::openConfig()->group(autoSaveGroup());
     applyMainWindowSettings(group);
 }

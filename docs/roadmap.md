@@ -40,16 +40,20 @@ Après la stabilisation de 3.4.1, la priorité est la maintenance du socle :
 
 ## Nettoyage du dépôt
 
-Les éléments historiques doivent être examinés individuellement.
+Une première passe de nettoyage a retiré :
 
-Candidats au nettoyage :
+- l'ancien constructeur Debian Flatpak/AppImage ;
+- l'ancien Snap BasKet ;
+- les anciennes configurations CI GitLab/KDE inutilisées ;
+- l'ancien fichier de projet KDevelop ;
+- le fichier INSTALL hérité de Qt 4 / KDE 4.
 
-- ancien constructeur Debian Flatpak/AppImage ;
-- ancien Snap BasKet ;
-- anciennes configurations CI inutilisées ;
-- anciens fichiers de projet KDevelop ;
-- documentation BasKet obsolète ;
-- blocs de code désactivés définitivement.
+Les prochains contrôles portent notamment sur :
+
+- la documentation DocBook BasKet embarquée ;
+- les blocs de code désactivés définitivement ;
+- les options de développement héritées ;
+- les fichiers encore présents uniquement pour compatibilité.
 
 Les noms internes nécessaires à la compatibilité ne doivent pas être renommés dans cette opération.
 

@@ -416,7 +416,7 @@ QVector<SyllableRange> syllableRanges(
      */
     if (nuclei.size() <= 1) {
         return {
-            {0, word.length()}
+            {0, static_cast<int>(word.length())}
         };
     }
 
@@ -540,7 +540,7 @@ QVector<SyllableRange> syllableRanges(
         result.append(
             {
                 start,
-                word.length() - start
+                static_cast<int>(word.length()) - start
             });
     }
 

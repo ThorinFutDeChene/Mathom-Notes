@@ -30,11 +30,9 @@ public:
     ~MainWindow() override;
 
 public Q_SLOTS:
-    //  void toggleToolBar();
     void toggleStatusBar();
     void showShortcutsSettingsDialog();
     void configureToolbars() override;
-    void configureNotifications();
     void showSettingsDialog();
     void showCustomAccessibilityDialog();
     void showUpdateSettingsDialog();
@@ -61,7 +59,6 @@ private:
     KToggleAction *m_actShowStatusbar = nullptr;
     QAction *actQuit = nullptr;
     QAction *actAppConfig = nullptr;
-    QList<QAction *> actBasketsList;
     QVBoxLayout *m_layout = nullptr;
     BNPView *m_baskets = nullptr;
     bool m_startDocked;

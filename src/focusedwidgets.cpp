@@ -281,7 +281,7 @@ FocusWidgetFilter::FocusWidgetFilter(QWidget *parent)
     }
 }
 
-bool FocusWidgetFilter::eventFilter(QObject *object, QEvent *event)
+bool FocusWidgetFilter::eventFilter(QObject *, QEvent *event)
 {
     switch (event->type()) {
     case QEvent::KeyPress: {

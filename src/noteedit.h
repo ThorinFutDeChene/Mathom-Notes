@@ -25,7 +25,6 @@ class KIconButton;
 class KUrlRequester;
 class KTextEdit;
 class KToggleAction;
-class KToolBar;
 class KActionCollection;
 class KComboBox;
 class KColorCombo;
@@ -368,7 +367,6 @@ public:
 
 public:
     // Rich Text ToolBar:
-    KToolBar *richTextToolBar();
     void enableRichTextToolBar();
     void disableRichTextToolBar();
     QPalette palette() const;

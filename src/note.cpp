@@ -18,7 +18,6 @@
 #include <QPixmap>
 #include <QStyle>
 #include <QStyleOption>
-#include <QTimeLine>
 
 #include <KIconLoader>
 
@@ -102,8 +101,6 @@ Note::Note(BasketScene *parent)
     // m_animX->setEasingCurve(QEasingCurve::InOutQuad);
     // m_animY->setEasingCurve(QEasingCurve::InOutQuad);
 
-    connect(m_animX, &NoteAnimation::valueChanged, this, &Note::xAnimated);
-    connect(m_animY, &NoteAnimation::valueChanged, this, &Note::yAnimated);
 
     setHeight(MIN_HEIGHT);
     if (m_basket) {
@@ -1305,16 +1302,6 @@ void Note::setYRecursively(qreal y, bool animate)
     qCDebug(BASKET_LOG) << "Yrecursive done";
 }
 
-void Note::xAnimated(const QVariant &x)
-{
-    return;
-}
-
-void Note::yAnimated(const QVariant &y)
-{
-    return;
-}
-
 void Note::hideRecursively()
 {
     hide();
@@ -1516,7 +1503,7 @@ void Note::drawHandle(QPainter *painter,
     painter->fillRect(middleWidth + 2, middleHeight + 4, 2, 2, foreground);
 }
 
-void Note::drawResizer(QPainter *painter, qreal x, qreal y, qreal width, qreal height, const QColor &background, const QColor &foreground, bool rounded)
+void Note::drawResizer(QPainter *painter, qreal, qreal, qreal width, qreal height, const QColor &background, const QColor &foreground, bool rounded)
 {
     const QPen backgroundPen(background);
     const QPen foregroundPen(foreground);
@@ -1602,7 +1589,7 @@ void Note::drawResizer(QPainter *painter, qreal x, qreal y, qreal width, qreal h
     }
 }
 
-void Note::drawInactiveResizer(QPainter *painter, qreal x, qreal y, qreal height, const QColor &background, bool column)
+void Note::drawInactiveResizer(QPainter *painter, qreal x, qreal y, qreal height, const QColor &background, bool)
 {
     // If background color is too dark, we compute a lighter color instead of a darker:
     QColor darkBgColor = (Tools::tooDark(background) ? background.lighter(120) : background.darker(105));

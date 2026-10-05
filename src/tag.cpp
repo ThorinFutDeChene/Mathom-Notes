@@ -102,7 +102,7 @@ QIcon State::icon() const
     return MathomIcons::icon(m_emblem);
 }
 
-QString State::toCSS(const QString &gradientFolderPath, const QString &gradientFolderName, const QFont &baseFont)
+QString State::toCSS(const QString &, const QString &, const QFont &)
 {
     QString css;
     if (bold())

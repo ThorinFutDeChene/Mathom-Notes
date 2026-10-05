@@ -86,15 +86,3 @@ cmake -S . -B build \
 
 cmake --build build
 ~~~
-
-## Ancien packaging
-
-Le dépôt possède encore historiquement :
-
-~~~text
-scripts/build-mathom-deb.sh
-~~~
-
-Ce constructeur basé sur Flatpak et un runtime autonome n'est plus le constructeur officiel des releases Debian actuelles.
-
-Il doit être considéré comme historique en attendant son nettoyage du dépôt.

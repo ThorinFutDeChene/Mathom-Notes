@@ -429,7 +429,11 @@ void HTMLExporter::exportNote(Note *note, int indent)
 
     if (note->isColumn()) {
         QString width;
-        if (false /*TODO: DEBUG AND REENABLE: hasResizer()*/) {
+        // Disabled intentionally: this historical calculation mixes pixel
+        // values with an HTML percentage width and can produce invalid
+        // proportions (often clamped to 100%). Keep it as a basis for a
+        // future, properly tested proportional column export.
+        if (false) {
             // As we cannot be precise in CSS (say eg. "width: 50%-40px;"),
             // we output a percentage that is approximately correct.
             // For instance, we compute the currently used percentage of width in the basket

@@ -83,13 +83,7 @@ scripts/build-mathom-native-deb.sh
 
 Le constructeur natif utilise les bibliothèques Qt 6 et KDE Frameworks 6 du système.
 
-L'ancien constructeur :
-
-~~~text
-scripts/build-mathom-deb.sh
-~~~
-
-est historique et n'est plus utilisé pour les releases Debian actuelles.
+L'ancien constructeur Debian autonome basé sur Flatpak/AppImage a été retiré du dépôt.
 
 ## Workflow
 

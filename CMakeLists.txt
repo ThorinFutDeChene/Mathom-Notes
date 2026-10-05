@@ -20,7 +20,7 @@ set(QT_MIN_VERSION "6.5.0")
 set(KF_MIN_VERSION "6.9.0")
 
 # Options
-option(BUILD_DEVTOOLS "Enabled Devtools" ON)
+option(BUILD_DEVTOOLS "Enabled Devtools" OFF)
 option(ENABLE_GPG "Enabled GPG Support" OFF)
 option(ENABLE_GIT "Enabled Git Support" ON)
 option(DEBUG_PIPE "Enabled Named Debugging Pipe" OFF)
@@ -104,19 +104,12 @@ find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
     JobWidgets
     KCMUtils
     KIO
-    Notifications
     Parts
     Service
     TextWidgets
     WidgetsAddons
     XmlGui
 )
-find_package(KF6DocTools ${KF_MIN_VERSION})
-set_package_properties(KF6DocTools PROPERTIES DESCRIPTION
-    "Tools to generate documentation"
-    TYPE OPTIONAL
-)
-
 #Make libbasketcommon search for translations in basket.mo
 add_definitions(-DTRANSLATION_DOMAIN=\"basket\")
 add_definitions(-DQT_NO_KEYWORDS)
@@ -127,12 +120,6 @@ ecm_set_disabled_deprecation_versions(QT 6.5.0
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
-if(KF6DocTools_FOUND)
-    kdoctools_install(po)
-    add_subdirectory(doc)
-endif()
-
 
 add_subdirectory(src)
 add_subdirectory(tags)
