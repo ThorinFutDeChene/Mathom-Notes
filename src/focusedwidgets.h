@@ -42,6 +42,7 @@ public Q_SLOTS:
     void applyFontWeight(int weight);
     void applyFontItalic(bool italic);
     void applyFontUnderline(bool underline);
+    void applyVerticalAlignment(QTextCharFormat::VerticalAlignment alignment);
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
