@@ -10,12 +10,12 @@
 #include <QClipboard>
 #include <QList>
 #include <QTextCursor>
+#include <QTextCharFormat>
 
 class QColor;
 class QEvent;
 class QKeyEvent;
 class QMouseEvent;
-class QTextCharFormat;
 class QWheelEvent;
 
 class FocusedTextEdit : public KTextEdit
