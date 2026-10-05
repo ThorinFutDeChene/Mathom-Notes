@@ -266,6 +266,7 @@ private:
     void updateFormulaBar();
     void commitFormulaBar();
     void insertFunction(const QString &functionName);
+    void applyScriptToFormulaSelection(bool superscript);
     void ensureCellExists(int row, int column);
 
     SpreadsheetContent *m_spreadsheetContent;
