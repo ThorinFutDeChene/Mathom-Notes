@@ -125,9 +125,7 @@ BNPView::BNPView(QWidget *parent, KXMLGUIClient *aGUIClient, KActionCollection *
 
     setupGlobalShortcuts();
 
-    // Navigation history (Previous / Next) and modification history
-    // (Undo / Redo) are two completely different concepts.
-    m_navigationHistory = new QUndoStack(this);
+    // Application-wide modification history (Undo / Redo).
     m_undoStack = new QUndoStack(this);
 
     initialize();
@@ -155,8 +153,6 @@ BNPView::~BNPView()
     Global::bnpView = nullptr;
 
     delete m_statusbar;
-    delete m_navigationHistory;
-    m_navigationHistory = nullptr;
 
     delete m_undoStack;
     m_undoStack = nullptr;
@@ -273,18 +269,6 @@ void BNPView::setupGlobalShortcuts()
         i18n("Allows you to create a new Mathom-House without having to open the "
              "main window (you then can use the other global shortcuts to add "
              "a mathom, paste clipboard or paste selection in this new Mathom-House)."));
-
-    a = ac->addAction(QStringLiteral("global_previous_basket"), this, &BNPView::goToPreviousBasket);
-    a->setText(i18n("Go to previous location"));
-    a->setStatusTip(
-        i18n("Allows you to go to the previous location without "
-             "having to open the main window."));
-
-    a = ac->addAction(QStringLiteral("global_next_basket"), this, &BNPView::goToNextBasket);
-    a->setText(i18n("Go to next location"));
-    a->setStatusTip(
-        i18n("Allows you to go to the next location "
-             "without having to open the main window."));
 
     a = ac->addAction(QStringLiteral("global_note_add_html"), this, &BNPView::addNoteHtml);
     a->setText(i18n("Insert text mathom"));
@@ -480,7 +464,7 @@ void BNPView::initialize()
         &MathomNavigationBar::navigateRequested,
         this,
         [this](BasketScene *basket) {
-            setCurrentBasketInHistory(basket);
+            setCurrentBasket(basket);
         });
 
     connect(
@@ -520,9 +504,6 @@ void BNPView::initialize()
                 this,
                 &BNPView::updateNavigationBar);
         });
-
-    connect(m_navigationHistory, &QUndoStack::canRedoChanged, this, &BNPView::canUndoRedoChanged);
-    connect(m_navigationHistory, &QUndoStack::canUndoChanged, this, &BNPView::canUndoRedoChanged);
 
     setupActions();
 
@@ -890,18 +871,6 @@ void BNPView::setupActions()
 
     /** Go : ******************************************************************/
 
-    a = ac->addAction(QStringLiteral("go_basket_previous"), this, &BNPView::goToPreviousBasket);
-    a->setText(i18n("&Previous"));
-    a->setIcon(MathomIcons::icon(QStringLiteral("go-previous")));
-    m_actionCollection->setDefaultShortcut(a, QKeySequence(Qt::ALT | Qt::Key_Left));
-    m_actPreviousBasket = a;
-
-    a = ac->addAction(QStringLiteral("go_basket_next"), this, &BNPView::goToNextBasket);
-    a->setText(i18n("&Next"));
-    a->setIcon(MathomIcons::icon(QStringLiteral("go-next")));
-    m_actionCollection->setDefaultShortcut(a, QKeySequence(Qt::ALT | Qt::Key_Right));
-    m_actNextBasket = a;
-
     a = ac->addAction(QStringLiteral("go_basket_fold"), this, &BNPView::foldBasket);
     a->setText(i18n("&Fold Mathom-House"));
     a->setIcon(MathomIcons::icon(QStringLiteral("go-up")));
@@ -1219,7 +1188,7 @@ BasketScene *BNPView::loadNewBasket(
         listViewItemForBasket(parent));
 
     basket->loadProperties(properties);
-    setCurrentBasketInHistory(basket);
+    setCurrentBasket(basket);
 
     return basket;
 }
@@ -1227,18 +1196,6 @@ BasketScene *BNPView::loadNewBasket(
 int BNPView::topLevelItemCount()
 {
     return m_tree->topLevelItemCount();
-}
-
-void BNPView::goToPreviousBasket()
-{
-    if (m_navigationHistory->canUndo())
-        m_navigationHistory->undo();
-}
-
-void BNPView::goToNextBasket()
-{
-    if (m_navigationHistory->canRedo())
-        m_navigationHistory->redo();
 }
 
 void BNPView::foldBasket()
@@ -1550,17 +1507,6 @@ BasketScene *BNPView::parentBasketOf(BasketScene *basket)
         return nullptr;
 }
 
-void BNPView::setCurrentBasketInHistory(BasketScene *basket)
-{
-    if (!basket)
-        return;
-
-    if (currentBasket() == basket)
-        return;
-
-    m_navigationHistory->push(new HistorySetBasket(basket));
-}
-
 void BNPView::setCurrentBasket(BasketScene *basket)
 {
     DiagnosticManager::instance().logEvent(
@@ -1638,7 +1584,7 @@ void BNPView::removeBasket(BasketScene *basket)
         nextBasketItem = (BasketListViewItem *)(basketItem->parent());
 
     if (nextBasketItem)
-        setCurrentBasketInHistory(nextBasketItem->basket());
+        setCurrentBasket(nextBasketItem->basket());
 
     // Remove from the view:
     basket->unsubscribeBackgroundImages();
@@ -2207,7 +2153,7 @@ void BNPView::slotPressed(QTreeWidgetItem *item, int column)
         m_tree->setCurrentItem(listViewItemForBasket(basket), true);
 
     else if (dynamic_cast<BasketListViewItem *>(item) != nullptr && currentBasket() != ((BasketListViewItem *)item)->basket()) {
-        setCurrentBasketInHistory(((BasketListViewItem *)item)->basket());
+        setCurrentBasket(((BasketListViewItem *)item)->basket());
         needSave(nullptr);
     }
     basket->graphicsView()->viewport()->setFocus();
@@ -2950,7 +2896,7 @@ QString BNPView::s_basketToOpen;
 void BNPView::delayedOpenBasket()
 {
     BasketScene *bv = this->basketForFolderName(s_basketToOpen);
-    this->setCurrentBasketInHistory(bv);
+    this->setCurrentBasket(bv);
 }
 
 void BNPView::openArchive()
@@ -2989,15 +2935,6 @@ void BNPView::slotBasketChanged()
     if (currentBasket()->decoration()->filterData().isFiltering)
         currentBasket()->decoration()->filterBar()->show(); // especially important for Filter all
     setFiltering(currentBasket() && currentBasket()->decoration()->filterData().isFiltering);
-    this->canUndoRedoChanged();
-}
-
-void BNPView::canUndoRedoChanged()
-{
-    if (m_navigationHistory) {
-        m_actPreviousBasket->setEnabled(m_navigationHistory->canUndo());
-        m_actNextBasket->setEnabled(m_navigationHistory->canRedo());
-    }
 }
 
 void BNPView::currentBasketChanged()
@@ -3398,7 +3335,7 @@ void BNPView::loadCrossReference(QString link)
     if (!basket)
         return;
 
-    this->setCurrentBasketInHistory(basket);
+    this->setCurrentBasket(basket);
 }
 
 QString BNPView::folderFromBasketNameLink(QStringList pages, QTreeWidgetItem *parent)
