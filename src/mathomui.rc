@@ -168,11 +168,9 @@
   <Action name="richtext_bold" />
   <Action name="richtext_italic" />
   <Action name="richtext_underline" />
-<!--
   <Separator lineSeparator="true" name="separator_2" />
   <Action name="richtext_super" />
   <Action name="richtext_sub" />
--->
   <Separator lineSeparator="true" name="separator_0" />
   <Action name="richtext_left" />
   <Action name="richtext_center" />
