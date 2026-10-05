@@ -1,74 +1,109 @@
 # Mathom Notes
 
-Mathom Notes est un gestionnaire de notes et de connaissances développé par **Thorinux Systems** à partir de **BasKet Note Pads**.
+![Logo Mathom](logo.png)
 
-L'application organise les informations selon trois niveaux :
+**Mathom Notes** est un logiciel libre de prise de notes et d'organisation d'informations pour Linux, développé à partir de **BasKet Note Pads**.
 
-- **Mathom-House** : espace principal ;
-- **Étagère / sous-étagère** : classement hiérarchique ;
-- **Mathom** : note ou contenu.
+La version stable actuelle est **Mathom Notes 3.4.1**.
 
-## Version
+## Concepts
 
-Version publiée : **0.1.1**
+Mathom utilise trois niveaux principaux :
 
-## Nouveautés de la 0.1.1
+- **Mathom-House** : espace principal de classement ;
+- **Étagère** : subdivision hiérarchique d'une Mathom-House ;
+- **Mathom** : note ou contenu conservé dans l'application.
 
-- nouvelle identité graphique Mathom ;
-- nouveau logo de l'application ;
-- icône coffre pour les Mathom-Houses ;
-- icône parchemin + plume pour les étagères et sous-étagères ;
-- conservation des icônes personnalisées ;
-- restauration des icônes historiques des marques BasKet ;
-- catalogue central d’icônes Mathom et restauration autonome des icônes de Bienvenue ;
-- interface française ;
-- paquet Debian autonome pour Ubuntu 24.04 LTS amd64.
+Un Mathom peut notamment contenir du texte, des liens, des images, des fichiers, des lanceurs ou d'autres contenus.
 
-## Installation Ubuntu / Debian
+## Fonctionnalités principales
 
-Télécharger le paquet `.deb` depuis la page des Releases GitHub, puis :
+Mathom Notes conserve les fonctions historiques utiles de BasKet et ajoute progressivement ses propres évolutions :
 
-```bash
-sudo apt install ./mathom_0.1.1-8_amd64.deb
-```
+- organisation hiérarchique en Mathom-Houses et Étagères ;
+- Mathoms texte riche, images, fichiers, liens et lanceurs ;
+- déplacement et regroupement des Mathoms ;
+- Pages dans les Mathom-Houses et Étagères ;
+- tableur intégré ;
+- Annuler / Refaire global ;
+- sélection multiple dans l'éditeur ;
+- exposant et indice dans le texte riche ;
+- exposant et indice Unicode dans le tableur ;
+- profils d'accessibilité ;
+- prise en charge de profils DYS et TDAH ;
+- profil personnalisé ;
+- police OpenDyslexic ;
+- réglages d'espacement et d'agrandissement ;
+- coloration syllabique ;
+- outils phonème / graphème ;
+- interface optimisée pour les petits écrans ;
+- système de diagnostic ;
+- vérification et installation des mises à jour Debian.
 
-Le paquet installe Mathom dans `/opt/mathom` avec les bibliothèques Qt/KF6 nécessaires à son exécution.
+## Installation
+
+La méthode recommandée est l'installation du paquet Debian natif disponible dans les Releases GitHub.
+
+Exemple pour Mathom Notes 3.4.1 :
+
+~~~bash
+sudo apt install ./mathom_3.4.1-1_amd64.deb
+~~~
+
+Le paquet utilise les bibliothèques Qt 6 et KDE Frameworks 6 du système.
+
+Il ne déploie pas de runtime autonome sous `/opt/mathom`.
 
 ## Construction du paquet Debian
 
-Le script de construction officiel est :
+Le script officiel actuel est :
 
-```bash
-./scripts/build-mathom-deb.sh
-```
+~~~bash
+./scripts/build-mathom-native-deb.sh
+~~~
 
-La compilation utilise le SDK KDE 6.9 via Flatpak, puis construit un paquet Debian autonome.
+Le paquet stable 3.4.1 produit est :
 
-Prérequis principaux :
+~~~text
+packaging/mathom_3.4.1-1_amd64.deb
+~~~
 
-- `flatpak-builder` ;
-- `org.kde.Sdk//6.9` ;
-- `org.kde.Platform//6.9` ;
-- les outils `linuxdeploy` présents dans `packaging/tools`.
+L'ancien script autonome basé sur Flatpak/AppImage n'est plus le chemin de construction de référence.
 
-Le paquet produit est :
+## Identité technique
 
-```text
-packaging/mathom_0.1.1-8_amd64.deb
-```
+| Élément | Valeur |
+|---|---|
+| Nom | Mathom Notes |
+| Version stable | 3.4.1 |
+| Exécutable | `mathom` |
+| Desktop ID | `fr.thorinux.mathom` |
+| Fichier desktop | `fr.thorinux.mathom.desktop` |
+| Metainfo | `fr.thorinux.mathom.metainfo.xml` |
+| Configuration | `mathomrc` |
+| Données utilisateur | espace XDG `mathom/` |
+| Licence principale | GPL-2.0-or-later |
 
-## Développement
+## Compatibilité avec BasKet
 
-Le binaire est `mathom` et l'identifiant d'application est :
+Mathom Notes est un fork de BasKet Note Pads et conserve volontairement plusieurs éléments techniques historiques afin de préserver la compatibilité.
 
-```text
-fr.thorinux.mathom
-```
+Cela concerne notamment :
 
-Mathom utilise Qt 6 et KDE Frameworks 6.
+- les archives `.baskets` ;
+- l'en-tête historique `BasKetNP:archive` ;
+- certains noms internes tels que `BasketScene`, `LibBasket` ou `BASKET_VERSION` ;
+- le domaine de traduction historique ;
+- certains chemins de compatibilité pour les données et ressources.
 
-## Origine et licence
+Ces éléments ne doivent pas être renommés sans mécanisme de migration explicite.
 
-Mathom est un fork de **BasKet Note Pads** et conserve l'historique, les auteurs et les licences du projet d'origine.
+## Documentation
 
-Licence : **GPL-2.0-or-later**.
+La documentation du projet est disponible dans le dossier [`docs/`](docs/README.md).
+
+## Licence et crédits
+
+Mathom Notes est distribué sous licence **GPL-2.0-or-later**.
+
+Le projet conserve les copyrights, licences et crédits du projet BasKet Note Pads dont il est issu.
