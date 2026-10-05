@@ -18,24 +18,11 @@ class BasketListViewItem;
 class BNPView;
 class Note;
 
-class HistorySetBasket : public QUndoCommand
-{
-public:
-    explicit HistorySetBasket(BasketScene *basket, QUndoCommand *parent = nullptr);
-    void undo() override;
-    void redo() override;
-
-private:
-    QString m_folderNameOld;
-    QString m_folderNameNew;
-};
-
-
 /**
  * Global modification history.
  *
- * Unlike HistorySetBasket, these commands represent modifications to the
- * user's data and therefore belong to the application-wide Undo/Redo stack.
+ * These commands represent modifications to the user's data and belong to
+ * the application-wide Undo/Redo stack.
  */
 class PageRenameCommand : public QUndoCommand
 {
