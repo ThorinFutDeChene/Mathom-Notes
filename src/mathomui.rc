@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE kpartgui SYSTEM "kpartgui.dtd">
-<gui name="basket" version="6">
+<gui name="basket" version="7">
  <MenuBar noMerge="1" >
   <Menu name="basket" >
    <text>&amp;Mathom-House</text>
@@ -56,8 +56,6 @@
   </Menu>
   <Menu name="go" >
    <text>&amp;Go</text>
-   <Action name="go_basket_previous" />
-   <Action name="go_basket_next" />
    <Action name="go_basket_fold" />
    <Action name="go_basket_expand" />
   </Menu>
@@ -184,8 +182,6 @@
   <Action name="edit_filter" />
   <Action name="edit_filter_all_baskets" />
   <Action name="basket_properties" />
-  <Action name="go_basket_previous" />
-  <Action name="go_basket_next" />
  </ToolBar>
  <Menu name="basket_popup" >
   <Action name="basket_new_menu" />
