@@ -19,6 +19,9 @@
 #include "bnpview.h"
 #include "global.h"
 #include "settings.h"
+#include "secondarylanguageengine.h"
+#include "secondarylanguagesettings.h"
+#include "secondarylanguagevalidator.h"
 
 #ifdef KeyPress
 #undef KeyPress
@@ -29,8 +32,25 @@
 FocusedTextEdit::FocusedTextEdit(bool disableUpdatesOnKeyPress, QWidget *parent)
     : KTextEdit(parent)
     , m_disableUpdatesOnKeyPress(disableUpdatesOnKeyPress)
+    , m_secondaryLanguages(SecondaryLanguageSettings::load())
 {
-    connect(this, &FocusedTextEdit::selectionChanged, this, &FocusedTextEdit::onSelectionChanged);
+    /*
+     * Une configuration comportant un conflit de déclencheurs ne doit
+     * jamais produire une transformation imprévisible.
+     *
+     * La page de paramètres signale déjà ces conflits visuellement.
+     * Tant qu'ils ne sont pas résolus, la saisie secondaire reste
+     * inactive dans cet éditeur.
+     */
+    m_secondaryLanguagesValid =
+        SecondaryLanguageValidator::isValid(
+            m_secondaryLanguages);
+
+    connect(
+        this,
+        &FocusedTextEdit::selectionChanged,
+        this,
+        &FocusedTextEdit::onSelectionChanged);
 }
 
 FocusedTextEdit::~FocusedTextEdit() = default;
@@ -185,6 +205,83 @@ void FocusedTextEdit::applyVerticalAlignment(QTextCharFormat::VerticalAlignment 
     mergeFormatIntoSelection(format);
 }
 
+void FocusedTextEdit::applySecondaryLanguageTransformation()
+{
+    if (!m_secondaryLanguagesValid
+        || m_secondaryLanguages.isEmpty()) {
+        return;
+    }
+
+    QTextCursor cursor =
+        textCursor();
+
+    if (cursor.hasSelection())
+        return;
+
+    const int cursorPosition =
+        cursor.position();
+
+    if (cursorPosition <= 0)
+        return;
+
+    /*
+     * Récupérer tout le texte situé avant le curseur.
+     *
+     * QTextCursor travaille en UTF-16, comme QString : les longueurs
+     * renvoyées par le moteur peuvent donc être réutilisées directement
+     * pour sélectionner la séquence à remplacer.
+     */
+    QTextCursor contextCursor =
+        cursor;
+
+    contextCursor.setPosition(
+        0,
+        QTextCursor::KeepAnchor);
+
+    const QString textBeforeCursor =
+        contextCursor.selectedText();
+
+    const SecondaryLanguageTransformation transformation =
+        SecondaryLanguageEngine::transform(
+            textBeforeCursor,
+            m_secondaryLanguages);
+
+    if (!transformation.matched
+        || transformation.ambiguous
+        || transformation.replaceLength <= 0
+        || transformation.replaceLength
+            > cursorPosition) {
+        return;
+    }
+
+    /*
+     * Conserver la mise en forme active du Mathom.
+     *
+     * Ainsi, une transformation réalisée au milieu d'un texte en gras,
+     * italique, couleur, etc. reste dans cette même mise en forme.
+     */
+    const QTextCharFormat format =
+        cursor.charFormat();
+
+    cursor.beginEditBlock();
+
+    cursor.setPosition(
+        cursorPosition
+        - transformation.replaceLength);
+
+    cursor.setPosition(
+        cursorPosition,
+        QTextCursor::KeepAnchor);
+
+    cursor.insertText(
+        transformation.replacement,
+        format);
+
+    cursor.endEditBlock();
+
+    setTextCursor(cursor);
+}
+
 void FocusedTextEdit::keyPressEvent(QKeyEvent *event)
 {
     // A normal typing/navigation action leaves multi-selection mode.
@@ -217,7 +314,24 @@ void FocusedTextEdit::keyPressEvent(QKeyEvent *event)
         setUpdatesEnabled(false);
     }
 
+    /*
+     * Un caractère produit par AltGr doit fonctionner lui aussi.
+     * On ne filtre donc pas naïvement Ctrl/Alt : on vérifie plutôt
+     * que l'événement contient réellement un caractère imprimable.
+     */
+    bool printableInput = false;
+
+    for (const QChar character : event->text()) {
+        if (character.isPrint()) {
+            printableInput = true;
+            break;
+        }
+    }
+
     KTextEdit::keyPressEvent(event);
+
+    if (printableInput)
+        applySecondaryLanguageTransformation();
 
     // Workaround (for ensuring the cursor to be visible): signal not emitted when pressing those keys:
     if (event->key() == Qt::Key_Home || event->key() == Qt::Key_End || event->key() == Qt::Key_PageUp || event->key() == Qt::Key_PageDown) {

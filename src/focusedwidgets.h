@@ -6,11 +6,14 @@
 #ifndef FOCUSEDWIDGETS_H
 #define FOCUSEDWIDGETS_H
 
+#include "secondarylanguagesettings.h"
+
 #include <KTextEdit>
 #include <QClipboard>
 #include <QList>
 #include <QTextCursor>
 #include <QTextCharFormat>
+#include <QVector>
 
 class QColor;
 class QEvent;
@@ -58,9 +61,13 @@ private:
     void addMultiSelection(const QTextCursor &cursor);
     void refreshMultiSelectionHighlights();
     void mergeFormatIntoSelection(const QTextCharFormat &format);
+    void applySecondaryLanguageTransformation();
 
     bool m_disableUpdatesOnKeyPress;
     QList<QTextCursor> m_multiSelectionCursors;
+
+    QVector<SecondaryLanguageSelection> m_secondaryLanguages;
+    bool m_secondaryLanguagesValid = true;
 };
 
 /** class FocusWidgetFilter

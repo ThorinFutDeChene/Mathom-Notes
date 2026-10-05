@@ -7,9 +7,11 @@
 #include <QString>
 #include <QVector>
 
+class QFrame;
 class QLabel;
 class QLineEdit;
 class QPushButton;
+class QScrollArea;
 class QVBoxLayout;
 class QWidget;
 
@@ -51,7 +53,10 @@ private:
     QVector<LanguageRow> m_rows;
 
     QVBoxLayout *m_rowsLayout = nullptr;
+    QScrollArea *m_scrollArea = nullptr;
+    QWidget *m_emptyStateWidget = nullptr;
     QPushButton *m_addButton = nullptr;
+    QFrame *m_conflictPanel = nullptr;
     QLabel *m_conflictLabel = nullptr;
 };
 
