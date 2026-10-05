@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE kpartgui SYSTEM "kpartgui.dtd">
-<gui name="basket" version="5">
+<gui name="basket" version="6">
  <MenuBar noMerge="1" >
   <Menu name="basket" >
    <text>&amp;Mathom-House</text>
@@ -138,44 +138,54 @@
  </MenuBar>
  <ToolBar newline="false" position="Top" noMerge="1" name="mainToolBar" fullWidth="true" >
   <text>Main Toolbar</text>
+
+  <!-- Zone 1: prise de notes immediate -->
   <Action name="basket_new_menu" />
-  <Action name="basket_properties" />
-  <Separator lineSeparator="true" name="separator_0" />
-  <Action name="go_basket_previous" />
-  <Action name="go_basket_next" />
-  <Separator lineSeparator="true" name="separator_0" />
-  <Action name="edit_cut" />
-  <Action name="edit_copy" />
-  <Action name="edit_paste" />
-  <Action name="edit_delete" />
-  <Separator lineSeparator="true" name="separator_1" />
-  <Action name="note_group" />
-  <Separator lineSeparator="true" name="separator_1" />
-  <Action name="edit_filter" />
-  <Action name="edit_filter_all_baskets" />
- </ToolBar>
- <ToolBar newline="false" position="Top" noMerge="1" name="richTextEditToolBar" fullWidth="true" >
-  <text>Text Formatting Toolbar</text>
   <Action name="richtext_undo" />
   <Action name="richtext_redo" />
-  <Separator lineSeparator="true" name="separator_1" />
-  <Action name="richtext_font" />
-  <Separator lineSeparator="false" name="separator_2" />
-  <Action name="richtext_font_size" />
-  <Separator lineSeparator="false" name="separator_3" />
-  <Action name="richtext_color" />
-  <Separator lineSeparator="true" name="separator_4" />
+
+  <Separator lineSeparator="true" name="toolbar_zone_1" />
+
+  <!-- Zone 2: mise en forme courante -->
   <Action name="richtext_bold" />
   <Action name="richtext_italic" />
   <Action name="richtext_underline" />
-  <Separator lineSeparator="true" name="separator_2" />
   <Action name="richtext_super" />
   <Action name="richtext_sub" />
-  <Separator lineSeparator="true" name="separator_0" />
+  <Action name="richtext_color" />
+
+  <Separator lineSeparator="true" name="toolbar_zone_2" />
+
+  <!-- Zone 3: police -->
+  <Action name="richtext_font" />
+  <Separator lineSeparator="false" name="toolbar_font_spacing" />
+  <Action name="richtext_font_size" />
+
+  <Separator lineSeparator="true" name="toolbar_zone_3" />
+
+  <!-- Zone 4: mise en page -->
   <Action name="richtext_left" />
   <Action name="richtext_center" />
   <Action name="richtext_right" />
   <Action name="richtext_block" />
+
+  <Separator lineSeparator="true" name="toolbar_zone_4" />
+
+  <!-- Zone 5: manipulation -->
+  <Action name="edit_cut" />
+  <Action name="edit_copy" />
+  <Action name="edit_paste" />
+  <Action name="edit_delete" />
+
+  <Separator lineSeparator="true" name="toolbar_zone_5" />
+
+  <!-- Zone 6: fonctions secondaires -->
+  <Action name="note_group" />
+  <Action name="edit_filter" />
+  <Action name="edit_filter_all_baskets" />
+  <Action name="basket_properties" />
+  <Action name="go_basket_previous" />
+  <Action name="go_basket_next" />
  </ToolBar>
  <Menu name="basket_popup" >
   <Action name="basket_new_menu" />
