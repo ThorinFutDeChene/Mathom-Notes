@@ -11,6 +11,9 @@ set(BASKET_TEST_SRC
     toolstest.cpp
     archivetest.cpp
     notefactorytest.cpp
+    secondarylanguagetest.cpp
+    secondarylanguageenginetest.cpp
+    secondarylanguagevalidatortest.cpp
 )
 
 ecm_add_tests(${BASKET_TEST_SRC} LINK_LIBRARIES LibBasket Qt::Test)

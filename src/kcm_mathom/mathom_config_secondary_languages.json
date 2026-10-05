@@ -1,0 +1,22 @@
+{
+    "KPlugin": {
+        "Description": "Secondary languages",
+        "Description[fr]": "Langues secondaires",
+        "Icon": "preferences-desktop-locale",
+        "Name": "Secondary Languages",
+        "Name[fr]": "Langues secondaires",
+        "ServiceTypes": [
+            "KCModule"
+        ]
+    },
+    "X-KDE-CfgDlgHierarchy": "Basket",
+    "X-KDE-FactoryName": "mathom_config_secondary_languages",
+    "X-KDE-HasReadOnlyMode": "false",
+    "X-KDE-ModuleType": "Library",
+    "X-KDE-ParentApp": "basket",
+    "X-KDE-ParentComponents": [
+        "basket",
+        "kontact_basketplugin"
+    ],
+    "X-KDE-Weight": 15
+}

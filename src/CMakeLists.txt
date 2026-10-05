@@ -42,6 +42,13 @@ set(libbasket_SRCS
     passworddialog.cpp passworddialog.h
     regiongrabber.cpp regiongrabber.h
     settings.cpp settings.h
+    secondarylanguageprofile.cpp secondarylanguageprofile.h
+    secondarylanguagecatalog.cpp secondarylanguagecatalog.h
+    secondarylanguagesettings.cpp secondarylanguagesettings.h
+    secondarylanguageengine.cpp secondarylanguageengine.h
+    secondarylanguagevalidator.cpp secondarylanguagevalidator.h
+    secondarylanguagespage.cpp secondarylanguagespage.h
+    secondarylanguagevalidator.cpp secondarylanguagevalidator.h
     settings_versionsync.cpp settings_versionsync.h
     softwareimporters.cpp softwareimporters.h
     spreadsheetcontent.cpp spreadsheetcontent.h
@@ -165,6 +172,12 @@ install(TARGETS mathom_config_apps DESTINATION ${KDE_INSTALL_PLUGINDIR}/pim/kcms
 add_library(mathom_config_version_sync MODULE kcm_mathom/mathom_config_version_sync.cpp)
 target_link_libraries(mathom_config_version_sync LibBasket)
 install(TARGETS mathom_config_version_sync DESTINATION ${KDE_INSTALL_PLUGINDIR}/pim/kcms/mathom/)
+
+add_library(mathom_config_secondary_languages MODULE
+    kcm_mathom/mathom_config_secondary_languages.cpp)
+target_link_libraries(mathom_config_secondary_languages LibBasket)
+install(TARGETS mathom_config_secondary_languages
+    DESTINATION ${KDE_INSTALL_PLUGINDIR}/pim/kcms/mathom/)
 
 
 install(FILES fr.thorinux.mathom.desktop DESTINATION ${KDE_INSTALL_APPDIR})

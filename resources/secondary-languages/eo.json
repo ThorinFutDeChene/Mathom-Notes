@@ -1,0 +1,20 @@
+{
+  "id": "eo",
+  "name": "Espéranto",
+  "defaultTrigger": "xx",
+  "rules": [
+    { "source": "c", "variants": ["ĉ"] },
+    { "source": "g", "variants": ["ĝ"] },
+    { "source": "h", "variants": ["ĥ"] },
+    { "source": "j", "variants": ["ĵ"] },
+    { "source": "s", "variants": ["ŝ"] },
+    { "source": "u", "variants": ["ŭ"] },
+
+    { "source": "C", "variants": ["Ĉ"] },
+    { "source": "G", "variants": ["Ĝ"] },
+    { "source": "H", "variants": ["Ĥ"] },
+    { "source": "J", "variants": ["Ĵ"] },
+    { "source": "S", "variants": ["Ŝ"] },
+    { "source": "U", "variants": ["Ŭ"] }
+  ]
+}

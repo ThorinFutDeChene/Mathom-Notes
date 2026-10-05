@@ -1,0 +1,16 @@
+{
+  "id": "de",
+  "name": "Allemand",
+  "defaultTrigger": "xx",
+  "rules": [
+    { "source": "a", "variants": ["ä"] },
+    { "source": "o", "variants": ["ö"] },
+    { "source": "u", "variants": ["ü"] },
+    { "source": "s", "variants": ["ß"] },
+
+    { "source": "A", "variants": ["Ä"] },
+    { "source": "O", "variants": ["Ö"] },
+    { "source": "U", "variants": ["Ü"] },
+    { "source": "S", "variants": ["ẞ"] }
+  ]
+}

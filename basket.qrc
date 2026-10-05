@@ -23,4 +23,9 @@
 	<file>tags/sc-actions-tag_progress_075.svgz</file>
 	<file>tags/sc-actions-tag_progress_100.svgz</file>
 </qresource>
+<qresource prefix="/mathom/secondary-languages">
+    <file alias="de.json">resources/secondary-languages/de.json</file>
+    <file alias="es.json">resources/secondary-languages/es.json</file>
+    <file alias="eo.json">resources/secondary-languages/eo.json</file>
+</qresource>
 </RCC>
