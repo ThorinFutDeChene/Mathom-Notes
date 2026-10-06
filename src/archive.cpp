@@ -10,6 +10,7 @@
 #include <QFile>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QInputDialog>
 #include <QList>
 #include <QMap>
 #include <QPainter>
@@ -293,7 +294,7 @@ void Archive::saveAll(const QString &destination)
     const QString tempIconFile =
         tempFolder + QStringLiteral("icon.png");
 
-    for (Tag *tag : std::as_const(tags)) {
+    for (Tag *tag : tags) {
         for (State *state : tag->states()) {
             QPixmap icon =
                 KIconLoader::global()->loadIcon(
@@ -1096,6 +1097,101 @@ void Archive::loadExtractedBaskets(const QString &extractionFolder, QDomNode &ba
                 basketItem->setExpanded(!XMLWork::trueOrFalse(element.attribute(QStringLiteral("folded"), QStringLiteral("false")), false));
                 QDomElement properties = XMLWork::getElement(element, QStringLiteral("properties"));
                 importBasketIcon(properties, extractionFolder); // Rename the icon fileName if necessary
+
+                // Top-level Mathom-House names should never silently collide.
+                // Propose "Name (2)", "Name (3)", ... and let the user edit
+                // the suggestion before the imported Mathom-House is loaded.
+                if (parent == nullptr) {
+                    const QString importedName =
+                        XMLWork::getElementText(
+                            properties,
+                            QStringLiteral("name"));
+
+                    if (!importedName.isEmpty()) {
+                        QStringList usedNames;
+
+                        for (int i = 0;
+                             i < Global::bnpView->topLevelItemCount();
+                             ++i) {
+                            BasketListViewItem *existingItem =
+                                Global::bnpView->topLevelItem(i);
+
+                            if (existingItem
+                                && existingItem->basket()
+                                && existingItem->basket() != basket) {
+                                usedNames << existingItem->basket()->basketName();
+                            }
+                        }
+
+                        if (usedNames.contains(
+                                importedName,
+                                Qt::CaseInsensitive)) {
+                            int suffix = 2;
+                            QString suggestedName;
+
+                            do {
+                                suggestedName =
+                                    QStringLiteral("%1 (%2)")
+                                        .arg(importedName)
+                                        .arg(suffix++);
+                            } while (usedNames.contains(
+                                suggestedName,
+                                Qt::CaseInsensitive));
+
+                            bool accepted = false;
+
+                            QString chosenName =
+                                QInputDialog::getText(
+                                    Global::activeMainWindow(),
+                                    i18n("Mathom-House Name Conflict"),
+                                    i18n(
+                                        "A Mathom-House named \"%1\" already exists.\n"
+                                        "Rename the imported Mathom-House or keep the suggested name:",
+                                        importedName),
+                                    QLineEdit::Normal,
+                                    suggestedName,
+                                    &accepted);
+
+                            if (!accepted
+                                || chosenName.trimmed().isEmpty()) {
+                                chosenName = suggestedName;
+                            }
+
+                            chosenName = chosenName.trimmed();
+
+                            while (usedNames.contains(
+                                chosenName,
+                                Qt::CaseInsensitive)) {
+                                chosenName =
+                                    QStringLiteral("%1 (%2)")
+                                        .arg(importedName)
+                                        .arg(suffix++);
+                            }
+
+                            QDomElement nameElement =
+                                XMLWork::getElement(
+                                    properties,
+                                    QStringLiteral("name"));
+
+                            if (!nameElement.isNull()) {
+                                while (!nameElement.firstChild().isNull())
+                                    nameElement.removeChild(
+                                        nameElement.firstChild());
+
+                                nameElement.appendChild(
+                                    properties.ownerDocument()
+                                        .createTextNode(chosenName));
+                            } else {
+                                XMLWork::addElement(
+                                    properties.ownerDocument(),
+                                    properties,
+                                    QStringLiteral("name"),
+                                    chosenName);
+                            }
+                        }
+                    }
+                }
+
                 basket->loadProperties(properties);
                 // Open the first basket of the archive:
                 if (!basketSetAsCurrent) {
