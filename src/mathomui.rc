@@ -10,6 +10,7 @@
    <Menu icon="document-export" >
     <text>&amp;Export</text>
     <Action name="basket_export_basket_archive" />
+    <Action name="basket_export_all_archives" />
     <Action name="basket_export_html" />
    </Menu>
    <Menu icon="view-sort-ascending" >
