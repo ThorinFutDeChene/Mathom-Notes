@@ -373,6 +373,8 @@ public:
     QFontComboBox *richTextFont;
     FontSizeCombo *richTextFontSize;
     KColorCombo *richTextColor;
+    KColorCombo *richTextHighlight;
+    QAction *richTextHighlightClear;
     KToggleAction *richTextBold;
     KToggleAction *richTextItalic;
     KToggleAction *richTextUnderline;

@@ -42,6 +42,8 @@ public Q_SLOTS:
     void applyFontFamily(const QString &family);
     void applyFontPointSize(qreal size);
     void applyTextColor(const QColor &color);
+    void applyHighlightColor(const QColor &color);
+    void clearHighlight();
     void applyFontWeight(int weight);
     void applyFontItalic(bool italic);
     void applyFontUnderline(bool underline);

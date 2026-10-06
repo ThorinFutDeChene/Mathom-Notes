@@ -150,6 +150,8 @@
   <Action name="richtext_super" />
   <Action name="richtext_sub" />
   <Action name="richtext_color" />
+  <Action name="richtext_highlight" />
+  <Action name="richtext_highlight_clear" />
 
   <Separator lineSeparator="true" name="toolbar_zone_2" />
 

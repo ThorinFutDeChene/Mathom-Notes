@@ -177,6 +177,23 @@ void FocusedTextEdit::applyTextColor(const QColor &color)
     mergeFormatIntoSelection(format);
 }
 
+void FocusedTextEdit::applyHighlightColor(const QColor &color)
+{
+    if (!color.isValid())
+        return;
+
+    QTextCharFormat format;
+    format.setBackground(color);
+    mergeFormatIntoSelection(format);
+}
+
+void FocusedTextEdit::clearHighlight()
+{
+    QTextCharFormat format;
+    format.clearBackground();
+    mergeFormatIntoSelection(format);
+}
+
 void FocusedTextEdit::applyFontWeight(int weight)
 {
     QTextCharFormat format;

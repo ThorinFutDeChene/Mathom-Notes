@@ -393,6 +393,8 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
     connect(InlineEditors::instance()->richTextFont, &QFontComboBox::currentFontChanged, this, &HtmlEditor::onFontSelectionChanged);
     connect(InlineEditors::instance()->richTextFontSize, &FontSizeCombo::sizeChanged, textEdit, &FocusedTextEdit::applyFontPointSize);
     connect(InlineEditors::instance()->richTextColor, &KColorCombo::activated, textEdit, &FocusedTextEdit::applyTextColor);
+    connect(InlineEditors::instance()->richTextHighlight, &KColorCombo::activated, textEdit, &FocusedTextEdit::applyHighlightColor);
+    connect(InlineEditors::instance()->richTextHighlightClear, &QAction::triggered, textEdit, &FocusedTextEdit::clearHighlight);
 
     connect(InlineEditors::instance()->focusWidgetFilter, &FocusWidgetFilter::escapePressed, textEdit, [&textEdit]() {
         textEdit->setFocus();
@@ -420,6 +422,14 @@ HtmlEditor::HtmlEditor(HtmlContent *htmlContent, QWidget * /*parent*/)
 
     connect(InlineEditors::instance()->richTextColor, &KColorCombo::activated, textEdit, [basket](const QColor &) {
         QTimer::singleShot(100, basket, &BasketScene::focusEditor);
+    });
+
+    connect(InlineEditors::instance()->richTextHighlight, &KColorCombo::activated, textEdit, [basket](const QColor &) {
+        QTimer::singleShot(100, basket, &BasketScene::focusEditor);
+    });
+
+    connect(InlineEditors::instance()->richTextHighlightClear, &QAction::triggered, textEdit, [basket]() {
+        QTimer::singleShot(0, basket, &BasketScene::focusEditor);
     });
 
     connect(textEdit, &QTextEdit::cursorPositionChanged, this, &HtmlEditor::cursorPositionChanged);
@@ -489,6 +499,17 @@ void HtmlEditor::editTextChanged()
 void HtmlEditor::charFormatChanged(const QTextCharFormat &format)
 {
     InlineEditors::instance()->richTextFontSize->setFontSize(format.font().pointSize());
+
+    const QBrush highlight = format.background();
+
+    if (highlight.style() != Qt::NoBrush
+        && highlight.color().isValid()) {
+        QSignalBlocker blocker(
+            InlineEditors::instance()->richTextHighlight);
+
+        InlineEditors::instance()->richTextHighlight->setColor(
+            highlight.color());
+    }
 
     const auto alignment = format.verticalAlignment();
     {
@@ -1565,6 +1586,35 @@ void InlineEditors::initToolBars(KActionCollection *ac)
     action->setDefaultWidget(richTextColor);
     action->setText(i18n("Color"));
 
+    richTextHighlight = new KColorCombo();
+    richTextHighlight->installEventFilter(focusWidgetFilter);
+    richTextHighlight->setFixedWidth(
+        richTextHighlight->sizeHint().height() * 2);
+    richTextHighlight->setColor(Qt::yellow);
+
+    richTextHighlight->setFocusPolicy(Qt::NoFocus);
+    if (richTextHighlight->lineEdit()) {
+        richTextHighlight->lineEdit()->setReadOnly(true);
+        richTextHighlight->lineEdit()->setFocusPolicy(Qt::NoFocus);
+    }
+
+    action = new QWidgetAction(ac);
+    ac->addAction(
+        QStringLiteral("richtext_highlight"),
+        action);
+    action->setDefaultWidget(richTextHighlight);
+    action->setText(i18n("Highlight"));
+
+    richTextHighlightClear = new QAction(ac);
+    ac->addAction(
+        QStringLiteral("richtext_highlight_clear"),
+        richTextHighlightClear);
+    richTextHighlightClear->setText(
+        i18n("Remove Highlight"));
+    richTextHighlightClear->setIcon(
+        MathomIcons::icon(
+            QStringLiteral("edit-clear")));
+
     KToggleAction *ta = nullptr;
     ta = new KToggleAction(ac);
     ac->addAction(QStringLiteral("richtext_bold"), ta);
@@ -1649,6 +1699,8 @@ void InlineEditors::enableRichTextToolBar()
     richTextFont->setEnabled(true);
     richTextFontSize->setEnabled(true);
     richTextColor->setEnabled(true);
+    richTextHighlight->setEnabled(true);
+    richTextHighlightClear->setEnabled(true);
     richTextBold->setEnabled(true);
     richTextItalic->setEnabled(true);
     richTextUnderline->setEnabled(true);
@@ -1665,6 +1717,8 @@ void InlineEditors::disableRichTextToolBar()
     disconnect(richTextFont);
     disconnect(richTextFontSize);
     disconnect(richTextColor);
+    disconnect(richTextHighlight);
+    disconnect(richTextHighlightClear);
     disconnect(richTextBold);
     disconnect(richTextItalic);
     disconnect(richTextUnderline);
@@ -1678,6 +1732,8 @@ void InlineEditors::disableRichTextToolBar()
     richTextFont->setEnabled(false);
     richTextFontSize->setEnabled(false);
     richTextColor->setEnabled(false);
+    richTextHighlight->setEnabled(false);
+    richTextHighlightClear->setEnabled(false);
     richTextBold->setEnabled(false);
     richTextItalic->setEnabled(false);
     richTextUnderline->setEnabled(false);
@@ -1694,6 +1750,7 @@ void InlineEditors::disableRichTextToolBar()
     richTextFont->setCurrentFont(defaultFont.family());
     richTextFontSize->setFontSize(defaultFont.pointSize());
     richTextColor->setColor(textColor);
+    richTextHighlight->setColor(Qt::yellow);
     richTextBold->setChecked(false);
     richTextItalic->setChecked(false);
     richTextUnderline->setChecked(false);
