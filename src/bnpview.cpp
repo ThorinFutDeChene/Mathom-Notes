@@ -1360,16 +1360,61 @@ void BNPView::updateNavigationBar()
                 currentHouse->parent());
     }
 
-    for (int i = 0; i < m_tree->topLevelItemCount(); ++i) {
+    QList<QColor> usedHouseColors;
+
+    for (int i = 0;
+         i < m_tree->topLevelItemCount();
+         ++i) {
+
         auto *item =
             static_cast<BasketListViewItem *>(
                 m_tree->topLevelItem(i));
+
+        const QColor color =
+            item->basket()->tabColor();
+
+        if (color.isValid())
+            usedHouseColors.append(color);
+    }
+
+    bool assignedAutomaticHouseColor = false;
+
+    for (int i = 0;
+         i < m_tree->topLevelItemCount();
+         ++i) {
+
+        auto *item =
+            static_cast<BasketListViewItem *>(
+                m_tree->topLevelItem(i));
+
+        QColor color =
+            item->basket()->tabColor();
+
+        if (!color.isValid()) {
+            color =
+                MathomNavigationBar::automaticColor(
+                    usedHouseColors);
+
+            item->basket()->setTabColor(
+                color,
+                true);
+
+            usedHouseColors.append(color);
+            assignedAutomaticHouseColor = true;
+        }
 
         houses.append({
             item->basket()->basketName(),
             item->basket(),
             QColor()
         });
+    }
+
+    if (assignedAutomaticHouseColor) {
+        m_tree->viewport()->update();
+
+        if (!m_loading)
+            save();
     }
 
     m_navigationBar->setMathomHouses(

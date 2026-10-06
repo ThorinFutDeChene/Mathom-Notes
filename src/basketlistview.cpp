@@ -462,38 +462,89 @@ void FoundCountIcon::paint(QPainter *painter, const QStyleOptionViewItem &option
         int iconTextMargin = m_basketTree->style()->pixelMetric(QStyle::PM_FocusFrameHMargin); ///< Space between icon and text
 
         // Don't forget to update the key computation if parameters
-        // affecting the rendering logic change
+        // affecting the rendering logic change.
+        //
+        // The hierarchy cartouche uses:
+        // - the Shelf / Mathom-House color on the left;
+        // - a white area behind the name;
+        // - the same color on the right;
+        // - a colored outline around the complete cartouche.
         QString key =
-            QString(QStringLiteral("BLIRR::%1.%2.%3.%4")).arg(option.rect.width()).arg(option.rect.size().height()).arg(textWidth).arg(background.rgb());
-        if (!QPixmapCache::find(key, &roundRectBmp)) {
-            // Draw first time
+            QString(QStringLiteral("BLIRR3::%1.%2.%3.%4"))
+                .arg(option.rect.width())
+                .arg(option.rect.size().height())
+                .arg(textWidth)
+                .arg(background.rgb());
 
+        if (!QPixmapCache::find(key, &roundRectBmp)) {
             roundRectBmp = QPixmap(option.rect.size());
             roundRectBmp.fill(Qt::transparent);
 
             QPainter brushPainter(&roundRectBmp);
-
-            int cornerR = option.rect.height() / 2 - MARGIN;
-
-            QRect roundRect(0, MARGIN, BASKET_ICON_SIZE + iconTextMargin + textWidth + 2 * cornerR, option.rect.height() - 2 * MARGIN);
-
-            brushPainter.setPen(background);
-            brushPainter.setBrush(background);
             brushPainter.setRenderHint(QPainter::Antialiasing);
-            brushPainter.drawRoundedRect(roundRect, cornerR, cornerR);
 
-            QPixmapCache::insert(key, roundRectBmp);
+            const int cornerR =
+                option.rect.height() / 2 - MARGIN;
+
+            const int outlineWidth = 2;
+            const int textPadding = 5;
+
+            const int leftColorWidth =
+                BASKET_ICON_SIZE
+                + qMax(2, iconTextMargin / 2);
+
+            const int whiteWidth =
+                textWidth
+                + 2 * textPadding;
+
+            const int rightColorWidth =
+                qMax(8, cornerR);
+
+            const int cartoucheWidth =
+                leftColorWidth
+                + whiteWidth
+                + rightColorWidth;
+
+            const QRect outerRect(
+                0,
+                MARGIN,
+                cartoucheWidth,
+                option.rect.height() - 2 * MARGIN);
+
+            brushPainter.setPen(Qt::NoPen);
+            brushPainter.setBrush(background);
+
+            brushPainter.drawRoundedRect(
+                outerRect,
+                cornerR,
+                cornerR);
+
+            const QRect whiteRect(
+                leftColorWidth,
+                MARGIN + outlineWidth,
+                whiteWidth,
+                option.rect.height()
+                    - 2 * MARGIN
+                    - 2 * outlineWidth);
+
+            brushPainter.fillRect(
+                whiteRect,
+                Qt::white);
+
+            QPixmapCache::insert(
+                key,
+                roundRectBmp);
         }
 
         basketInTree->setBackground(
             0,
             QBrush(roundRectBmp));
 
-        // No shelf-specific text color:
-        // use the normal theme rendering.
+        // The name is deliberately black on white for maximum
+        // readability, independently of the hierarchy color.
         basketInTree->setForeground(
             0,
-            QBrush());
+            QBrush(Qt::black));
     } else {
         basketInTree->setBackground(
             0,
