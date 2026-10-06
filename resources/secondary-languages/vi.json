@@ -1,0 +1,387 @@
+{
+  "id": "vi",
+  "name": "Vietnamien",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "aw",
+      "variants": [
+        "ă"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "Aw",
+      "variants": [
+        "Ă"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "AW",
+      "variants": [
+        "Ă"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "aa",
+      "variants": [
+        "â"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "Aa",
+      "variants": [
+        "Â"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "AA",
+      "variants": [
+        "Â"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "d",
+      "variants": [
+        "đ"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "D",
+      "variants": [
+        "Đ"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "ee",
+      "variants": [
+        "ê"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "Ee",
+      "variants": [
+        "Ê"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "EE",
+      "variants": [
+        "Ê"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "oo",
+      "variants": [
+        "ô"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "Oo",
+      "variants": [
+        "Ô"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "OO",
+      "variants": [
+        "Ô"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "ow",
+      "variants": [
+        "ơ"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "Ow",
+      "variants": [
+        "Ơ"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "OW",
+      "variants": [
+        "Ơ"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "uw",
+      "variants": [
+        "ư"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "Uw",
+      "variants": [
+        "Ư"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "UW",
+      "variants": [
+        "Ư"
+      ],
+      "cycle": false
+    },
+    {
+      "source": "a",
+      "variants": [
+        "à",
+        "ả",
+        "ã",
+        "á",
+        "ạ"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À",
+        "Ả",
+        "Ã",
+        "Á",
+        "Ạ"
+      ]
+    },
+    {
+      "source": "ă",
+      "variants": [
+        "ằ",
+        "ẳ",
+        "ẵ",
+        "ắ",
+        "ặ"
+      ]
+    },
+    {
+      "source": "Ă",
+      "variants": [
+        "Ằ",
+        "Ẳ",
+        "Ẵ",
+        "Ắ",
+        "Ặ"
+      ]
+    },
+    {
+      "source": "â",
+      "variants": [
+        "ầ",
+        "ẩ",
+        "ẫ",
+        "ấ",
+        "ậ"
+      ]
+    },
+    {
+      "source": "Â",
+      "variants": [
+        "Ầ",
+        "Ẩ",
+        "Ẫ",
+        "Ấ",
+        "Ậ"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "è",
+        "ẻ",
+        "ẽ",
+        "é",
+        "ẹ"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "È",
+        "Ẻ",
+        "Ẽ",
+        "É",
+        "Ẹ"
+      ]
+    },
+    {
+      "source": "ê",
+      "variants": [
+        "ề",
+        "ể",
+        "ễ",
+        "ế",
+        "ệ"
+      ]
+    },
+    {
+      "source": "Ê",
+      "variants": [
+        "Ề",
+        "Ể",
+        "Ễ",
+        "Ế",
+        "Ệ"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ì",
+        "ỉ",
+        "ĩ",
+        "í",
+        "ị"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ì",
+        "Ỉ",
+        "Ĩ",
+        "Í",
+        "Ị"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ò",
+        "ỏ",
+        "õ",
+        "ó",
+        "ọ"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ò",
+        "Ỏ",
+        "Õ",
+        "Ó",
+        "Ọ"
+      ]
+    },
+    {
+      "source": "ô",
+      "variants": [
+        "ồ",
+        "ổ",
+        "ỗ",
+        "ố",
+        "ộ"
+      ]
+    },
+    {
+      "source": "Ô",
+      "variants": [
+        "Ồ",
+        "Ổ",
+        "Ỗ",
+        "Ố",
+        "Ộ"
+      ]
+    },
+    {
+      "source": "ơ",
+      "variants": [
+        "ờ",
+        "ở",
+        "ỡ",
+        "ớ",
+        "ợ"
+      ]
+    },
+    {
+      "source": "Ơ",
+      "variants": [
+        "Ờ",
+        "Ở",
+        "Ỡ",
+        "Ớ",
+        "Ợ"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ù",
+        "ủ",
+        "ũ",
+        "ú",
+        "ụ"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ù",
+        "Ủ",
+        "Ũ",
+        "Ú",
+        "Ụ"
+      ]
+    },
+    {
+      "source": "ư",
+      "variants": [
+        "ừ",
+        "ử",
+        "ữ",
+        "ứ",
+        "ự"
+      ]
+    },
+    {
+      "source": "Ư",
+      "variants": [
+        "Ừ",
+        "Ử",
+        "Ữ",
+        "Ứ",
+        "Ự"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ỳ",
+        "ỷ",
+        "ỹ",
+        "ý",
+        "ỵ"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ỳ",
+        "Ỷ",
+        "Ỹ",
+        "Ý",
+        "Ỵ"
+      ]
+    }
+  ]
+}

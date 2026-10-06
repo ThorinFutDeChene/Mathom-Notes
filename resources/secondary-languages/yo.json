@@ -1,0 +1,133 @@
+{
+  "id": "yo",
+  "name": "Yoruba",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "à"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "À"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è",
+        "ẹ",
+        "ẹ́",
+        "ẹ̀"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È",
+        "Ẹ",
+        "Ẹ́",
+        "Ẹ̀"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í",
+        "ì"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í",
+        "Ì"
+      ]
+    },
+    {
+      "source": "m",
+      "variants": [
+        "ḿ",
+        "m̀",
+        "m̄"
+      ]
+    },
+    {
+      "source": "M",
+      "variants": [
+        "Ḿ",
+        "M̀",
+        "M̄"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ń",
+        "ǹ",
+        "n̄"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ń",
+        "Ǹ",
+        "N̄"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ò",
+        "ọ",
+        "ọ́",
+        "ọ̀"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ò",
+        "Ọ",
+        "Ọ́",
+        "Ọ̀"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "ṣ"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Ṣ"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "ù"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Ù"
+      ]
+    }
+  ]
+}

@@ -26,18 +26,20 @@ QHash<QString, QString> transitions(
             rule.source,
             rule.variants.first());
 
-        for (int index = 0;
-             index < rule.variants.size();
-             ++index) {
+        if (rule.cycle) {
+            for (int index = 0;
+                 index < rule.variants.size();
+                 ++index) {
 
-            const QString replacement =
-                index + 1 < rule.variants.size()
-                ? rule.variants.at(index + 1)
-                : rule.source;
+                const QString replacement =
+                    index + 1 < rule.variants.size()
+                    ? rule.variants.at(index + 1)
+                    : rule.source;
 
-            result.insert(
-                rule.variants.at(index),
-                replacement);
+                result.insert(
+                    rule.variants.at(index),
+                    replacement);
+            }
         }
     }
 

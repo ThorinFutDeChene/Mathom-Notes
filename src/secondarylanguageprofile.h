@@ -11,6 +11,7 @@ struct SecondaryLanguageRule
 {
     QString source;
     QStringList variants;
+    bool cycle = true;
 };
 
 class BASKET_EXPORT SecondaryLanguageProfile

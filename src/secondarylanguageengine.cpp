@@ -100,26 +100,28 @@ SecondaryLanguageEngine::transform(
                 rule.variants.first(),
                 profile.id);
 
-            for (int index = 0;
-                 index < rule.variants.size();
-                 ++index) {
+            if (rule.cycle) {
+                for (int index = 0;
+                     index < rule.variants.size();
+                     ++index) {
 
-                const QString &current =
-                    rule.variants.at(index);
+                    const QString &current =
+                        rule.variants.at(index);
 
-                const QString replacement =
-                    index + 1
-                            < rule.variants.size()
-                    ? rule.variants.at(index + 1)
-                    : rule.source;
+                    const QString replacement =
+                        index + 1
+                                < rule.variants.size()
+                        ? rule.variants.at(index + 1)
+                        : rule.source;
 
-                addCandidate(
-                    candidates,
-                    prefix,
-                    trigger,
-                    current,
-                    replacement,
-                    profile.id);
+                    addCandidate(
+                        candidates,
+                        prefix,
+                        trigger,
+                        current,
+                        replacement,
+                        profile.id);
+                }
             }
         }
     }

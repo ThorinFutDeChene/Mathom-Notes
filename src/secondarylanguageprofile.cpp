@@ -75,6 +75,11 @@ SecondaryLanguageProfile::loadFromResource(
                 .value(QStringLiteral("source"))
                 .toString();
 
+        rule.cycle =
+            ruleObject
+                .value(QStringLiteral("cycle"))
+                .toBool(true);
+
         const QJsonArray variants =
             ruleObject
                 .value(QStringLiteral("variants"))

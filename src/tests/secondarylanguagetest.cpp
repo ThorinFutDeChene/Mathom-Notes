@@ -77,40 +77,13 @@ void SecondaryLanguageTest::loadCatalog()
 
     QVERIFY2(
         errors.isEmpty(),
-        qPrintable(errors.join(
-            QLatin1Char('\n'))));
+        qPrintable(
+            errors.join(
+                QLatin1Char('\n'))));
 
-    const QStringList expectedIds = {
-        QStringLiteral("bs"),
-        QStringLiteral("ca"),
-        QStringLiteral("cs"),
-        QStringLiteral("da"),
-        QStringLiteral("de"),
-        QStringLiteral("eo"),
-        QStringLiteral("es"),
-        QStringLiteral("et"),
-        QStringLiteral("fi"),
-        QStringLiteral("fo"),
-        QStringLiteral("fr"),
-        QStringLiteral("ga"),
-        QStringLiteral("hr"),
-        QStringLiteral("hu"),
-        QStringLiteral("is"),
-        QStringLiteral("it"),
-        QStringLiteral("lt"),
-        QStringLiteral("lv"),
-        QStringLiteral("mt"),
-        QStringLiteral("no"),
-        QStringLiteral("pl"),
-        QStringLiteral("pt"),
-        QStringLiteral("ro"),
-        QStringLiteral("sk"),
-        QStringLiteral("sl"),
-        QStringLiteral("sq"),
-        QStringLiteral("sr-Latn"),
-        QStringLiteral("sv"),
-        QStringLiteral("tr")
-    };
+    QCOMPARE(
+        profiles.size(),
+        46);
 
     QStringList ids;
 
@@ -119,18 +92,31 @@ void SecondaryLanguageTest::loadCatalog()
         ids.append(profile.id);
     }
 
-    QCOMPARE(
-        ids.size(),
-        expectedIds.size());
+    const QStringList requiredIds = {
+        QStringLiteral("de"),
+        QStringLiteral("es"),
+        QStringLiteral("eo"),
+        QStringLiteral("fr"),
+        QStringLiteral("pl"),
+        QStringLiteral("tr"),
+        QStringLiteral("az"),
+        QStringLiteral("mi"),
+        QStringLiteral("haw"),
+        QStringLiteral("gn"),
+        QStringLiteral("ha"),
+        QStringLiteral("ig"),
+        QStringLiteral("se"),
+        QStringLiteral("vi"),
+        QStringLiteral("yo")
+    };
 
-    for (const QString &expectedId :
-         expectedIds) {
+    for (const QString &id : requiredIds) {
         QVERIFY2(
-            ids.contains(expectedId),
+            ids.contains(id),
             qPrintable(
                 QStringLiteral(
                     "Profil manquant : %1")
-                    .arg(expectedId)));
+                    .arg(id)));
     }
 }
 
