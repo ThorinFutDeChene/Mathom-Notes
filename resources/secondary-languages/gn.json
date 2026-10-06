@@ -1,0 +1,109 @@
+{
+  "id": "gn",
+  "name": "Guarani",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ã"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ẽ"
+      ]
+    },
+    {
+      "source": "g",
+      "variants": [
+        "g̃"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ĩ"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ñ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "õ"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ũ"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ỹ"
+      ]
+    },
+    {
+      "source": "'",
+      "variants": [
+        "ʼ"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ã"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ẽ"
+      ]
+    },
+    {
+      "source": "G",
+      "variants": [
+        "G̃"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ĩ"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ñ"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Õ"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ũ"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ỹ"
+      ]
+    }
+  ]
+}

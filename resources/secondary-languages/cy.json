@@ -1,0 +1,91 @@
+{
+  "id": "cy",
+  "name": "Gallois",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "â"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ê"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "î"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ô"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "û"
+      ]
+    },
+    {
+      "source": "w",
+      "variants": [
+        "ŵ"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ŷ"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Â"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ê"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Î"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ô"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Û"
+      ]
+    },
+    {
+      "source": "W",
+      "variants": [
+        "Ŵ"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ŷ"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,69 @@
+{
+  "id": "rm",
+  "name": "Romanche",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ì"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ì"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ò"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ò"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ù"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ù"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,113 @@
+{
+  "id": "fy",
+  "name": "Frison occidental",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "à",
+        "â",
+        "ä"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "À",
+        "Â",
+        "Ä"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è",
+        "ê",
+        "ë"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È",
+        "Ê",
+        "Ë"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í",
+        "ï"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í",
+        "Ï"
+      ]
+    },
+    {
+      "source": "ij",
+      "variants": [
+        "íj́"
+      ]
+    },
+    {
+      "source": "IJ",
+      "variants": [
+        "ÍJ́"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ô",
+        "ö"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ô",
+        "Ö"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "û",
+        "ü"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Û",
+        "Ü"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ý"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ý"
+      ]
+    }
+  ]
+}

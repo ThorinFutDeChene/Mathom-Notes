@@ -1,0 +1,103 @@
+{
+  "id": "tk",
+  "name": "Turkmène",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ä"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ň"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ö"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "ş"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ü"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ý"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ä"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ň"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ö"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Ş"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ü"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ý"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,91 @@
+{
+  "id": "az",
+  "name": "Azéri",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ə"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ə"
+      ]
+    },
+    {
+      "source": "g",
+      "variants": [
+        "ğ"
+      ]
+    },
+    {
+      "source": "G",
+      "variants": [
+        "Ğ"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ı"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "İ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ö"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ö"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "ş"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Ş"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ü"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ü"
+      ]
+    }
+  ]
+}

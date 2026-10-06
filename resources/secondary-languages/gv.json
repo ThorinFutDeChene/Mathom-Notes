@@ -1,0 +1,19 @@
+{
+  "id": "gv",
+  "name": "Mannois",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    }
+  ]
+}

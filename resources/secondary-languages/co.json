@@ -1,0 +1,71 @@
+{
+  "id": "co",
+  "name": "Corse",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "è"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "È"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ì",
+        "ï"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ì",
+        "Ï"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ò"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ò"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ù",
+        "ü"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ù",
+        "Ü"
+      ]
+    }
+  ]
+}

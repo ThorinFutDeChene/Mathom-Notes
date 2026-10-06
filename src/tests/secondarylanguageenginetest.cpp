@@ -18,6 +18,7 @@ private Q_SLOTS:
     void guaraniCombiningCharacter();
     void yorubaCombinedTone();
     void vietnameseStructuralThenTone();
+    void dutchIjAccent();
 };
 
 void SecondaryLanguageEngineTest::esperantoCustomTrigger()
@@ -347,6 +348,29 @@ void SecondaryLanguageEngineTest::vietnameseStructuralThenTone()
     QCOMPARE(
         result.replacement,
         QStringLiteral("â"));
+}
+
+
+void SecondaryLanguageEngineTest::dutchIjAccent()
+{
+    const QVector<SecondaryLanguageSelection> languages = {
+        {
+            QStringLiteral("nl"),
+            QStringLiteral("$")
+        }
+    };
+
+    const SecondaryLanguageTransformation result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("ij$"),
+            languages);
+
+    QVERIFY(result.matched);
+    QVERIFY(!result.ambiguous);
+
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("íj́"));
 }
 
 QTEST_APPLESS_MAIN(SecondaryLanguageEngineTest)

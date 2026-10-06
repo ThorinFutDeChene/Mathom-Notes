@@ -1,0 +1,67 @@
+{
+  "id": "gd",
+  "name": "Gaélique écossais",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "è"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ì"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ò"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ù"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "È"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ì"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ò"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ù"
+      ]
+    }
+  ]
+}

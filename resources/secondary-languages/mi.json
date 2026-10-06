@@ -1,0 +1,67 @@
+{
+  "id": "mi",
+  "name": "Māori",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ā"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ē"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ī"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ō"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ū"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ā"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ē"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ī"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ō"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ū"
+      ]
+    }
+  ]
+}

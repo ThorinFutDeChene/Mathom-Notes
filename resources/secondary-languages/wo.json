@@ -1,0 +1,59 @@
+{
+  "id": "wo",
+  "name": "Wolof",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "ë"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ñ",
+        "ŋ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "Ë"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ñ",
+        "Ŋ"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó"
+      ]
+    }
+  ]
+}

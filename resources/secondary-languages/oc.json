@@ -1,0 +1,89 @@
+{
+  "id": "oc",
+  "name": "Occitan",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "à"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "À"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í",
+        "ï"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í",
+        "Ï"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ò"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ò"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "ü"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Ü"
+      ]
+    }
+  ]
+}

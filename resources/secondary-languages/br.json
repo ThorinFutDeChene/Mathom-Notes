@@ -1,0 +1,83 @@
+{
+  "id": "br",
+  "name": "Breton",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "â"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ê"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "î"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ô"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "û",
+        "ù",
+        "ü"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ñ"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Â"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ê"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Î"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ô"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Û",
+        "Ù",
+        "Ü"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ñ"
+      ]
+    }
+  ]
+}

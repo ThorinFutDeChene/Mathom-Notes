@@ -1,0 +1,31 @@
+{
+  "id": "eu",
+  "name": "Basque",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ñ"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ñ"
+      ]
+    }
+  ]
+}

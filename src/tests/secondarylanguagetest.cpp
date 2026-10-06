@@ -83,7 +83,7 @@ void SecondaryLanguageTest::loadCatalog()
 
     QCOMPARE(
         profiles.size(),
-        46);
+        55);
 
     QStringList ids;
 

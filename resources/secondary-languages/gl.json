@@ -1,0 +1,83 @@
+{
+  "id": "gl",
+  "name": "Galicien",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í",
+        "ï"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ñ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "ü"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í",
+        "Ï"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ñ"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Ü"
+      ]
+    }
+  ]
+}

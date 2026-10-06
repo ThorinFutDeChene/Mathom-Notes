@@ -1,0 +1,33 @@
+{
+  "id": "lb",
+  "name": "Luxembourgeois",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ä"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "ë"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ä"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "Ë"
+      ]
+    }
+  ]
+}

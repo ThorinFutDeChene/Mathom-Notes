@@ -1,0 +1,89 @@
+{
+  "id": "nl",
+  "name": "Néerlandais",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "ä"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "Ä"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "ë"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "Ë"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í",
+        "ï"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í",
+        "Ï"
+      ]
+    },
+    {
+      "source": "ij",
+      "variants": [
+        "íj́"
+      ]
+    },
+    {
+      "source": "IJ",
+      "variants": [
+        "ÍJ́"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ö"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ö"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "ü"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Ü"
+      ]
+    }
+  ]
+}

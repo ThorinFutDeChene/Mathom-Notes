@@ -1,0 +1,79 @@
+{
+  "id": "af",
+  "name": "Afrikaans",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "â"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è",
+        "ê",
+        "ë"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "î",
+        "ï"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ô",
+        "ö"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "û"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "Â"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È",
+        "Ê",
+        "Ë"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Î",
+        "Ï"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ô",
+        "Ö"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Û"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,55 @@
+{
+  "id": "ig",
+  "name": "Igbo",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "i",
+      "variants": [
+        "ị"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ṅ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ọ"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ụ"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ị"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ṅ"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ọ"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ụ"
+      ]
+    }
+  ]
+}

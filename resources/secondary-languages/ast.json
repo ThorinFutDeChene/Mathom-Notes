@@ -1,0 +1,105 @@
+{
+  "id": "ast",
+  "name": "Asturien",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É"
+      ]
+    },
+    {
+      "source": "h",
+      "variants": [
+        "ḥ"
+      ]
+    },
+    {
+      "source": "H",
+      "variants": [
+        "Ḥ"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í"
+      ]
+    },
+    {
+      "source": "l",
+      "variants": [
+        "ḷ"
+      ]
+    },
+    {
+      "source": "L",
+      "variants": [
+        "Ḷ"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ñ"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ñ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "ü"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Ü"
+      ]
+    }
+  ]
+}

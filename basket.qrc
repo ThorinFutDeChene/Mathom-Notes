@@ -25,10 +25,13 @@
 </qresource>
 <qresource prefix="/mathom/secondary-languages">
     <file alias="af.json">resources/secondary-languages/af.json</file>
+    <file alias="an.json">resources/secondary-languages/an.json</file>
+    <file alias="ast.json">resources/secondary-languages/ast.json</file>
     <file alias="az.json">resources/secondary-languages/az.json</file>
     <file alias="br.json">resources/secondary-languages/br.json</file>
     <file alias="bs.json">resources/secondary-languages/bs.json</file>
     <file alias="ca.json">resources/secondary-languages/ca.json</file>
+    <file alias="co.json">resources/secondary-languages/co.json</file>
     <file alias="cs.json">resources/secondary-languages/cs.json</file>
     <file alias="cy.json">resources/secondary-languages/cy.json</file>
     <file alias="da.json">resources/secondary-languages/da.json</file>
@@ -36,13 +39,16 @@
     <file alias="eo.json">resources/secondary-languages/eo.json</file>
     <file alias="es.json">resources/secondary-languages/es.json</file>
     <file alias="et.json">resources/secondary-languages/et.json</file>
+    <file alias="eu.json">resources/secondary-languages/eu.json</file>
     <file alias="fi.json">resources/secondary-languages/fi.json</file>
     <file alias="fo.json">resources/secondary-languages/fo.json</file>
     <file alias="fr.json">resources/secondary-languages/fr.json</file>
+    <file alias="fy.json">resources/secondary-languages/fy.json</file>
     <file alias="ga.json">resources/secondary-languages/ga.json</file>
     <file alias="gd.json">resources/secondary-languages/gd.json</file>
     <file alias="gl.json">resources/secondary-languages/gl.json</file>
     <file alias="gn.json">resources/secondary-languages/gn.json</file>
+    <file alias="gv.json">resources/secondary-languages/gv.json</file>
     <file alias="ha.json">resources/secondary-languages/ha.json</file>
     <file alias="haw.json">resources/secondary-languages/haw.json</file>
     <file alias="hr.json">resources/secondary-languages/hr.json</file>
@@ -55,9 +61,12 @@
     <file alias="lv.json">resources/secondary-languages/lv.json</file>
     <file alias="mi.json">resources/secondary-languages/mi.json</file>
     <file alias="mt.json">resources/secondary-languages/mt.json</file>
+    <file alias="nl.json">resources/secondary-languages/nl.json</file>
     <file alias="no.json">resources/secondary-languages/no.json</file>
+    <file alias="oc.json">resources/secondary-languages/oc.json</file>
     <file alias="pl.json">resources/secondary-languages/pl.json</file>
     <file alias="pt.json">resources/secondary-languages/pt.json</file>
+    <file alias="rm.json">resources/secondary-languages/rm.json</file>
     <file alias="ro.json">resources/secondary-languages/ro.json</file>
     <file alias="se.json">resources/secondary-languages/se.json</file>
     <file alias="sk.json">resources/secondary-languages/sk.json</file>

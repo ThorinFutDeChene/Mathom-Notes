@@ -1,0 +1,61 @@
+{
+  "id": "ha",
+  "name": "Haoussa",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "b",
+      "variants": [
+        "ɓ"
+      ]
+    },
+    {
+      "source": "d",
+      "variants": [
+        "ɗ"
+      ]
+    },
+    {
+      "source": "k",
+      "variants": [
+        "ƙ"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ƴ"
+      ]
+    },
+    {
+      "source": "'",
+      "variants": [
+        "ʼ"
+      ]
+    },
+    {
+      "source": "B",
+      "variants": [
+        "Ɓ"
+      ]
+    },
+    {
+      "source": "D",
+      "variants": [
+        "Ɗ"
+      ]
+    },
+    {
+      "source": "K",
+      "variants": [
+        "Ƙ"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ƴ"
+      ]
+    }
+  ]
+}
