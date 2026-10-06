@@ -16,7 +16,7 @@ Mathom Notes utilise principalement :
 | Élément | Valeur |
 |---|---|
 | Application | Mathom Notes |
-| Version stable | 3.4.1 |
+| Version stable | 3.7.0 |
 | Exécutable | `mathom` |
 | Desktop ID | `fr.thorinux.mathom` |
 | Desktop file | `fr.thorinux.mathom.desktop` |

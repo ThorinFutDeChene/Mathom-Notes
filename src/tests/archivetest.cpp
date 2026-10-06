@@ -84,12 +84,22 @@ void ArchiveTest::testCreateArchive()
     // Test the Archive::createArchiveFromSource function
 
     QString referenceSource = referencePath + QStringLiteral("sample.baskets");
-    QString testArchive = tempDir.filePath(QStringLiteral("test.baskets"));
+    QString testArchive = tempDir.filePath(QStringLiteral("test.mathom"));
 
     QString testSourcePath = m_sampleSourceDir.filePath(QStringLiteral("sample_source/"));
     Archive::IOErrorCode ioCode = Archive::createArchiveFromSource(testSourcePath, testSourcePath + QStringLiteral("preview.png"), testArchive);
 
-    QVERIFY2(ioCode == Archive::IOErrorCode::NoError, "An issue occurred while creating a .baskets archive");
+    QVERIFY2(ioCode == Archive::IOErrorCode::NoError, "An issue occurred while creating a .mathom archive");
+
+    QFile nativeArchive(testArchive);
+    QVERIFY(nativeArchive.open(QIODevice::ReadOnly | QIODevice::Text));
+    QCOMPARE(nativeArchive.readLine().trimmed(), QByteArray("MathomNotes:archive"));
+    nativeArchive.close();
+
+    const QString extractedPath = tempDir.filePath(QStringLiteral("extracted-native"));
+    ioCode = Archive::extractArchive(testArchive, extractedPath, false);
+    QVERIFY2(ioCode == Archive::IOErrorCode::NoError, "The newly created .mathom archive could not be read back");
+    QVERIFY2(compareDirTree(extractedPath, testSourcePath), "Extracted .mathom archive is not identical with the source");
 
     /// \todo find a simple way to compare created archive. KTar could write specific meta data...
 

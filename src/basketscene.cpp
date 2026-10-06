@@ -6749,6 +6749,9 @@ void BasketScene::insertSelection(NoteSelection *selection, Note *after)
 
 void BasketScene::selectSelection(NoteSelection *selection)
 {
+    if (!selection)
+        return;
+
     for (NoteSelection *toUnplug = selection->firstStacked(); toUnplug; toUnplug = toUnplug->nextStacked()) {
         if (toUnplug->note->isGroup())
             selectSelection(toUnplug);
