@@ -29,6 +29,7 @@ class Archive
 {
 public:
     static void save(BasketScene *basket, bool withSubBaskets, const QString &destination);
+    static void saveAll(const QString &destination);
     static void open(const QString &path);
 
     /**
@@ -45,7 +46,7 @@ public:
     };
 
     /**
-     * @brief extractArchive decodes .baskets files
+     * @brief extractArchive decodes native .mathom archives and legacy .baskets archives
      * @param path to the .baskets file
      * @param destination into which the basket archive should be extracted
      * @param protectDestination decides whether the destination will be replaced if it has been present
@@ -55,7 +56,7 @@ public:
     BASKET_EXPORT static IOErrorCode extractArchive(const QString &path, const QString &destination, const bool protectDestination = true);
 
     /**
-     * @brief createArchiveFromSource encodes a basket directory into a .baskets file
+     * @brief createArchiveFromSource encodes a Mathom archive source directory into a .mathom file
      *
      * Be aware, this function currently does not validate the sourcePath's structure. The caller of this function needs to make sure the basket directory is a
      * valid source.
