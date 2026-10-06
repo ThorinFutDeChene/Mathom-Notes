@@ -1,0 +1,109 @@
+{
+  "id": "dsb",
+  "name": "Bas-sorabe",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "c",
+      "variants": [
+        "č",
+        "ć"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Č",
+        "Ć"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ě"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ě"
+      ]
+    },
+    {
+      "source": "l",
+      "variants": [
+        "ł"
+      ]
+    },
+    {
+      "source": "L",
+      "variants": [
+        "Ł"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ń"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ń"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó"
+      ]
+    },
+    {
+      "source": "r",
+      "variants": [
+        "ŕ"
+      ]
+    },
+    {
+      "source": "R",
+      "variants": [
+        "Ŕ"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š",
+        "ś"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š",
+        "Ś"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž",
+        "ź"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž",
+        "Ź"
+      ]
+    }
+  ]
+}

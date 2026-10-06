@@ -1,0 +1,123 @@
+{
+  "id": "hsb",
+  "name": "Haut-sorabe",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "c",
+      "variants": [
+        "č",
+        "ć"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Č",
+        "Ć"
+      ]
+    },
+    {
+      "source": "dz",
+      "variants": [
+        "dź"
+      ]
+    },
+    {
+      "source": "DZ",
+      "variants": [
+        "DŹ"
+      ]
+    },
+    {
+      "source": "Dz",
+      "variants": [
+        "Dź"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ě"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ě"
+      ]
+    },
+    {
+      "source": "l",
+      "variants": [
+        "ł"
+      ]
+    },
+    {
+      "source": "L",
+      "variants": [
+        "Ł"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ń"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ń"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó"
+      ]
+    },
+    {
+      "source": "r",
+      "variants": [
+        "ř"
+      ]
+    },
+    {
+      "source": "R",
+      "variants": [
+        "Ř"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

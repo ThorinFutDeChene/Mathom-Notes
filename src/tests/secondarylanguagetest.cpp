@@ -83,7 +83,7 @@ void SecondaryLanguageTest::loadCatalog()
 
     QCOMPARE(
         profiles.size(),
-        61);
+        72);
 
     QStringList ids;
 
@@ -114,6 +114,17 @@ void SecondaryLanguageTest::loadCatalog()
         QStringLiteral("ku"),
         QStringLiteral("su"),
         QStringLiteral("tn"),
+        QStringLiteral("dsb"),
+        QStringLiteral("fur"),
+        QStringLiteral("hsb"),
+        QStringLiteral("lld"),
+        QStringLiteral("sc"),
+        QStringLiteral("scn"),
+        QStringLiteral("sma"),
+        QStringLiteral("smj"),
+        QStringLiteral("smn"),
+        QStringLiteral("sms"),
+        QStringLiteral("vec"),
 };
 
     for (const QString &id : requiredIds) {

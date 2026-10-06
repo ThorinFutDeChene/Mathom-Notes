@@ -21,6 +21,8 @@ private Q_SLOTS:
     void dutchIjAccent();
     void africanLatinCharacters();
     void kurdishCharacters();
+    void upperSorbianDigraph();
+    void skoltSamiCharacters();
 };
 
 void SecondaryLanguageEngineTest::esperantoCustomTrigger()
@@ -485,6 +487,97 @@ void SecondaryLanguageEngineTest::kurdishCharacters()
     QCOMPARE(
         result.replacement,
         QStringLiteral("û"));
+}
+
+
+void SecondaryLanguageEngineTest::upperSorbianDigraph()
+{
+    const QVector<SecondaryLanguageSelection> languages = {
+        {
+            QStringLiteral("hsb"),
+            QStringLiteral("$")
+        }
+    };
+
+    auto result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("dz$"),
+            languages);
+
+    QVERIFY(result.matched);
+    QVERIFY(!result.ambiguous);
+
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("dź"));
+
+    /*
+     * Vérification de la casse de début de mot.
+     */
+    result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("Dz$"),
+            languages);
+
+    QVERIFY(result.matched);
+
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("Dź"));
+}
+
+void SecondaryLanguageEngineTest::skoltSamiCharacters()
+{
+    const QVector<SecondaryLanguageSelection> languages = {
+        {
+            QStringLiteral("sms"),
+            QStringLiteral("$")
+        }
+    };
+
+    auto result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("g$"),
+            languages);
+
+    QVERIFY(result.matched);
+
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("ǧ"));
+
+    result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("ǧ$"),
+            languages);
+
+    QVERIFY(result.matched);
+
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("ǥ"));
+
+    result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("j$"),
+            languages);
+
+    QVERIFY(result.matched);
+
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("ʒ"));
+
+    result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("ʒ$"),
+            languages);
+
+    QVERIFY(result.matched);
+
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("ǯ"));
 }
 
 QTEST_APPLESS_MAIN(SecondaryLanguageEngineTest)

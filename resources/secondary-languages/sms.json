@@ -1,0 +1,135 @@
+{
+  "id": "sms",
+  "name": "Same skolt",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "â",
+        "å",
+        "ä"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Â",
+        "Å",
+        "Ä"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "č"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Č"
+      ]
+    },
+    {
+      "source": "d",
+      "variants": [
+        "đ"
+      ]
+    },
+    {
+      "source": "D",
+      "variants": [
+        "Đ"
+      ]
+    },
+    {
+      "source": "g",
+      "variants": [
+        "ǧ",
+        "ǥ"
+      ]
+    },
+    {
+      "source": "G",
+      "variants": [
+        "Ǧ",
+        "Ǥ"
+      ]
+    },
+    {
+      "source": "j",
+      "variants": [
+        "ʒ",
+        "ǯ"
+      ]
+    },
+    {
+      "source": "J",
+      "variants": [
+        "Ʒ",
+        "Ǯ"
+      ]
+    },
+    {
+      "source": "k",
+      "variants": [
+        "ǩ"
+      ]
+    },
+    {
+      "source": "K",
+      "variants": [
+        "Ǩ"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ŋ"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ŋ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "õ"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Õ"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

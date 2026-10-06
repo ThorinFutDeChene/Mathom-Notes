@@ -1,0 +1,67 @@
+{
+  "id": "sc",
+  "name": "Sarde",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "è"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "È"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ì"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ì"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ò"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ò"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ù"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ù"
+      ]
+    }
+  ]
+}

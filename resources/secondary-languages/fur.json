@@ -1,0 +1,89 @@
+{
+  "id": "fur",
+  "name": "Frioulan",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à",
+        "â"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À",
+        "Â"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "è",
+        "ê"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "È",
+        "Ê"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ì",
+        "î"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ì",
+        "Î"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ò",
+        "ô"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ò",
+        "Ô"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ù",
+        "û"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ù",
+        "Û"
+      ]
+    }
+  ]
+}

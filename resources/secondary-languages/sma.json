@@ -1,0 +1,53 @@
+{
+  "id": "sma",
+  "name": "Same du Sud",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "å",
+        "ä"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Å",
+        "Ä"
+      ]
+    },
+    {
+      "source": "ae",
+      "variants": [
+        "æ"
+      ]
+    },
+    {
+      "source": "AE",
+      "variants": [
+        "Æ"
+      ]
+    },
+    {
+      "source": "Ae",
+      "variants": [
+        "Æ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ö",
+        "ø"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ö",
+        "Ø"
+      ]
+    }
+  ]
+}

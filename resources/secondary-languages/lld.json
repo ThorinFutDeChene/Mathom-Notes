@@ -1,0 +1,97 @@
+{
+  "id": "lld",
+  "name": "Ladin",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "à",
+        "â"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "À",
+        "Â"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "ć"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ć"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è",
+        "ê",
+        "ë"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È",
+        "Ê",
+        "Ë"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í",
+        "î"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í",
+        "Î"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ô",
+        "ö"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ô",
+        "Ö"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "ü"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Ü"
+      ]
+    }
+  ]
+}

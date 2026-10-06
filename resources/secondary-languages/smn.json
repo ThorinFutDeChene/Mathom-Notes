@@ -1,0 +1,83 @@
+{
+  "id": "smn",
+  "name": "Same d'Inari",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "â",
+        "ä",
+        "á"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Â",
+        "Ä",
+        "Á"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "č"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Č"
+      ]
+    },
+    {
+      "source": "d",
+      "variants": [
+        "đ"
+      ]
+    },
+    {
+      "source": "D",
+      "variants": [
+        "Đ"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ŋ"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ŋ"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

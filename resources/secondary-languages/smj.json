@@ -1,0 +1,35 @@
+{
+  "id": "smj",
+  "name": "Same de Lule",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "å",
+        "ä"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "Å",
+        "Ä"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ń"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ń"
+      ]
+    }
+  ]
+}
