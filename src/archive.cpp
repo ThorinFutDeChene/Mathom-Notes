@@ -1183,8 +1183,11 @@ void Archive::loadExtractedBaskets(const QString &extractionFolder, QDomNode &ba
                                     properties.ownerDocument()
                                         .createTextNode(chosenName));
                             } else {
+                                QDomDocument document =
+                                    properties.ownerDocument();
+
                                 XMLWork::addElement(
-                                    properties.ownerDocument(),
+                                    document,
                                     properties,
                                     QStringLiteral("name"),
                                     chosenName);
