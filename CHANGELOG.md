@@ -4,6 +4,28 @@ Ce fichier résume les principales versions propres au fork Mathom.
 
 Le journal de développement détaillé reste la référence technique complète du projet.
 
+## 3.7.0
+
+### Added
+
+- nouveau format natif d’échange `.mathom` avec signature `MathomNotes:archive` ;
+- export de la Mathom-House courante avec ses Étagères, Pages, Mathoms, pièces jointes, marques et arrière-plans nécessaires ;
+- export de toutes les Mathom-Houses dans une seule archive `.mathom` ;
+- import des archives Mathom `.mathom` ;
+- gestion des conflits de noms à l’import avec proposition de renommage automatique ;
+- traces de diagnostic dédiées aux opérations d’export Mathom.
+
+### Changed
+
+- conservation de la compatibilité d’import avec les anciennes archives BasKet `.baskets` ;
+- sélecteurs de fichiers adaptés à Qt 6 ;
+- ajout automatique de l’extension `.mathom` lors de l’export.
+
+### Fixed
+
+- correction des plantages d’export liés à la restauration d’une sélection vide ;
+- sécurisation de la restauration des sélections lors de la génération des miniatures d’archives.
+
 ## 3.4.1
 
 ### Changed
