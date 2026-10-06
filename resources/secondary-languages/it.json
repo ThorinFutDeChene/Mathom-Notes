@@ -1,0 +1,69 @@
+{
+  "id": "it",
+  "name": "Italien",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ì"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ò"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ù"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ì"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ò"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ù"
+      ]
+    }
+  ]
+}

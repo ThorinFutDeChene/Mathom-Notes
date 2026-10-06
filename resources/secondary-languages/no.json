@@ -1,0 +1,43 @@
+{
+  "id": "no",
+  "name": "Norvégien",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "å"
+      ]
+    },
+    {
+      "source": "ae",
+      "variants": [
+        "æ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ø"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Å"
+      ]
+    },
+    {
+      "source": "AE",
+      "variants": [
+        "Æ"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ø"
+      ]
+    }
+  ]
+}

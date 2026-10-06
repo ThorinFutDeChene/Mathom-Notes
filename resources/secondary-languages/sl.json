@@ -1,0 +1,43 @@
+{
+  "id": "sl",
+  "name": "Slovène",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "c",
+      "variants": [
+        "č"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Č"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

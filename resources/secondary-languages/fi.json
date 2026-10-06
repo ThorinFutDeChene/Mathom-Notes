@@ -1,0 +1,57 @@
+{
+  "id": "fi",
+  "name": "Finnois",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ä",
+        "å"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ö"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ä",
+        "Å"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ö"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

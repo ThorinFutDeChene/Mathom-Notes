@@ -1,0 +1,95 @@
+{
+  "id": "lt",
+  "name": "Lituanien",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ą"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "č"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ę",
+        "ė"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "į"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ų",
+        "ū"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ą"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Č"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ę",
+        "Ė"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Į"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ų",
+        "Ū"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "id": "mt",
+  "name": "Maltais",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "ċ"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "è"
+      ]
+    },
+    {
+      "source": "g",
+      "variants": [
+        "ġ"
+      ]
+    },
+    {
+      "source": "h",
+      "variants": [
+        "ħ"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ì"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ò"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ù"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ż"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ċ"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "È"
+      ]
+    },
+    {
+      "source": "G",
+      "variants": [
+        "Ġ"
+      ]
+    },
+    {
+      "source": "H",
+      "variants": [
+        "Ħ"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ì"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ò"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ù"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ż"
+      ]
+    }
+  ]
+}

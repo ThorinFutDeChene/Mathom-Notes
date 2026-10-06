@@ -1,0 +1,31 @@
+{
+  "id": "sq",
+  "name": "Albanais",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ë"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ë"
+      ]
+    }
+  ]
+}

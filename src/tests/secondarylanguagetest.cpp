@@ -80,7 +80,37 @@ void SecondaryLanguageTest::loadCatalog()
         qPrintable(errors.join(
             QLatin1Char('\n'))));
 
-    QCOMPARE(profiles.size(), 3);
+    const QStringList expectedIds = {
+        QStringLiteral("bs"),
+        QStringLiteral("ca"),
+        QStringLiteral("cs"),
+        QStringLiteral("da"),
+        QStringLiteral("de"),
+        QStringLiteral("eo"),
+        QStringLiteral("es"),
+        QStringLiteral("et"),
+        QStringLiteral("fi"),
+        QStringLiteral("fo"),
+        QStringLiteral("fr"),
+        QStringLiteral("ga"),
+        QStringLiteral("hr"),
+        QStringLiteral("hu"),
+        QStringLiteral("is"),
+        QStringLiteral("it"),
+        QStringLiteral("lt"),
+        QStringLiteral("lv"),
+        QStringLiteral("mt"),
+        QStringLiteral("no"),
+        QStringLiteral("pl"),
+        QStringLiteral("pt"),
+        QStringLiteral("ro"),
+        QStringLiteral("sk"),
+        QStringLiteral("sl"),
+        QStringLiteral("sq"),
+        QStringLiteral("sr-Latn"),
+        QStringLiteral("sv"),
+        QStringLiteral("tr")
+    };
 
     QStringList ids;
 
@@ -89,9 +119,19 @@ void SecondaryLanguageTest::loadCatalog()
         ids.append(profile.id);
     }
 
-    QVERIFY(ids.contains(QStringLiteral("de")));
-    QVERIFY(ids.contains(QStringLiteral("es")));
-    QVERIFY(ids.contains(QStringLiteral("eo")));
+    QCOMPARE(
+        ids.size(),
+        expectedIds.size());
+
+    for (const QString &expectedId :
+         expectedIds) {
+        QVERIFY2(
+            ids.contains(expectedId),
+            qPrintable(
+                QStringLiteral(
+                    "Profil manquant : %1")
+                    .arg(expectedId)));
+    }
 }
 
 void SecondaryLanguageTest::findProfileById()

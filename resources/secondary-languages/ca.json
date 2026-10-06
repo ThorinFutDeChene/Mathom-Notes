@@ -1,0 +1,99 @@
+{
+  "id": "ca",
+  "name": "Catalan",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í",
+        "ï"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ò"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "ü"
+      ]
+    },
+    {
+      "source": "ll",
+      "variants": [
+        "l·l"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í",
+        "Ï"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ò"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Ü"
+      ]
+    },
+    {
+      "source": "LL",
+      "variants": [
+        "L·L"
+      ]
+    }
+  ]
+}

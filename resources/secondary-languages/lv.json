@@ -1,0 +1,139 @@
+{
+  "id": "lv",
+  "name": "Letton",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ā"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "č"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ē"
+      ]
+    },
+    {
+      "source": "g",
+      "variants": [
+        "ģ"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "ī"
+      ]
+    },
+    {
+      "source": "k",
+      "variants": [
+        "ķ"
+      ]
+    },
+    {
+      "source": "l",
+      "variants": [
+        "ļ"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ņ"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ū"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ā"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Č"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ē"
+      ]
+    },
+    {
+      "source": "G",
+      "variants": [
+        "Ģ"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Ī"
+      ]
+    },
+    {
+      "source": "K",
+      "variants": [
+        "Ķ"
+      ]
+    },
+    {
+      "source": "L",
+      "variants": [
+        "Ļ"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ņ"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ū"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

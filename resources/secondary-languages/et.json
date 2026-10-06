@@ -1,0 +1,69 @@
+{
+  "id": "et",
+  "name": "Estonien",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ä"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "õ",
+        "ö"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ü"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ä"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Õ",
+        "Ö"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ü"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

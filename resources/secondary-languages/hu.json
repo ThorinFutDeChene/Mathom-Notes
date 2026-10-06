@@ -1,0 +1,75 @@
+{
+  "id": "hu",
+  "name": "Hongrois",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ö",
+        "ő"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "ü",
+        "ű"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ö",
+        "Ő"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Ü",
+        "Ű"
+      ]
+    }
+  ]
+}

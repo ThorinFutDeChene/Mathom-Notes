@@ -1,0 +1,67 @@
+{
+  "id": "ga",
+  "name": "Irlandais",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú"
+      ]
+    }
+  ]
+}

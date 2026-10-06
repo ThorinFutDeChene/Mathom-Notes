@@ -1,0 +1,33 @@
+{
+  "id": "sv",
+  "name": "Suédois",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "å",
+        "ä"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ö"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Å",
+        "Ä"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ö"
+      ]
+    }
+  ]
+}

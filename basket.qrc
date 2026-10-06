@@ -24,8 +24,34 @@
 	<file>tags/sc-actions-tag_progress_100.svgz</file>
 </qresource>
 <qresource prefix="/mathom/secondary-languages">
+    <file alias="bs.json">resources/secondary-languages/bs.json</file>
+    <file alias="ca.json">resources/secondary-languages/ca.json</file>
+    <file alias="cs.json">resources/secondary-languages/cs.json</file>
+    <file alias="da.json">resources/secondary-languages/da.json</file>
     <file alias="de.json">resources/secondary-languages/de.json</file>
-    <file alias="es.json">resources/secondary-languages/es.json</file>
     <file alias="eo.json">resources/secondary-languages/eo.json</file>
+    <file alias="es.json">resources/secondary-languages/es.json</file>
+    <file alias="et.json">resources/secondary-languages/et.json</file>
+    <file alias="fi.json">resources/secondary-languages/fi.json</file>
+    <file alias="fo.json">resources/secondary-languages/fo.json</file>
+    <file alias="fr.json">resources/secondary-languages/fr.json</file>
+    <file alias="ga.json">resources/secondary-languages/ga.json</file>
+    <file alias="hr.json">resources/secondary-languages/hr.json</file>
+    <file alias="hu.json">resources/secondary-languages/hu.json</file>
+    <file alias="is.json">resources/secondary-languages/is.json</file>
+    <file alias="it.json">resources/secondary-languages/it.json</file>
+    <file alias="lt.json">resources/secondary-languages/lt.json</file>
+    <file alias="lv.json">resources/secondary-languages/lv.json</file>
+    <file alias="mt.json">resources/secondary-languages/mt.json</file>
+    <file alias="no.json">resources/secondary-languages/no.json</file>
+    <file alias="pl.json">resources/secondary-languages/pl.json</file>
+    <file alias="pt.json">resources/secondary-languages/pt.json</file>
+    <file alias="ro.json">resources/secondary-languages/ro.json</file>
+    <file alias="sk.json">resources/secondary-languages/sk.json</file>
+    <file alias="sl.json">resources/secondary-languages/sl.json</file>
+    <file alias="sq.json">resources/secondary-languages/sq.json</file>
+    <file alias="sr-Latn.json">resources/secondary-languages/sr-Latn.json</file>
+    <file alias="sv.json">resources/secondary-languages/sv.json</file>
+    <file alias="tr.json">resources/secondary-languages/tr.json</file>
 </qresource>
 </RCC>

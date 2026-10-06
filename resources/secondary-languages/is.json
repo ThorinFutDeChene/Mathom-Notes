@@ -1,0 +1,117 @@
+{
+  "id": "is",
+  "name": "Islandais",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á"
+      ]
+    },
+    {
+      "source": "d",
+      "variants": [
+        "ð"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ö"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ý"
+      ]
+    },
+    {
+      "source": "ae",
+      "variants": [
+        "æ"
+      ]
+    },
+    {
+      "source": "th",
+      "variants": [
+        "þ"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á"
+      ]
+    },
+    {
+      "source": "D",
+      "variants": [
+        "Ð"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ö"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ý"
+      ]
+    },
+    {
+      "source": "AE",
+      "variants": [
+        "Æ"
+      ]
+    },
+    {
+      "source": "TH",
+      "variants": [
+        "Þ"
+      ]
+    }
+  ]
+}

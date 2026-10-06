@@ -1,0 +1,91 @@
+{
+  "id": "pt",
+  "name": "Portugais",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "à",
+        "â",
+        "ã"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "ê"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ô",
+        "õ"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "À",
+        "Â",
+        "Ã"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "Ê"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ô",
+        "Õ"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú"
+      ]
+    }
+  ]
+}

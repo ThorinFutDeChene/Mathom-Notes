@@ -1,0 +1,105 @@
+{
+  "id": "pl",
+  "name": "Polonais",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ą"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "ć"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ę"
+      ]
+    },
+    {
+      "source": "l",
+      "variants": [
+        "ł"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ń"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "ś"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ź",
+        "ż"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ą"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ć"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ę"
+      ]
+    },
+    {
+      "source": "L",
+      "variants": [
+        "Ł"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ń"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Ś"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ź",
+        "Ż"
+      ]
+    }
+  ]
+}

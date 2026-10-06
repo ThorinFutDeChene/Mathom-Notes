@@ -1,0 +1,93 @@
+{
+  "id": "fo",
+  "name": "Féroïen",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á"
+      ]
+    },
+    {
+      "source": "d",
+      "variants": [
+        "ð"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ø"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ý"
+      ]
+    },
+    {
+      "source": "ae",
+      "variants": [
+        "æ"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á"
+      ]
+    },
+    {
+      "source": "D",
+      "variants": [
+        "Ð"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ø"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ý"
+      ]
+    },
+    {
+      "source": "AE",
+      "variants": [
+        "Æ"
+      ]
+    }
+  ]
+}

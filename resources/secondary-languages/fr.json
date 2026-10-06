@@ -1,0 +1,129 @@
+{
+  "id": "fr",
+  "name": "Français",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "à",
+        "â"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è",
+        "ê",
+        "ë"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "î",
+        "ï"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ô"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ù",
+        "û",
+        "ü"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ÿ"
+      ]
+    },
+    {
+      "source": "ae",
+      "variants": [
+        "æ"
+      ]
+    },
+    {
+      "source": "oe",
+      "variants": [
+        "œ"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "À",
+        "Â"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È",
+        "Ê",
+        "Ë"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Î",
+        "Ï"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ô"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ù",
+        "Û",
+        "Ü"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ÿ"
+      ]
+    },
+    {
+      "source": "AE",
+      "variants": [
+        "Æ"
+      ]
+    },
+    {
+      "source": "OE",
+      "variants": [
+        "Œ"
+      ]
+    }
+  ]
+}

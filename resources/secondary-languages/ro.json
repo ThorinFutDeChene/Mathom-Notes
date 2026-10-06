@@ -1,0 +1,57 @@
+{
+  "id": "ro",
+  "name": "Roumain",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "ă",
+        "â"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "î"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "ș"
+      ]
+    },
+    {
+      "source": "t",
+      "variants": [
+        "ț"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Ă",
+        "Â"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Î"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Ș"
+      ]
+    },
+    {
+      "source": "T",
+      "variants": [
+        "Ț"
+      ]
+    }
+  ]
+}

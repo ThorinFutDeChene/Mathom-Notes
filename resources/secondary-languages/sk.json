@@ -1,0 +1,181 @@
+{
+  "id": "sk",
+  "name": "Slovaque",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "ä"
+      ]
+    },
+    {
+      "source": "c",
+      "variants": [
+        "č"
+      ]
+    },
+    {
+      "source": "d",
+      "variants": [
+        "ď"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í"
+      ]
+    },
+    {
+      "source": "l",
+      "variants": [
+        "ĺ",
+        "ľ"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ň"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ô"
+      ]
+    },
+    {
+      "source": "r",
+      "variants": [
+        "ŕ"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "t",
+      "variants": [
+        "ť"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú"
+      ]
+    },
+    {
+      "source": "y",
+      "variants": [
+        "ý"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "Ä"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Č"
+      ]
+    },
+    {
+      "source": "D",
+      "variants": [
+        "Ď"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í"
+      ]
+    },
+    {
+      "source": "L",
+      "variants": [
+        "Ĺ",
+        "Ľ"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ň"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ô"
+      ]
+    },
+    {
+      "source": "R",
+      "variants": [
+        "Ŕ"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "T",
+      "variants": [
+        "Ť"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú"
+      ]
+    },
+    {
+      "source": "Y",
+      "variants": [
+        "Ý"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}

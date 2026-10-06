@@ -1,0 +1,57 @@
+{
+  "id": "sr-Latn",
+  "name": "Serbe latin",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "c",
+      "variants": [
+        "č",
+        "ć"
+      ]
+    },
+    {
+      "source": "d",
+      "variants": [
+        "đ"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "z",
+      "variants": [
+        "ž"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Č",
+        "Ć"
+      ]
+    },
+    {
+      "source": "D",
+      "variants": [
+        "Đ"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    },
+    {
+      "source": "Z",
+      "variants": [
+        "Ž"
+      ]
+    }
+  ]
+}
