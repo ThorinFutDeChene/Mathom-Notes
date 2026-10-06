@@ -183,6 +183,7 @@ public Q_SLOTS:
     void doBasketDeletion(BasketScene *basket);
     void password();
     void saveAsArchive();
+    void saveAllAsArchive();
     void openArchive();
     void delayedOpenArchive();
     void delayedOpenBasket();
@@ -238,6 +239,7 @@ public:
 private:
     // Basket actions:
     QAction *m_actSaveAsArchive;
+    QAction *m_actSaveAllAsArchive;
     QAction *m_actOpenArchive;
     // Notes actions :
     QAction *m_actOpenNoteWith;
