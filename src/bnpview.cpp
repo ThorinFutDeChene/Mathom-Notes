@@ -2732,16 +2732,22 @@ void BNPView::delBasket()
         {{QStringLiteral("folder"), basketFolderName}});
 
     /*
-     * Shelf deletion now belongs to the global modification history.
+     * Shelf and Mathom-House deletion belongs to the global
+     * modification history whenever a valid fallback location exists.
      *
-     * Keep the complete Shelf subtree alive while the command remains
-     * undoable. This allows Undo to restore the exact same Shelf,
-     * sub-Shelves, Pages and Mathoms.
+     * A Shelf always has its parent as a fallback.
+     * A Mathom-House can be detached when another root Mathom-House
+     * remains available.
      *
-     * Mathom-House deletion keeps the historical path for the moment;
-     * its special "last Mathom-House" case will be handled separately.
+     * The last remaining Mathom-House keeps the historical deletion
+     * path because detachBasketForUndo() deliberately refuses to leave
+     * the application without a current location.
      */
-    if (isShelf
+    const bool canUndoDeletion =
+        isShelf
+        || topLevelItemCount() > 1;
+
+    if (canUndoDeletion
         && m_undoStack
         && listViewItemForBasket(basket)) {
 
