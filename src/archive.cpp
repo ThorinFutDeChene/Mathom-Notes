@@ -352,7 +352,10 @@ void Archive::saveAll(const QString &destination)
         previewBasket->setFocusedNote(nullptr);
         previewBasket->doHoverEffects(nullptr, Note::None);
         previewBasket->render(&painter);
-        previewBasket->selectSelection(selection);
+
+        if (selection)
+            previewBasket->selectSelection(selection);
+
         previewBasket->setFocusedNote(focusedNote);
         previewBasket->doHoverEffects();
         painter.end();
