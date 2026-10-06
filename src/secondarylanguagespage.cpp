@@ -500,8 +500,7 @@ void SecondaryLanguagesPage::chooseLanguage()
         &QListWidget::itemDoubleClicked,
         &dialog,
         [&dialog](
-            QListWidgetItem *,
-            int) {
+            QListWidgetItem *) {
             dialog.accept();
         });
 
