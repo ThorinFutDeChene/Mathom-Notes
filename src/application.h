@@ -9,6 +9,7 @@
 #include <QApplication>
 
 class MainWindow;
+class QEvent;
 
 /**
  * @class Application
@@ -25,6 +26,9 @@ public:
 public Q_SLOTS:
     /// Activate program window if duplicate instance is started, load file from args
     void onActivateRequested(const QStringList &args, const QString &workingDir);
+
+protected:
+    bool notify(QObject *receiver, QEvent *event) override;
 
 private:
     MainWindow *m_mainWindow;

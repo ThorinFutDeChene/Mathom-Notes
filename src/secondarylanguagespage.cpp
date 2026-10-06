@@ -30,6 +30,14 @@ SecondaryLanguagesPage::SecondaryLanguagesPage(
     const KPluginMetaData &data)
     : AbstractSettingsPage(parent, data)
 {
+    /*
+     * Cette page configure précisément les déclencheurs :
+     * ses champs texte doivent rester littéraux.
+     */
+    widget()->setProperty(
+        "mathomSecondaryLanguageDisabled",
+        true);
+
     auto *mainLayout =
         new QVBoxLayout(widget());
 

@@ -846,6 +846,11 @@ SpreadsheetEditor::SpreadsheetEditor(SpreadsheetContent *spreadsheetContent, QWi
     , m_functionCombo(new QComboBox())
 {
     auto *container = new QWidget();
+
+    container->setProperty(
+        "mathomSecondaryLanguageDisabled",
+        true);
+
     auto *layout = new QVBoxLayout(container);
     layout->setContentsMargins(0, 0, 0, 0);
     layout->setSpacing(4);
@@ -1131,6 +1136,11 @@ LinkEditDialog::LinkEditDialog(LinkContent *contentNote, QWidget *parent /*, QKe
     mainLayout->addLayout(layout);
 
     m_url = new KUrlRequester(this);
+
+    m_url->setProperty(
+        "mathomSecondaryLanguageDisabled",
+        true);
+
     m_url->setMode(KFile::File | KFile::ExistingOnly);
     m_url->lineEdit()->setMinimumWidth(m_url->lineEdit()->fontMetrics().maxWidth() * 20);
     layout->addRow(i18n("Ta&rget:"), m_url);

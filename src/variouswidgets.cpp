@@ -43,6 +43,11 @@ RunCommandRequester::RunCommandRequester(const QString &runCommand, const QStrin
     layout->setContentsMargins(0, 0, 0, 0);
 
     m_runCommand = new QLineEdit(runCommand, this);
+
+    m_runCommand->setProperty(
+        "mathomSecondaryLanguageDisabled",
+        true);
+
     auto *button = new QPushButton(i18n("..."), this);
     button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
 
