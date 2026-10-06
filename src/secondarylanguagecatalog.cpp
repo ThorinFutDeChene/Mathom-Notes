@@ -1,5 +1,8 @@
 #include "secondarylanguagecatalog.h"
 
+// TODO(Mathom): étendre dans une évolution future le catalogue des langues
+// secondaires aux autres langues en écriture latine répertoriées par CLDR.
+
 #include <QDir>
 #include <QSet>
 
