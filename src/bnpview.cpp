@@ -2880,6 +2880,9 @@ void BNPView::saveAsArchive()
     if (!basket)
         return;
 
+    while (BasketScene *parent = parentBasketOf(basket))
+        basket = parent;
+
     QDir dir;
 
     KConfigGroup config =
@@ -2950,10 +2953,20 @@ void BNPView::saveAsArchive()
 
     config.sync();
 
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("EXPORT_MATHOM_BEGIN"),
+        {{QStringLiteral("scope"), QStringLiteral("current-house")},
+         {QStringLiteral("folder"), basket->folderName()}});
+
     Archive::save(
         basket,
         true,
         destination);
+
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("EXPORT_MATHOM_OK"),
+        {{QStringLiteral("scope"), QStringLiteral("current-house")},
+         {QStringLiteral("folder"), basket->folderName()}});
 }
 
 void BNPView::saveAllAsArchive()
@@ -3030,7 +3043,15 @@ void BNPView::saveAllAsArchive()
 
     config.sync();
 
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("EXPORT_MATHOM_BEGIN"),
+        {{QStringLiteral("scope"), QStringLiteral("all-houses")}});
+
     Archive::saveAll(destination);
+
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("EXPORT_MATHOM_OK"),
+        {{QStringLiteral("scope"), QStringLiteral("all-houses")}});
 }
 
 
