@@ -516,13 +516,19 @@ void BNPView::setupActions()
     KActionCollection *ac = actionCollection();
 
     a = ac->addAction(QStringLiteral("basket_export_basket_archive"), this, &BNPView::saveAsArchive);
-    a->setText(i18n("&Mathom-House Archive..."));
+    a->setText(i18n("Current &Mathom-House..."));
     a->setIcon(MathomIcons::icon(QStringLiteral("baskets")));
     a->setShortcut(0);
     m_actSaveAsArchive = a;
 
+    a = ac->addAction(QStringLiteral("basket_export_all_archives"), this, &BNPView::saveAllAsArchive);
+    a->setText(i18n("&All Mathom-Houses..."));
+    a->setIcon(MathomIcons::icon(QStringLiteral("baskets")));
+    a->setShortcut(0);
+    m_actSaveAllAsArchive = a;
+
     a = ac->addAction(QStringLiteral("basket_import_basket_archive"), this, &BNPView::openArchive);
-    a->setText(i18n("&Mathom-House Archive..."));
+    a->setText(i18n("&Mathom / BasKet Archive..."));
     a->setIcon(MathomIcons::icon(QStringLiteral("baskets")));
     a->setShortcut(0);
     m_actOpenArchive = a;
@@ -2871,42 +2877,162 @@ void BNPView::lockBasket()
 void BNPView::saveAsArchive()
 {
     BasketScene *basket = currentBasket();
+    if (!basket)
+        return;
 
     QDir dir;
 
-    KConfigGroup config = KSharedConfig::openConfig()->group(QStringLiteral("Basket Archive"));
-    QString folder = config.readEntry("lastFolder", QDir::homePath()) + QStringLiteral("/");
-    QString url = folder + QString(basket->basketName()).replace(QLatin1Char('/'), QLatin1Char('_')) + QStringLiteral(".baskets");
+    KConfigGroup config =
+        KSharedConfig::openConfig()->group(
+            QStringLiteral("Mathom Archive"));
 
-    QString filter = QStringLiteral("*.baskets|") + i18n("Mathom-House Archives") + QStringLiteral("\n*|") + i18n("All Files");
-    QString destination = url;
+    const QString folder =
+        config.readEntry(
+            "lastFolder",
+            QDir::homePath())
+        + QStringLiteral("/");
+
+    QString destination =
+        folder
+        + QString(basket->basketName())
+              .replace(QLatin1Char('/'), QLatin1Char('_'))
+        + QStringLiteral(".mathom");
+
+    const QString filter =
+        i18n("Mathom Archives (*.mathom);;All Files (*)");
+
     for (bool askAgain = true; askAgain;) {
-        destination = QFileDialog::getSaveFileName(nullptr, i18n("Save as Mathom-House Archive"), destination, filter);
-        if (destination.isEmpty()) // User canceled
+        destination =
+            QFileDialog::getSaveFileName(
+                nullptr,
+                i18n("Export Current Mathom-House"),
+                destination,
+                filter);
+
+        if (destination.isEmpty())
             return;
+
+        if (!destination.endsWith(
+                QStringLiteral(".mathom"),
+                Qt::CaseInsensitive)) {
+            destination += QStringLiteral(".mathom");
+        }
+
         if (dir.exists(destination)) {
-            int result = KMessageBox::questionTwoActionsCancel(
-                this,
-                QStringLiteral("<qt>")
-                    + i18n("The file <b>%1</b> already exists. Do you really want to overwrite it?", QUrl::fromLocalFile(destination).fileName()),
-                i18n("Overwrite File?"),
-                KGuiItem(i18n("&Overwrite"), QStringLiteral("document-save")),
-                KStandardGuiItem::discard());
+            const int result =
+                KMessageBox::questionTwoActionsCancel(
+                    this,
+                    QStringLiteral("<qt>")
+                        + i18n(
+                            "The file <b>%1</b> already exists. Do you really want to overwrite it?",
+                            QUrl::fromLocalFile(destination).fileName()),
+                    i18n("Overwrite File?"),
+                    KGuiItem(
+                        i18n("&Overwrite"),
+                        QStringLiteral("document-save")),
+                    KStandardGuiItem::discard());
+
             if (result == KMessageBox::Cancel)
                 return;
-            else if (result == KMessageBox::Ok)
-                askAgain = false;
-        } else
-            askAgain = false;
-    }
-    bool withSubBaskets =
-        true; // KMessageBox::questionYesNo(this, i18n("Do you want to export sub-baskets too?"), i18n("Save as Mathom-House Archive")) == KMessageBox::Yes;
 
-    config.writeEntry("lastFolder", QUrl::fromLocalFile(destination).adjusted(QUrl::RemoveFilename).path());
+            if (result == KMessageBox::Ok)
+                askAgain = false;
+        } else {
+            askAgain = false;
+        }
+    }
+
+    config.writeEntry(
+        "lastFolder",
+        QUrl::fromLocalFile(destination)
+            .adjusted(QUrl::RemoveFilename)
+            .path());
+
     config.sync();
 
-    Archive::save(basket, withSubBaskets, destination);
+    Archive::save(
+        basket,
+        true,
+        destination);
 }
+
+void BNPView::saveAllAsArchive()
+{
+    if (topLevelItemCount() <= 0)
+        return;
+
+    QDir dir;
+
+    KConfigGroup config =
+        KSharedConfig::openConfig()->group(
+            QStringLiteral("Mathom Archive"));
+
+    const QString folder =
+        config.readEntry(
+            "lastFolder",
+            QDir::homePath())
+        + QStringLiteral("/");
+
+    QString destination =
+        folder
+        + i18n("All_Mathom-Houses")
+        + QStringLiteral(".mathom");
+
+    const QString filter =
+        i18n("Mathom Archives (*.mathom);;All Files (*)");
+
+    for (bool askAgain = true; askAgain;) {
+        destination =
+            QFileDialog::getSaveFileName(
+                nullptr,
+                i18n("Export All Mathom-Houses"),
+                destination,
+                filter);
+
+        if (destination.isEmpty())
+            return;
+
+        if (!destination.endsWith(
+                QStringLiteral(".mathom"),
+                Qt::CaseInsensitive)) {
+            destination += QStringLiteral(".mathom");
+        }
+
+        if (dir.exists(destination)) {
+            const int result =
+                KMessageBox::questionTwoActionsCancel(
+                    this,
+                    QStringLiteral("<qt>")
+                        + i18n(
+                            "The file <b>%1</b> already exists. Do you really want to overwrite it?",
+                            QUrl::fromLocalFile(destination).fileName()),
+                    i18n("Overwrite File?"),
+                    KGuiItem(
+                        i18n("&Overwrite"),
+                        QStringLiteral("document-save")),
+                    KStandardGuiItem::discard());
+
+            if (result == KMessageBox::Cancel)
+                return;
+
+            if (result == KMessageBox::Ok)
+                askAgain = false;
+        } else {
+            askAgain = false;
+        }
+    }
+
+    config.writeEntry(
+        "lastFolder",
+        QUrl::fromLocalFile(destination)
+            .adjusted(QUrl::RemoveFilename)
+            .path());
+
+    config.sync();
+
+    Archive::saveAll(destination);
+}
+
 
 QString BNPView::s_fileToOpen;
 
@@ -2925,11 +3051,18 @@ void BNPView::delayedOpenBasket()
 
 void BNPView::openArchive()
 {
-    QString filter = QStringLiteral("*.baskets|") + i18n("Mathom-House Archives") + QStringLiteral("\n*|") + i18n("All Files");
-    QString path = QFileDialog::getOpenFileName(this, i18n("Open Mathom-House Archive"), QString(), filter);
-    if (!path.isEmpty()) { // User has not canceled
+    const QString filter =
+        i18n("Mathom Archives (*.mathom);;Legacy BasKet Archives (*.baskets);;All Files (*)");
+
+    const QString path =
+        QFileDialog::getOpenFileName(
+            this,
+            i18n("Import Mathom-House Archive"),
+            QString(),
+            filter);
+
+    if (!path.isEmpty())
         Archive::open(path);
-    }
 }
 
 void BNPView::activatedTagShortcut()
