@@ -11,6 +11,7 @@
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QInputDialog>
+#include <QLineEdit>
 #include <QList>
 #include <QMap>
 #include <QPainter>
