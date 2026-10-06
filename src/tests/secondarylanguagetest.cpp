@@ -107,7 +107,7 @@ void SecondaryLanguageTest::loadCatalog()
         QStringLiteral("ig"),
         QStringLiteral("se"),
         QStringLiteral("vi"),
-        QStringLiteral("yo")
+        QStringLiteral("yo"),
             QStringLiteral("ak"),
         QStringLiteral("ee"),
         QStringLiteral("gaa"),
