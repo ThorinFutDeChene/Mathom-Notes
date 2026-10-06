@@ -1,0 +1,67 @@
+{
+  "id": "ku",
+  "name": "Kurde (kurmandji)",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "c",
+      "variants": [
+        "ç"
+      ]
+    },
+    {
+      "source": "C",
+      "variants": [
+        "Ç"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "ê"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ê"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "î"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Î"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "ş"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Ş"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "û"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Û"
+      ]
+    }
+  ]
+}

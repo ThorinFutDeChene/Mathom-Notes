@@ -19,6 +19,8 @@ private Q_SLOTS:
     void yorubaCombinedTone();
     void vietnameseStructuralThenTone();
     void dutchIjAccent();
+    void africanLatinCharacters();
+    void kurdishCharacters();
 };
 
 void SecondaryLanguageEngineTest::esperantoCustomTrigger()
@@ -371,6 +373,118 @@ void SecondaryLanguageEngineTest::dutchIjAccent()
     QCOMPARE(
         result.replacement,
         QStringLiteral("íj́"));
+}
+
+
+void SecondaryLanguageEngineTest::africanLatinCharacters()
+{
+    {
+        const QVector<SecondaryLanguageSelection> languages = {
+            {
+                QStringLiteral("ak"),
+                QStringLiteral("$")
+            }
+        };
+
+        auto result =
+            SecondaryLanguageEngine::transform(
+                QStringLiteral("e$"),
+                languages);
+
+        QVERIFY(result.matched);
+        QCOMPARE(
+            result.replacement,
+            QStringLiteral("ɛ"));
+
+        result =
+            SecondaryLanguageEngine::transform(
+                QStringLiteral("o$"),
+                languages);
+
+        QVERIFY(result.matched);
+        QCOMPARE(
+            result.replacement,
+            QStringLiteral("ɔ"));
+    }
+
+    {
+        const QVector<SecondaryLanguageSelection> languages = {
+            {
+                QStringLiteral("ee"),
+                QStringLiteral("$")
+            }
+        };
+
+        auto result =
+            SecondaryLanguageEngine::transform(
+                QStringLiteral("d$"),
+                languages);
+
+        QVERIFY(result.matched);
+        QCOMPARE(
+            result.replacement,
+            QStringLiteral("ɖ"));
+
+        result =
+            SecondaryLanguageEngine::transform(
+                QStringLiteral("f$"),
+                languages);
+
+        QVERIFY(result.matched);
+        QCOMPARE(
+            result.replacement,
+            QStringLiteral("ƒ"));
+
+        result =
+            SecondaryLanguageEngine::transform(
+                QStringLiteral("n$"),
+                languages);
+
+        QVERIFY(result.matched);
+        QCOMPARE(
+            result.replacement,
+            QStringLiteral("ŋ"));
+    }
+}
+
+void SecondaryLanguageEngineTest::kurdishCharacters()
+{
+    const QVector<SecondaryLanguageSelection> languages = {
+        {
+            QStringLiteral("ku"),
+            QStringLiteral("$")
+        }
+    };
+
+    auto result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("c$"),
+            languages);
+
+    QVERIFY(result.matched);
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("ç"));
+
+    result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("s$"),
+            languages);
+
+    QVERIFY(result.matched);
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("ş"));
+
+    result =
+        SecondaryLanguageEngine::transform(
+            QStringLiteral("u$"),
+            languages);
+
+    QVERIFY(result.matched);
+    QCOMPARE(
+        result.replacement,
+        QStringLiteral("û"));
 }
 
 QTEST_APPLESS_MAIN(SecondaryLanguageEngineTest)

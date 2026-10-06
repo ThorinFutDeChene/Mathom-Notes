@@ -1,0 +1,19 @@
+{
+  "id": "su",
+  "name": "Soundanais",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "e",
+      "variants": [
+        "é"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É"
+      ]
+    }
+  ]
+}

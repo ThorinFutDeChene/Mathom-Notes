@@ -1,0 +1,163 @@
+{
+  "id": "ee",
+  "name": "Éwé",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "a",
+      "variants": [
+        "á",
+        "à",
+        "ã"
+      ]
+    },
+    {
+      "source": "A",
+      "variants": [
+        "Á",
+        "À",
+        "Ã"
+      ]
+    },
+    {
+      "source": "d",
+      "variants": [
+        "ɖ"
+      ]
+    },
+    {
+      "source": "D",
+      "variants": [
+        "Ɖ"
+      ]
+    },
+    {
+      "source": "e",
+      "variants": [
+        "é",
+        "è",
+        "ẽ",
+        "ɛ",
+        "ɛ́",
+        "ɛ̀",
+        "ɛ̃"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "É",
+        "È",
+        "Ẽ",
+        "Ɛ",
+        "Ɛ́",
+        "Ɛ̀",
+        "Ɛ̃"
+      ]
+    },
+    {
+      "source": "f",
+      "variants": [
+        "ƒ"
+      ]
+    },
+    {
+      "source": "F",
+      "variants": [
+        "Ƒ"
+      ]
+    },
+    {
+      "source": "g",
+      "variants": [
+        "ɣ"
+      ]
+    },
+    {
+      "source": "G",
+      "variants": [
+        "Ɣ"
+      ]
+    },
+    {
+      "source": "i",
+      "variants": [
+        "í",
+        "ì",
+        "ĩ"
+      ]
+    },
+    {
+      "source": "I",
+      "variants": [
+        "Í",
+        "Ì",
+        "Ĩ"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ŋ"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ŋ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ó",
+        "ò",
+        "õ",
+        "ɔ",
+        "ɔ́",
+        "ɔ̀",
+        "ɔ̃"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ó",
+        "Ò",
+        "Õ",
+        "Ɔ",
+        "Ɔ́",
+        "Ɔ̀",
+        "Ɔ̃"
+      ]
+    },
+    {
+      "source": "u",
+      "variants": [
+        "ú",
+        "ù",
+        "ũ"
+      ]
+    },
+    {
+      "source": "U",
+      "variants": [
+        "Ú",
+        "Ù",
+        "Ũ"
+      ]
+    },
+    {
+      "source": "v",
+      "variants": [
+        "ʋ"
+      ]
+    },
+    {
+      "source": "V",
+      "variants": [
+        "Ʋ"
+      ]
+    }
+  ]
+}

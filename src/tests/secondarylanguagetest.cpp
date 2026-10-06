@@ -83,7 +83,7 @@ void SecondaryLanguageTest::loadCatalog()
 
     QCOMPARE(
         profiles.size(),
-        55);
+        61);
 
     QStringList ids;
 
@@ -108,7 +108,13 @@ void SecondaryLanguageTest::loadCatalog()
         QStringLiteral("se"),
         QStringLiteral("vi"),
         QStringLiteral("yo")
-    };
+            QStringLiteral("ak"),
+        QStringLiteral("ee"),
+        QStringLiteral("gaa"),
+        QStringLiteral("ku"),
+        QStringLiteral("su"),
+        QStringLiteral("tn"),
+};
 
     for (const QString &id : requiredIds) {
         QVERIFY2(

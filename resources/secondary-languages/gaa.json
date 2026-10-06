@@ -1,0 +1,43 @@
+{
+  "id": "gaa",
+  "name": "Ga",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "e",
+      "variants": [
+        "ɛ"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ɛ"
+      ]
+    },
+    {
+      "source": "n",
+      "variants": [
+        "ŋ"
+      ]
+    },
+    {
+      "source": "N",
+      "variants": [
+        "Ŋ"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ɔ"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ɔ"
+      ]
+    }
+  ]
+}

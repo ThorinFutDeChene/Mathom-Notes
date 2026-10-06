@@ -1,0 +1,43 @@
+{
+  "id": "tn",
+  "name": "Tswana",
+  "defaultTrigger": "xx",
+  "rules": [
+    {
+      "source": "e",
+      "variants": [
+        "ê"
+      ]
+    },
+    {
+      "source": "E",
+      "variants": [
+        "Ê"
+      ]
+    },
+    {
+      "source": "o",
+      "variants": [
+        "ô"
+      ]
+    },
+    {
+      "source": "O",
+      "variants": [
+        "Ô"
+      ]
+    },
+    {
+      "source": "s",
+      "variants": [
+        "š"
+      ]
+    },
+    {
+      "source": "S",
+      "variants": [
+        "Š"
+      ]
+    }
+  ]
+}
