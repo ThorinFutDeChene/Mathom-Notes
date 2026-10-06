@@ -66,9 +66,11 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     dialog.setValue(0);
     dialog.show();
 
-    // Create the temporary folder:
+    // Create a clean temporary folder. A previous interrupted export must
+    // never leave stale files that affect the next archive.
     QString tempFolder = Global::savesFolder() + QStringLiteral("temp-archive/");
-    dir.mkdir(tempFolder);
+    Tools::deleteRecursively(tempFolder);
+    dir.mkpath(tempFolder);
 
     // Create the temporary archive file:
     QString tempDestination = tempFolder + QStringLiteral("temp-archive.tar.gz");
@@ -143,8 +145,10 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     previewBasket->doHoverEffects(nullptr, Note::None);
     // Take the screenshot:
     previewBasket->render(&painter);
-    // Go back to the old look:
-    previewBasket->selectSelection(selection);
+    // Go back to the old look. selectedNotes() legitimately returns
+    // nullptr when nothing was selected.
+    if (selection)
+        previewBasket->selectSelection(selection);
     previewBasket->setFocusedNote(focusedNote);
     previewBasket->doHoverEffects();
     // End and save our splandid painting:
@@ -161,8 +165,8 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
         ulong archiveSize = QFile(tempDestination).size();
         QTextStream stream(&file);
         // stream.setEncoding(QStringConverter::Latin1);
-        stream << "BasKetNP:archive\n"
-               << "version:0.6.1\n"
+        stream << "MathomNotes:archive\n"
+               << "version:1.0\n"
                //             << "read-compatible:0.6.1\n"
                //             << "write-compatible:0.6.1\n"
                << "preview*:" << previewSize << "\n";
@@ -822,8 +826,8 @@ Archive::createArchiveFromSource(const QString &sourcePath, const QString &previ
         ulong archiveSize = QFile(tempDestinationFile).size();
         QTextStream stream(&file);
         // stream.setEncoding(QStringConverter::Latin1);
-        stream << "BasKetNP:archive\n"
-               << "version:0.6.1\n"
+        stream << "MathomNotes:archive\n"
+               << "version:1.0\n"
                //             << "read-compatible:0.6.1\n"
                //             << "write-compatible:0.6.1\n"
                << "preview*:" << previewSize << "\n";
@@ -1009,7 +1013,7 @@ void Archive::importBasketIcon(QDomElement properties, const QString &extraction
     if (iconName.isEmpty() || iconName == QStringLiteral("basket"))
         return;
 
-    // A .baskets archive is self-contained: when it contains a snapshot of
+    // A Mathom archive is self-contained: when it contains a snapshot of
     // the hierarchy icon, always restore that snapshot instead of deciding
     // from the icon theme available on the current machine. This avoids the
     // lab/native discrepancy where KIconLoader could resolve an icon in the
