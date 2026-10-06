@@ -199,6 +199,214 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     dir.rmdir(tempFolder);
 }
 
+
+void Archive::saveAll(const QString &destination)
+{
+    if (!Global::bnpView || Global::bnpView->topLevelItemCount() <= 0)
+        return;
+
+    QDir dir;
+    QProgressDialog dialog;
+    dialog.setWindowTitle(i18n("Save All Mathom-Houses"));
+    dialog.setLabelText(i18n("Saving all Mathom-Houses. Please wait..."));
+    dialog.setCancelButton(nullptr);
+    dialog.setAutoClose(true);
+
+    int basketTotal = 0;
+    for (int i = 0; i < Global::bnpView->topLevelItemCount(); ++i) {
+        BasketListViewItem *item = Global::bnpView->topLevelItem(i);
+        basketTotal += 1 + Global::bnpView->basketCount(item);
+    }
+
+    dialog.setRange(0, 2 + basketTotal);
+    dialog.setValue(0);
+    dialog.show();
+
+    const QString tempFolder =
+        Global::savesFolder() + QStringLiteral("temp-archive/");
+
+    Tools::deleteRecursively(tempFolder);
+    dir.mkpath(tempFolder);
+
+    const QString tempDestination =
+        tempFolder + QStringLiteral("temp-archive.tar.gz");
+
+    KTar tar(tempDestination, QStringLiteral("application/x-gzip"));
+    if (!tar.open(QIODevice::WriteOnly)) {
+        KMessageBox::error(
+            nullptr,
+            i18n("Failed to create the temporary Mathom archive."),
+            i18n("Mathom Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
+
+    tar.writeDir(QStringLiteral("baskets"), QString(), QString());
+    dialog.setValue(dialog.value() + 1);
+
+    QStringList backgrounds;
+    QList<Tag *> tags;
+
+    for (int i = 0; i < Global::bnpView->topLevelItemCount(); ++i) {
+        BasketListViewItem *item = Global::bnpView->topLevelItem(i);
+        BasketScene *basket = item->basket();
+
+        saveBasketToArchive(
+            basket,
+            true,
+            &tar,
+            backgrounds,
+            tempFolder,
+            &dialog);
+
+        listUsedTags(basket, true, tags);
+    }
+
+    QString data;
+    QXmlStreamWriter treeStream(&data);
+    XMLWork::setupXmlStream(treeStream, QStringLiteral("basketTree"));
+
+    for (int i = 0; i < Global::bnpView->topLevelItemCount(); ++i) {
+        Global::bnpView->saveSubHierarchy(
+            Global::bnpView->topLevelItem(i),
+            treeStream,
+            true);
+    }
+
+    treeStream.writeEndElement();
+    treeStream.writeEndDocument();
+
+    const QString treePath =
+        tempFolder + QStringLiteral("baskets.xml");
+
+    FileStorage::safelySaveToFile(treePath, data);
+    tar.addLocalFile(treePath, QStringLiteral("baskets/baskets.xml"));
+    dir.remove(treePath);
+
+    const QString tagsPath =
+        tempFolder + QStringLiteral("tags.xml");
+
+    Tag::saveTagsTo(tags, tagsPath);
+    tar.addLocalFile(tagsPath, QStringLiteral("tags.xml"));
+    dir.remove(tagsPath);
+
+    const QString tempIconFile =
+        tempFolder + QStringLiteral("icon.png");
+
+    for (Tag *tag : std::as_const(tags)) {
+        for (State *state : tag->states()) {
+            QPixmap icon =
+                KIconLoader::global()->loadIcon(
+                    state->emblem(),
+                    KIconLoader::Small,
+                    16,
+                    KIconLoader::DefaultState,
+                    QStringList(),
+                    nullptr,
+                    true);
+
+            if (!icon.isNull()) {
+                icon.save(tempIconFile, "PNG");
+                QString iconFileName =
+                    state->emblem().replace(
+                        QLatin1Char('/'),
+                        QLatin1Char('_'));
+
+                tar.addLocalFile(
+                    tempIconFile,
+                    QStringLiteral("tag-emblems/")
+                        + iconFileName);
+            }
+        }
+    }
+
+    dir.remove(tempIconFile);
+    tar.close();
+
+    BasketScene *previewBasket =
+        Global::bnpView->currentBasket();
+
+    QString previewPath =
+        tempFolder + QStringLiteral("preview.png");
+
+    if (previewBasket) {
+        QPixmap previewPixmap(
+            previewBasket->width(),
+            previewBasket->height());
+
+        QPainter painter(&previewPixmap);
+        NoteSelection *selection =
+            previewBasket->selectedNotes();
+
+        previewBasket->unselectAll();
+
+        Note *focusedNote =
+            previewBasket->focusedNote();
+
+        previewBasket->setFocusedNote(nullptr);
+        previewBasket->doHoverEffects(nullptr, Note::None);
+        previewBasket->render(&painter);
+        previewBasket->selectSelection(selection);
+        previewBasket->setFocusedNote(focusedNote);
+        previewBasket->doHoverEffects();
+        painter.end();
+
+        previewPixmap.toImage()
+            .scaled(256, 256, Qt::KeepAspectRatio)
+            .save(previewPath, "PNG");
+    }
+
+    QFile file(destination);
+    if (file.open(QIODevice::WriteOnly)) {
+        const ulong previewSize =
+            QFile(previewPath).size();
+
+        const ulong archiveSize =
+            QFile(tempDestination).size();
+
+        QTextStream output(&file);
+        output << "MathomNotes:archive\n"
+               << "version:1.0\n"
+               << "scope:all\n"
+               << "preview*:" << previewSize << "\n";
+        output.flush();
+
+        const unsigned long bufferSize = 1024;
+        char *buffer = new char[bufferSize];
+        long sizeRead;
+
+        QFile previewFile(previewPath);
+        if (previewFile.open(QIODevice::ReadOnly)) {
+            while ((sizeRead =
+                        previewFile.read(
+                            buffer,
+                            bufferSize)) > 0) {
+                file.write(buffer, sizeRead);
+            }
+        }
+
+        output << "archive*:" << archiveSize << "\n";
+        output.flush();
+
+        QFile archiveFile(tempDestination);
+        if (archiveFile.open(QIODevice::ReadOnly)) {
+            while ((sizeRead =
+                        archiveFile.read(
+                            buffer,
+                            bufferSize)) > 0) {
+                file.write(buffer, sizeRead);
+            }
+        }
+
+        delete[] buffer;
+        file.close();
+    }
+
+    dialog.setValue(dialog.maximum());
+    Tools::deleteRecursively(tempFolder);
+}
+
+
 void Archive::saveBasketToArchive(BasketScene *basket,
                                   bool recursive,
                                   KTar *tar,
@@ -402,11 +610,22 @@ Archive::IOErrorCode Archive::extractArchive(const QString &path, const QString 
         QTextStream stream(&file);
         // stream.setEncoding(QStringConverter::Latin1);
         QString line = stream.readLine();
-        if (line != QStringLiteral("BasKetNP:archive")) {
+        const bool nativeMathomArchive =
+            line == QStringLiteral("MathomNotes:archive");
+        const bool legacyBasketArchive =
+            line == QStringLiteral("BasKetNP:archive");
+
+        if (!nativeMathomArchive && !legacyBasketArchive) {
             file.close();
             dir.removeRecursively();
             return IOErrorCode::NotABasketArchive;
         }
+
+        const QString expectedVersion =
+            nativeMathomArchive
+                ? QStringLiteral("1.0")
+                : QStringLiteral("0.6.1");
+
         QString version;
         QStringList readCompatibleVersions;
         QStringList writeCompatibleVersions;
@@ -453,12 +672,12 @@ Archive::IOErrorCode Archive::extractArchive(const QString &path, const QString 
                 }
                 stream.seek(stream.pos() + size);
             } else if (key == QStringLiteral("archive*")) {
-                if (version != QStringLiteral("0.6.1") && readCompatibleVersions.contains(QStringLiteral("0.6.1"))
-                    && !writeCompatibleVersions.contains(QStringLiteral("0.6.1"))) {
+                if (version != expectedVersion && readCompatibleVersions.contains(expectedVersion)
+                    && !writeCompatibleVersions.contains(expectedVersion)) {
                     retCode = IOErrorCode::PossiblyCompatibleBasketVersion;
                 }
-                if (version != QStringLiteral("0.6.1") && !readCompatibleVersions.contains(QStringLiteral("0.6.1"))
-                    && !writeCompatibleVersions.contains(QStringLiteral("0.6.1"))) {
+                if (version != expectedVersion && !readCompatibleVersions.contains(expectedVersion)
+                    && !writeCompatibleVersions.contains(expectedVersion)) {
                     file.close();
                     dir.removeRecursively();
                     return IOErrorCode::IncompatibleBasketVersion;
