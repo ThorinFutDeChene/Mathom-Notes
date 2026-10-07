@@ -2202,6 +2202,9 @@ void BackupDialog::backup()
         thread,
         dialog);
 
+    dialog.hide();
+    qApp->processEvents();
+
     if (!thread.success()) {
         QFile::remove(destination);
 
@@ -2336,6 +2339,9 @@ void BackupDialog::restore()
         restoreThread,
         validationDialog);
 
+    validationDialog.hide();
+    qApp->processEvents();
+
     if (!restoreThread.success()) {
         DiagnosticManager::instance()
             .logEvent(
@@ -2463,6 +2469,9 @@ void BackupDialog::restore()
     waitForThread(
         safetyThread,
         safetyDialog);
+
+    safetyDialog.hide();
+    qApp->processEvents();
 
     if (!safetyThread.success()) {
         DiagnosticManager::instance()
