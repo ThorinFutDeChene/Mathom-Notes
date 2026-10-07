@@ -584,57 +584,6 @@ void PageDeleteCommand::redo()
 }
 
 
-PagePropertiesCommand::PagePropertiesCommand(
-    BasketScene *basket,
-    const QString &pageId,
-    const PageHistoryState &oldState,
-    const PageHistoryState &newState,
-    QUndoCommand *parent)
-    : QUndoCommand(parent)
-    , m_basket(basket)
-    , m_pageId(pageId)
-    , m_oldState(oldState)
-    , m_newState(newState)
-{
-    setText(
-        i18n(
-            "Change Page \"%1\" Properties",
-            newState.title));
-}
-
-void PagePropertiesCommand::apply(
-    const PageHistoryState &state)
-{
-    if (!m_basket
-        || m_pageId.isEmpty()) {
-        return;
-    }
-
-    revealBasketForHistory(
-        m_basket,
-        m_pageId);
-
-    m_basket->setCurrentPageAppearance(
-        state.backgroundImage,
-        state.backgroundColor,
-        state.textColor);
-
-    m_basket->setCurrentPageDisposition(
-        state.freeLayout,
-        state.columnCount);
-}
-
-void PagePropertiesCommand::undo()
-{
-    apply(m_oldState);
-}
-
-void PagePropertiesCommand::redo()
-{
-    apply(m_newState);
-}
-
-
 /** Global Mathom text modification history */
 
 MathomTextEditCommand::MathomTextEditCommand(
