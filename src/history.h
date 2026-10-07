@@ -190,30 +190,6 @@ private:
 };
 
 
-class PagePropertiesCommand : public QUndoCommand
-{
-public:
-    PagePropertiesCommand(
-        BasketScene *basket,
-        const QString &pageId,
-        const PageHistoryState &oldState,
-        const PageHistoryState &newState,
-        QUndoCommand *parent = nullptr);
-
-    void undo() override;
-    void redo() override;
-
-private:
-    void apply(
-        const PageHistoryState &state);
-
-    QPointer<BasketScene> m_basket;
-    QString m_pageId;
-    PageHistoryState m_oldState;
-    PageHistoryState m_newState;
-};
-
-
 class MathomDeleteCommand : public QUndoCommand
 {
 public:
