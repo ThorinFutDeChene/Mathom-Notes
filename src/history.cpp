@@ -63,6 +63,209 @@ void revealBasketForHistory(
     }
 }
 
+PageHistoryState pageStateForHistory(
+    BasketScene *basket,
+    const QString &pageId,
+    int *index = nullptr)
+{
+    PageHistoryState state;
+
+    if (index)
+        *index = -1;
+
+    if (!basket)
+        return state;
+
+    const auto &pages =
+        basket->pages();
+
+    for (int pageIndex = 0;
+         pageIndex < pages.size();
+         ++pageIndex) {
+        const BasketScene::PageInfo &page =
+            pages.at(pageIndex);
+
+        if (page.id != pageId)
+            continue;
+
+        state.id = page.id;
+        state.title = page.title;
+        state.dayKey = page.dayKey;
+        state.backgroundImage =
+            page.backgroundImage;
+        state.backgroundColor =
+            page.backgroundColor;
+        state.textColor =
+            page.textColor;
+        state.freeLayout =
+            page.freeLayout;
+        state.columnCount =
+            page.columnCount;
+        state.layoutOwned =
+            page.layoutOwned;
+
+        if (index)
+            *index = pageIndex;
+
+        break;
+    }
+
+    return state;
+}
+
+BasketScene::PageInfo pageInfoFromHistory(
+    const PageHistoryState &state)
+{
+    BasketScene::PageInfo page;
+
+    page.id = state.id;
+    page.title = state.title;
+    page.dayKey = state.dayKey;
+    page.backgroundImage =
+        state.backgroundImage;
+    page.backgroundColor =
+        state.backgroundColor;
+    page.textColor =
+        state.textColor;
+    page.freeLayout =
+        state.freeLayout;
+    page.columnCount =
+        state.columnCount;
+    page.layoutOwned =
+        state.layoutOwned;
+
+    return page;
+}
+
+QSet<QString> pageIdsInTreeForHistory(
+    Note *note)
+{
+    QSet<QString> result;
+
+    if (!note)
+        return result;
+
+    if (note->content()) {
+        if (!note->pageId().isEmpty())
+            result.insert(note->pageId());
+
+        return result;
+    }
+
+    for (Note *child = note->firstChild();
+         child;
+         child = child->next()) {
+        result.unite(
+            pageIdsInTreeForHistory(child));
+    }
+
+    return result;
+}
+
+void collectPageRootsForHistory(
+    Note *first,
+    const QString &pageId,
+    QList<DeletedMathomPosition> &positions)
+{
+    for (Note *note = first;
+         note;
+         note = note->next()) {
+
+        bool detachWholeNode = false;
+
+        if (note->content()) {
+            detachWholeNode =
+                note->pageId() == pageId;
+        } else {
+            const QSet<QString> childPageIds =
+                pageIdsInTreeForHistory(note);
+
+            detachWholeNode =
+                (childPageIds.size() == 1
+                 && childPageIds.contains(pageId))
+                || (childPageIds.isEmpty()
+                    && note->pageId() == pageId);
+        }
+
+        if (detachWholeNode) {
+            DeletedMathomPosition position;
+            position.note = note;
+            position.parent =
+                note->parentNote();
+            position.previous =
+                note->prev();
+            position.next =
+                note->next();
+
+            positions.append(position);
+            continue;
+        }
+
+        if (!note->content()) {
+            collectPageRootsForHistory(
+                note->firstChild(),
+                pageId,
+                positions);
+        }
+    }
+}
+
+void suspendPagePositions(
+    BasketScene *basket,
+    const QList<DeletedMathomPosition> &positions)
+{
+    if (!basket)
+        return;
+
+    for (const DeletedMathomPosition &position :
+         positions) {
+        if (position.note) {
+            basket->suspendMathomForUndo(
+                position.note);
+        }
+    }
+}
+
+void restorePagePositions(
+    BasketScene *basket,
+    const QList<DeletedMathomPosition> &positions)
+{
+    if (!basket)
+        return;
+
+    for (int index = positions.size() - 1;
+         index >= 0;
+         --index) {
+        const DeletedMathomPosition &position =
+            positions.at(index);
+
+        if (!position.note)
+            continue;
+
+        basket->restoreSuspendedMathom(
+            position.note,
+            position.parent,
+            position.previous,
+            position.next);
+    }
+}
+
+void discardPagePositions(
+    BasketScene *basket,
+    const QList<DeletedMathomPosition> &positions)
+{
+    if (!basket)
+        return;
+
+    for (const DeletedMathomPosition &position :
+         positions) {
+        if (position.note) {
+            basket->discardSuspendedMathom(
+                position.note);
+        }
+    }
+}
+
 }
 
 /** Global Page modification history */
@@ -151,6 +354,286 @@ void PageReorderCommand::redo()
     m_basket->reorderPages(
         m_newOrder);
 }
+
+PageCreateCommand::PageCreateCommand(
+    BasketScene *basket,
+    const QString &pageId,
+    const QString &previousPageId,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_basket(basket)
+    , m_previousPageId(previousPageId)
+{
+    if (!m_basket)
+        return;
+
+    m_page =
+        pageStateForHistory(
+            m_basket,
+            pageId,
+            &m_pageIndex);
+
+    if (m_page.id.isEmpty())
+        return;
+
+    collectPageRootsForHistory(
+        m_basket->firstNote(),
+        m_page.id,
+        m_positions);
+
+    setText(
+        i18n(
+            "Create Page \"%1\"",
+            m_page.title));
+}
+
+PageCreateCommand::~PageCreateCommand()
+{
+    if (!m_detached
+        || !m_basket) {
+        return;
+    }
+
+    discardPagePositions(
+        m_basket,
+        m_positions);
+}
+
+void PageCreateCommand::undo()
+{
+    if (!m_basket
+        || m_page.id.isEmpty()
+        || m_detached) {
+        return;
+    }
+
+    revealBasketForHistory(
+        m_basket,
+        m_page.id);
+
+    suspendPagePositions(
+        m_basket,
+        m_positions);
+
+    if (!m_basket->detachPageForUndo(
+            m_page.id,
+            /*allowLastPage=*/true,
+            m_previousPageId)) {
+        restorePagePositions(
+            m_basket,
+            m_positions);
+        return;
+    }
+
+    m_detached = true;
+}
+
+void PageCreateCommand::redo()
+{
+    /*
+     * QUndoStack::push() calls redo() immediately. The Page already
+     * exists because the + button created it just before this command
+     * entered history.
+     */
+    if (m_firstRedo) {
+        m_firstRedo = false;
+        return;
+    }
+
+    if (!m_basket
+        || !m_detached
+        || m_page.id.isEmpty()) {
+        return;
+    }
+
+    if (!m_basket->restorePageForUndo(
+            pageInfoFromHistory(m_page),
+            m_pageIndex,
+            m_page.id)) {
+        return;
+    }
+
+    restorePagePositions(
+        m_basket,
+        m_positions);
+
+    revealBasketForHistory(
+        m_basket,
+        m_page.id);
+
+    m_detached = false;
+}
+
+
+PageDeleteCommand::PageDeleteCommand(
+    BasketScene *basket,
+    const QString &pageId,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_basket(basket)
+{
+    if (!m_basket)
+        return;
+
+    m_currentPageBefore =
+        m_basket->currentPageId();
+
+    m_page =
+        pageStateForHistory(
+            m_basket,
+            pageId,
+            &m_pageIndex);
+
+    if (m_page.id.isEmpty()
+        || m_basket->pages().size() <= 1) {
+        return;
+    }
+
+    const auto &pages =
+        m_basket->pages();
+
+    if (m_pageIndex + 1
+        < pages.size()) {
+        m_replacementPageId =
+            pages.at(
+                m_pageIndex + 1)
+                .id;
+    } else if (m_pageIndex > 0) {
+        m_replacementPageId =
+            pages.at(
+                m_pageIndex - 1)
+                .id;
+    }
+
+    collectPageRootsForHistory(
+        m_basket->firstNote(),
+        m_page.id,
+        m_positions);
+
+    setText(
+        i18n(
+            "Delete Page \"%1\"",
+            m_page.title));
+}
+
+PageDeleteCommand::~PageDeleteCommand()
+{
+    if (!m_deleted
+        || !m_basket) {
+        return;
+    }
+
+    discardPagePositions(
+        m_basket,
+        m_positions);
+}
+
+void PageDeleteCommand::undo()
+{
+    if (!m_basket
+        || !m_deleted
+        || m_page.id.isEmpty()) {
+        return;
+    }
+
+    if (!m_basket->restorePageForUndo(
+            pageInfoFromHistory(m_page),
+            m_pageIndex,
+            m_currentPageBefore)) {
+        return;
+    }
+
+    restorePagePositions(
+        m_basket,
+        m_positions);
+
+    revealBasketForHistory(
+        m_basket,
+        m_currentPageBefore);
+
+    m_deleted = false;
+}
+
+void PageDeleteCommand::redo()
+{
+    if (!m_basket
+        || m_deleted
+        || m_page.id.isEmpty()) {
+        return;
+    }
+
+    revealBasketForHistory(
+        m_basket,
+        m_page.id);
+
+    suspendPagePositions(
+        m_basket,
+        m_positions);
+
+    if (!m_basket->detachPageForUndo(
+            m_page.id,
+            /*allowLastPage=*/false,
+            m_replacementPageId)) {
+        restorePagePositions(
+            m_basket,
+            m_positions);
+        return;
+    }
+
+    m_deleted = true;
+}
+
+
+PagePropertiesCommand::PagePropertiesCommand(
+    BasketScene *basket,
+    const QString &pageId,
+    const PageHistoryState &oldState,
+    const PageHistoryState &newState,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_basket(basket)
+    , m_pageId(pageId)
+    , m_oldState(oldState)
+    , m_newState(newState)
+{
+    setText(
+        i18n(
+            "Change Page \"%1\" Properties",
+            newState.title));
+}
+
+void PagePropertiesCommand::apply(
+    const PageHistoryState &state)
+{
+    if (!m_basket
+        || m_pageId.isEmpty()) {
+        return;
+    }
+
+    revealBasketForHistory(
+        m_basket,
+        m_pageId);
+
+    m_basket->setCurrentPageAppearance(
+        state.backgroundImage,
+        state.backgroundColor,
+        state.textColor);
+
+    m_basket->setCurrentPageDisposition(
+        state.freeLayout,
+        state.columnCount);
+}
+
+void PagePropertiesCommand::undo()
+{
+    apply(m_oldState);
+}
+
+void PagePropertiesCommand::redo()
+{
+    apply(m_newState);
+}
+
 
 /** Global Mathom text modification history */
 
