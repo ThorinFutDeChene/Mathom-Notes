@@ -136,7 +136,8 @@ HTMLExporter::HTMLExporter(BasketScene *basket)
     dialog->setValue(dialog->value() + 1);
 
     m_succeeded =
-        QFile::exists(filePath);
+        !m_failed
+        && QFile::exists(filePath);
 }
 
 HTMLExporter::~HTMLExporter() = default;
@@ -182,7 +183,8 @@ void HTMLExporter::prepareExport(
 
     QDir dir;
 
-    dir.mkpath(filesFolderPath);
+    if (!dir.mkpath(filesFolderPath))
+        m_failed = true;
 
     iconsFolderPath =
         filesFolderPath
@@ -205,9 +207,12 @@ void HTMLExporter::prepareExport(
             "mathom-houses")
         + QLatin1Char('/');
 
-    dir.mkpath(iconsFolderPath);
-    dir.mkpath(imagesFolderPath);
-    dir.mkpath(basketsFolderPath);
+    if (!dir.mkpath(iconsFolderPath))
+        m_failed = true;
+    if (!dir.mkpath(imagesFolderPath))
+        m_failed = true;
+    if (!dir.mkpath(basketsFolderPath))
+        m_failed = true;
 
     dialog->setValue(dialog->value() + 1);
 }
@@ -674,11 +679,40 @@ void HTMLExporter::exportBasketPage(
 
     // Create the data folder for this basket:
     QDir dir;
-    dir.mkpath(dataFolderPath);
+    if (!dir.mkpath(dataFolderPath))
+        m_failed = true;
 
     // Generate basket icons:
     QString basketIcon16 = iconsFolderName + copyIcon(basket->icon(), 16);
     QString basketIcon32 = iconsFolderName + copyIcon(basket->icon(), 32);
+
+    QString pageBackgroundFileName;
+
+    if (basket->hasBackgroundImage()
+        && basket->backgroundPixmap()
+        && !basket->backgroundPixmap()->isNull()) {
+        QString suffix =
+            pageId.isEmpty()
+                ? QStringLiteral("legacy")
+                : pageId;
+
+        suffix.replace(
+            QRegularExpression(
+                QStringLiteral("[^A-Za-z0-9_-]")),
+            QStringLiteral("_"));
+
+        pageBackgroundFileName =
+            QStringLiteral("page_background_%1.png")
+                .arg(suffix);
+
+        if (!basket->backgroundPixmap()->save(
+                imagesFolderPath
+                    + pageBackgroundFileName,
+                "PNG")) {
+            pageBackgroundFileName.clear();
+            m_failed = true;
+        }
+    }
 
     // Generate the [+] image for groups:
     QPixmap expandGroup(Note::EXPANDER_WIDTH, Note::EXPANDER_HEIGHT);
@@ -723,8 +757,10 @@ void HTMLExporter::exportBasketPage(
 
     // Open the file to write:
     QFile file(basketFilePath);
-    if (!file.open(QIODevice::WriteOnly))
+    if (!file.open(QIODevice::WriteOnly)) {
+        m_failed = true;
         return;
+    }
     stream.setDevice(&file);
 
     // Output the header:
@@ -781,6 +817,17 @@ void HTMLExporter::exportBasketPage(
     stream << "   .basket { ";
     if (hasBackgroundColor) {
         stream << "background-color: " << basket->backgroundColor().name() << "; ";
+    }
+    if (!pageBackgroundFileName.isEmpty()) {
+        stream
+            << "background-image: url('"
+            << imagesFolderName
+            << pageBackgroundFileName
+            << "'); background-position: top left; background-repeat: "
+            << (basket->isTiledBackground()
+                    ? QStringLiteral("repeat")
+                    : QStringLiteral("no-repeat"))
+            << "; ";
     }
     stream << "border: solid " << borderColor
            << " 1px; "
@@ -1124,7 +1171,7 @@ void HTMLExporter::writeBasketTree(BasketScene *currentBasket, BasketScene *bask
 
     // Write the sub-baskets lines & end the current one:
     BasketListViewItem *item = Global::bnpView->listViewItemForBasket(basket);
-    if (item->childCount() >= 0) {
+    if (item->childCount() > 0) {
         stream << "\n" << spaces.fill(QLatin1Char(' '), indent) << " <ul>\n";
         for (int i = 0; i < item->childCount(); i++)
             writeBasketTree(currentBasket, ((BasketListViewItem *)item->child(i))->basket(), indent + 2);
