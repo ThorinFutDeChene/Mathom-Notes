@@ -32,6 +32,7 @@
 #include <QProcess>
 
 #include "aboutdata.h"
+#include "backup.h"
 #include "basketscene.h"
 #include "bnpview.h"
 #include "debugwindow.h"
@@ -94,6 +95,8 @@ bool Settings::s_spellCheckTextNotes = true;
 bool Settings::s_versionSyncEnabled = false;
 // Updates
 bool Settings::s_allowDevelopmentUpdates = false;
+// Backups
+bool Settings::s_automaticBackupsEnabled = false;
 
 void Settings::loadConfig()
 {
@@ -193,6 +196,9 @@ void Settings::loadConfig()
 
     config = Global::config()->group(QStringLiteral("Updates"));
     setAllowDevelopmentUpdates(config.readEntry("allowDevelopmentVersions", false));
+
+    config = Global::config()->group(QStringLiteral("Backups"));
+    setAutomaticBackupsEnabled(config.readEntry("automaticEnabled", false));
 }
 
 void Settings::saveConfig()
@@ -264,6 +270,9 @@ void Settings::saveConfig()
 
     config = Global::config()->group(QStringLiteral("Updates"));
     config.writeEntry("allowDevelopmentVersions", allowDevelopmentUpdates());
+
+    config = Global::config()->group(QStringLiteral("Backups"));
+    config.writeEntry("automaticEnabled", automaticBackupsEnabled());
 
     config.sync();
 }
@@ -507,6 +516,83 @@ void GeneralPage::defaults()
 void GeneralPage::cancel()
 {
     // TODO
+}
+
+/** BackupSettingsPage */
+BackupSettingsPage::BackupSettingsPage(QObject *parent, const KPluginMetaData &data)
+    : AbstractSettingsPage(parent, data)
+{
+    auto *layout = new QVBoxLayout(this->widget());
+
+    m_automaticBackups =
+        new QCheckBox(
+            i18n("Activer les sauvegardes automatiques"),
+            this->widget());
+
+    m_automaticBackups->setToolTip(
+        i18n(
+            "Au lancement de Mathom, une sauvegarde est créée automatiquement "
+            "si la sauvegarde journalière, hebdomadaire ou mensuelle est due."));
+
+    layout->addWidget(m_automaticBackups);
+
+    auto *description =
+        new QLabel(
+            i18n(
+                "Mathom maintient trois points de sauvegarde indépendants : "
+                "une sauvegarde journalière à la première ouverture du jour, "
+                "une sauvegarde hebdomadaire à la première ouverture de la semaine "
+                "et une sauvegarde mensuelle à la première ouverture du mois."),
+            this->widget());
+
+    description->setWordWrap(true);
+    layout->addWidget(description);
+
+    m_destination =
+        new QLabel(
+            this->widget());
+
+    m_destination->setWordWrap(true);
+    m_destination->setTextInteractionFlags(
+        Qt::TextSelectableByMouse);
+
+    layout->addWidget(m_destination);
+    layout->addStretch();
+
+    connect(
+        m_automaticBackups,
+        &QCheckBox::toggled,
+        this,
+        &KCModule::markAsChanged);
+
+    BackupSettingsPage::load();
+}
+
+void BackupSettingsPage::load()
+{
+    m_automaticBackups->setChecked(
+        Settings::automaticBackupsEnabled());
+
+    m_destination->setText(
+        i18n(
+            "Emplacement des sauvegardes automatiques : <b>%1</b>",
+            Backup::automaticBackupDirectory()));
+
+    setNeedsSave(false);
+}
+
+void BackupSettingsPage::save()
+{
+    Settings::setAutomaticBackupsEnabled(
+        m_automaticBackups->isChecked());
+
+    Settings::saveConfig();
+    setNeedsSave(false);
+}
+
+void BackupSettingsPage::defaults()
+{
+    m_automaticBackups->setChecked(false);
 }
 
 /** BasketsPage */
