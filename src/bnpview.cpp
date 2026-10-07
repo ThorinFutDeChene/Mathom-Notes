@@ -13,6 +13,7 @@
 #include <QGraphicsView>
 #include <QHideEvent>
 #include <QImage>
+#include <QInputDialog>
 #include <QKeyEvent>
 #include <QList>
 #include <QMenu>
@@ -963,29 +964,114 @@ void BNPView::slotShowProperties(QTreeWidgetItem *item)
 
 void BNPView::slotContextMenu(const QPoint &pos)
 {
-    QTreeWidgetItem *item;
-    item = m_tree->itemAt(pos);
+    QTreeWidgetItem *item =
+        m_tree->itemAt(pos);
+
     QString menuName;
+
+    BasketScene *basket = nullptr;
+
     if (item) {
-        BasketScene *basket = ((BasketListViewItem *)item)->basket();
+        basket =
+            static_cast<BasketListViewItem *>(
+                item)
+                ->basket();
 
         setCurrentBasket(basket);
-        menuName = QStringLiteral("basket_popup");
+        menuName =
+            QStringLiteral("basket_popup");
     } else {
-        menuName = QStringLiteral("tab_bar_popup");
+        menuName =
+            QStringLiteral("tab_bar_popup");
+
         /*
          * "File -> New" create a new basket with the same parent basket as the current one.
          * But when invoked when right-clicking the empty area at the bottom of the basket tree,
          * it is obvious the user want to create a new basket at the bottom of the tree (with no parent).
-         * So we set a temporary variable during the time the popup menu is shown,
-         * so the slot askNewBasket() will do the right thing:
          */
         setNewBasketPopup();
     }
 
-    QMenu *menu = popupMenu(menuName);
-    connect(menu, &QMenu::aboutToHide, this, &BNPView::aboutToHideNewBasketPopup);
-    menu->exec(m_tree->mapToGlobal(pos));
+    QMenu *menu =
+        popupMenu(menuName);
+
+    QAction *conversionSeparator = nullptr;
+    QMenu *conversionMenu = nullptr;
+
+    if (menu && basket && item) {
+        conversionSeparator =
+            menu->addSeparator();
+
+        conversionMenu =
+            menu->addMenu(
+                i18n("Convert to"));
+
+        if (item->parent()) {
+            QAction *toPage =
+                conversionMenu->addAction(
+                    i18n("Page"));
+
+            connect(
+                toPage,
+                &QAction::triggered,
+                this,
+                [this, basket]() {
+                    convertShelfToPage(
+                        basket);
+                });
+
+            QAction *toHouse =
+                conversionMenu->addAction(
+                    i18n("Mathom-House"));
+
+            connect(
+                toHouse,
+                &QAction::triggered,
+                this,
+                [this, basket]() {
+                    convertShelfToMathomHouse(
+                        basket);
+                });
+        } else {
+            QAction *toShelf =
+                conversionMenu->addAction(
+                    i18n("Shelf..."));
+
+            connect(
+                toShelf,
+                &QAction::triggered,
+                this,
+                [this, basket]() {
+                    convertMathomHouseToShelf(
+                        basket);
+                });
+        }
+    }
+
+    if (menu) {
+        connect(
+            menu,
+            &QMenu::aboutToHide,
+            this,
+            &BNPView::aboutToHideNewBasketPopup);
+
+        menu->exec(
+            m_tree->mapToGlobal(pos));
+    }
+
+    if (menu && conversionMenu) {
+        menu->removeAction(
+            conversionMenu->menuAction());
+
+        delete conversionMenu;
+    }
+
+    if (menu && conversionSeparator) {
+        menu->removeAction(
+            conversionSeparator);
+
+        delete conversionSeparator;
+    }
 }
 
 /* this happens every time we switch the basket (but not if we tell the user we save the stuff
@@ -1552,11 +1638,543 @@ void BNPView::updateNavigationBar()
 
 BasketScene *BNPView::parentBasketOf(BasketScene *basket)
 {
-    auto *item = (BasketListViewItem *)(listViewItemForBasket(basket)->parent());
-    if (item)
-        return item->basket();
-    else
+    BasketListViewItem *basketItem =
+        listViewItemForBasket(basket);
+
+    if (!basketItem)
         return nullptr;
+
+    auto *item =
+        static_cast<BasketListViewItem *>(
+            basketItem->parent());
+
+    return item
+        ? item->basket()
+        : nullptr;
+}
+
+bool BNPView::moveBasketForConversion(
+    BasketScene *basket,
+    BasketScene *newParent,
+    int index)
+{
+    BasketListViewItem *item =
+        listViewItemForBasket(basket);
+
+    if (!item)
+        return false;
+
+    BasketListViewItem *newParentItem =
+        newParent
+            ? listViewItemForBasket(newParent)
+            : nullptr;
+
+    if (newParent && !newParentItem)
+        return false;
+
+    /*
+     * Never create a hierarchy cycle by moving an item below itself or
+     * below one of its descendants.
+     */
+    for (QTreeWidgetItem *cursor =
+             newParentItem;
+         cursor;
+         cursor = cursor->parent()) {
+        if (cursor == item)
+            return false;
+    }
+
+    QTreeWidgetItem *oldParent =
+        item->parent();
+
+    int oldIndex = -1;
+
+    if (oldParent) {
+        oldIndex =
+            oldParent->indexOfChild(item);
+
+        oldParent->takeChild(
+            oldIndex);
+    } else {
+        oldIndex =
+            m_tree->indexOfTopLevelItem(
+                item);
+
+        m_tree->takeTopLevelItem(
+            oldIndex);
+    }
+
+    if (newParentItem) {
+        const int safeIndex =
+            qBound(
+                0,
+                index,
+                newParentItem
+                    ->childCount());
+
+        newParentItem->insertChild(
+            safeIndex,
+            item);
+
+        newParentItem->setExpanded(true);
+    } else {
+        const int safeIndex =
+            qBound(
+                0,
+                index,
+                m_tree->topLevelItemCount());
+
+        m_tree->insertTopLevelItem(
+            safeIndex,
+            item);
+    }
+
+    m_tree->setCurrentItem(item);
+    item->ensureVisible();
+
+    save();
+    updateNavigationBar();
+    m_tree->viewport()->update();
+
+    return true;
+}
+
+void BNPView::convertMathomHouseToShelf(
+    BasketScene *basket)
+{
+    BasketListViewItem *item =
+        listViewItemForBasket(basket);
+
+    if (!item
+        || item->parent()) {
+        return;
+    }
+
+    QList<BasketScene *> destinations;
+    QStringList destinationNames;
+
+    QTreeWidgetItemIterator iterator(m_tree);
+
+    while (*iterator) {
+        auto *candidate =
+            static_cast<BasketListViewItem *>(
+                *iterator);
+
+        bool insideSourceSubtree = false;
+
+        for (QTreeWidgetItem *cursor =
+                 candidate;
+             cursor;
+             cursor = cursor->parent()) {
+            if (cursor == item) {
+                insideSourceSubtree = true;
+                break;
+            }
+        }
+
+        if (!insideSourceSubtree) {
+            QStringList pathParts;
+
+            for (QTreeWidgetItem *cursor =
+                     candidate;
+                 cursor;
+                 cursor = cursor->parent()) {
+                auto *pathItem =
+                    static_cast<BasketListViewItem *>(
+                        cursor);
+
+                pathParts.prepend(
+                    pathItem
+                        ->basket()
+                        ->basketName());
+            }
+
+            destinations.append(
+                candidate->basket());
+
+            destinationNames.append(
+                pathParts.join(
+                    QStringLiteral(" / ")));
+        }
+
+        ++iterator;
+    }
+
+    if (destinations.isEmpty()) {
+        KMessageBox::information(
+            this,
+            i18n(
+                "A Mathom-House can become a Shelf only when another Mathom-House or Shelf is available to contain it."),
+            i18n("Convert to Shelf"));
+        return;
+    }
+
+    bool accepted = false;
+
+    const QString selected =
+        QInputDialog::getItem(
+            this,
+            i18n("Convert to Shelf"),
+            i18n("Place the new Shelf in:"),
+            destinationNames,
+            0,
+            false,
+            &accepted);
+
+    if (!accepted)
+        return;
+
+    const int selectedIndex =
+        destinationNames.indexOf(
+            selected);
+
+    if (selectedIndex < 0)
+        return;
+
+    BasketScene *destination =
+        destinations.at(
+            selectedIndex);
+
+    BasketListViewItem *destinationItem =
+        listViewItemForBasket(
+            destination);
+
+    if (!destinationItem)
+        return;
+
+    const QString newIcon =
+        MathomIcons::convertedHierarchyName(
+            basket->icon(),
+            /*topLevel=*/false);
+
+    m_undoStack->push(
+        new BasketHierarchyMoveCommand(
+            this,
+            basket,
+            destination,
+            destinationItem->childCount(),
+            newIcon));
+}
+
+void BNPView::convertShelfToMathomHouse(
+    BasketScene *basket)
+{
+    BasketListViewItem *item =
+        listViewItemForBasket(basket);
+
+    if (!item
+        || !item->parent()) {
+        return;
+    }
+
+    const QString newIcon =
+        MathomIcons::convertedHierarchyName(
+            basket->icon(),
+            /*topLevel=*/true);
+
+    m_undoStack->push(
+        new BasketHierarchyMoveCommand(
+            this,
+            basket,
+            nullptr,
+            m_tree->topLevelItemCount(),
+            newIcon));
+}
+
+void BNPView::convertShelfToPage(
+    BasketScene *basket)
+{
+    BasketListViewItem *item =
+        listViewItemForBasket(basket);
+
+    if (!item
+        || !item->parent()) {
+        return;
+    }
+
+    if (item->childCount() > 0) {
+        KMessageBox::information(
+            this,
+            i18n(
+                "This Shelf contains one or more sub-Shelves. It cannot be converted to a Page because that would orphan part of the hierarchy."),
+            i18n("Convert Shelf to Page"));
+        return;
+    }
+
+    BasketScene *parentBasket =
+        parentBasketOf(basket);
+
+    if (!parentBasket)
+        return;
+
+    if (!basket->isLoaded())
+        basket->load();
+
+    if (!parentBasket->isLoaded())
+        parentBasket->load();
+
+    if (basket->isLocked()
+        || parentBasket->isLocked()) {
+        KMessageBox::information(
+            this,
+            i18n(
+                "Unlock both locations before converting the Shelf to a Page."),
+            i18n("Convert Shelf to Page"));
+        return;
+    }
+
+    if (basket->pages().size() > 1) {
+        KMessageBox::information(
+            this,
+            i18n(
+                "This Shelf contains more than one Page. A Shelf can become a Page only when it is empty or contains exactly one Page."),
+            i18n("Convert Shelf to Page"));
+        return;
+    }
+
+    if (basket->pages().isEmpty()) {
+        if (basket->count() != 0) {
+            KMessageBox::information(
+                this,
+                i18n(
+                    "This Shelf contains Mathoms that are not attached to a single Page. The conversion has been refused to prevent data loss."),
+                i18n("Convert Shelf to Page"));
+            return;
+        }
+
+        const QString previousPageId =
+            parentBasket->currentPageId();
+
+        m_undoStack->beginMacro(
+            i18n(
+                "Convert Shelf \"%1\" to Page",
+                basket->basketName()));
+
+        const QString pageId =
+            parentBasket->createPage();
+
+        parentBasket->renamePage(
+            pageId,
+            basket->basketName());
+
+        m_undoStack->push(
+            new PageCreateCommand(
+                parentBasket,
+                pageId,
+                previousPageId));
+
+        m_undoStack->push(
+            new BasketDeleteCommand(
+                this,
+                basket));
+
+        m_undoStack->endMacro();
+        return;
+    }
+
+    if (basket->isEncrypted()
+        || parentBasket->isEncrypted()) {
+        KMessageBox::information(
+            this,
+            i18n(
+                "Moving a Page between encrypted locations is not enabled yet. No data has been changed."),
+            i18n("Convert Shelf to Page"));
+        return;
+    }
+
+    const QString pageId =
+        basket->pages().first().id;
+
+    auto *transfer =
+        new PageTransferCommand(
+            basket,
+            parentBasket,
+            pageId);
+
+    if (!transfer->isValid()) {
+        delete transfer;
+        return;
+    }
+
+    m_undoStack->beginMacro(
+        i18n(
+            "Convert Shelf \"%1\" to Page",
+            basket->basketName()));
+
+    m_undoStack->push(transfer);
+
+    m_undoStack->push(
+        new BasketDeleteCommand(
+            this,
+            basket));
+
+    m_undoStack->endMacro();
+}
+
+void BNPView::convertPageToShelf(
+    BasketScene *basket,
+    const QString &pageId)
+{
+    if (!basket
+        || pageId.isEmpty()) {
+        return;
+    }
+
+    if (!basket->isLoaded())
+        basket->load();
+
+    if (basket->isLocked()) {
+        KMessageBox::information(
+            this,
+            i18n(
+                "Unlock this location before converting the Page to a Shelf."),
+            i18n("Convert Page to Shelf"));
+        return;
+    }
+
+    if (basket->isEncrypted()) {
+        KMessageBox::information(
+            this,
+            i18n(
+                "Moving a Page out of an encrypted location is not enabled yet. No data has been changed."),
+            i18n("Convert Page to Shelf"));
+        return;
+    }
+
+    QString pageTitle;
+
+    for (const BasketScene::PageInfo &page :
+         basket->pages()) {
+        if (page.id == pageId) {
+            pageTitle = page.title;
+            break;
+        }
+    }
+
+    if (pageTitle.isEmpty())
+        return;
+
+    m_undoStack->beginMacro(
+        i18n(
+            "Convert Page \"%1\" to Shelf",
+            pageTitle));
+
+    BasketScene *created =
+        BasketFactory::newBasket(
+            QStringLiteral("mathom-shelf"),
+            pageTitle,
+            basket);
+
+    if (!created) {
+        m_undoStack->endMacro();
+        return;
+    }
+
+    if (!created->isLoaded())
+        created->load();
+
+    m_undoStack->push(
+        new BasketCreateCommand(
+            this,
+            created));
+
+    auto *transfer =
+        new PageTransferCommand(
+            basket,
+            created,
+            pageId);
+
+    if (!transfer->isValid()) {
+        delete transfer;
+        m_undoStack->endMacro();
+        return;
+    }
+
+    m_undoStack->push(transfer);
+    m_undoStack->endMacro();
+}
+
+void BNPView::convertPageToMathomHouse(
+    BasketScene *basket,
+    const QString &pageId)
+{
+    if (!basket
+        || pageId.isEmpty()) {
+        return;
+    }
+
+    if (!basket->isLoaded())
+        basket->load();
+
+    if (basket->isLocked()) {
+        KMessageBox::information(
+            this,
+            i18n(
+                "Unlock this location before converting the Page to a Mathom-House."),
+            i18n("Convert Page to Mathom-House"));
+        return;
+    }
+
+    if (basket->isEncrypted()) {
+        KMessageBox::information(
+            this,
+            i18n(
+                "Moving a Page out of an encrypted location is not enabled yet. No data has been changed."),
+            i18n("Convert Page to Mathom-House"));
+        return;
+    }
+
+    QString pageTitle;
+
+    for (const BasketScene::PageInfo &page :
+         basket->pages()) {
+        if (page.id == pageId) {
+            pageTitle = page.title;
+            break;
+        }
+    }
+
+    if (pageTitle.isEmpty())
+        return;
+
+    m_undoStack->beginMacro(
+        i18n(
+            "Convert Page \"%1\" to Mathom-House",
+            pageTitle));
+
+    BasketScene *created =
+        BasketFactory::newBasket(
+            QStringLiteral("mathom-house"),
+            pageTitle,
+            nullptr);
+
+    if (!created) {
+        m_undoStack->endMacro();
+        return;
+    }
+
+    if (!created->isLoaded())
+        created->load();
+
+    m_undoStack->push(
+        new BasketCreateCommand(
+            this,
+            created));
+
+    auto *transfer =
+        new PageTransferCommand(
+            basket,
+            created,
+            pageId);
+
+    if (!transfer->isValid()) {
+        delete transfer;
+        m_undoStack->endMacro();
+        return;
+    }
+
+    m_undoStack->push(transfer);
+    m_undoStack->endMacro();
 }
 
 void BNPView::setCurrentBasket(BasketScene *basket)
