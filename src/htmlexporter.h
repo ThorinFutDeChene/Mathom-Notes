@@ -120,6 +120,7 @@ public: // Used by NoteContent HTML exporters.
 
 private:
     bool m_currentDocumentInBasketsFolder = false;
+    bool m_failed = false;
     bool m_succeeded = false;
 };
 
