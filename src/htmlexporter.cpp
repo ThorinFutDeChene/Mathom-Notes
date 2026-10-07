@@ -38,6 +38,7 @@
 #include <QPalette>
 #include <QPixmap>
 #include <QProgressDialog>
+#include <QRegularExpression>
 #include <QTextStream>
 
 #include <basket_debug.h>
