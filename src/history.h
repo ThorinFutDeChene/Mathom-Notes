@@ -9,6 +9,7 @@
 
 #include <QColor>
 #include <QKeySequence>
+#include <QList>
 #include <QPointer>
 #include <QStringList>
 #include <QUndoCommand>
@@ -17,6 +18,19 @@ class BasketScene;
 class BasketListViewItem;
 class BNPView;
 class Note;
+
+struct PageHistoryState
+{
+    QString id;
+    QString title;
+    QString dayKey;
+    QString backgroundImage;
+    QColor backgroundColor;
+    QColor textColor;
+    bool freeLayout = false;
+    int columnCount = 1;
+    bool layoutOwned = false;
+};
 
 /**
  * Global modification history.
@@ -124,6 +138,79 @@ struct DeletedMathomPosition
     QPointer<Note> parent;
     QPointer<Note> previous;
     QPointer<Note> next;
+};
+
+
+class PageCreateCommand : public QUndoCommand
+{
+public:
+    PageCreateCommand(
+        BasketScene *basket,
+        const QString &pageId,
+        const QString &previousPageId,
+        QUndoCommand *parent = nullptr);
+
+    ~PageCreateCommand() override;
+
+    void undo() override;
+    void redo() override;
+
+private:
+    QPointer<BasketScene> m_basket;
+    PageHistoryState m_page;
+    QList<DeletedMathomPosition> m_positions;
+    QString m_previousPageId;
+    int m_pageIndex = -1;
+    bool m_firstRedo = true;
+    bool m_detached = false;
+};
+
+
+class PageDeleteCommand : public QUndoCommand
+{
+public:
+    PageDeleteCommand(
+        BasketScene *basket,
+        const QString &pageId,
+        QUndoCommand *parent = nullptr);
+
+    ~PageDeleteCommand() override;
+
+    void undo() override;
+    void redo() override;
+
+private:
+    QPointer<BasketScene> m_basket;
+    PageHistoryState m_page;
+    QList<DeletedMathomPosition> m_positions;
+    QString m_currentPageBefore;
+    QString m_replacementPageId;
+    int m_pageIndex = -1;
+    bool m_deleted = false;
+};
+
+
+class PagePropertiesCommand : public QUndoCommand
+{
+public:
+    PagePropertiesCommand(
+        BasketScene *basket,
+        const QString &pageId,
+        const PageHistoryState &oldState,
+        const PageHistoryState &newState,
+        QUndoCommand *parent = nullptr);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    void apply(
+        const PageHistoryState &state);
+
+    QPointer<BasketScene> m_basket;
+    QString m_pageId;
+    PageHistoryState m_oldState;
+    PageHistoryState m_newState;
 };
 
 
