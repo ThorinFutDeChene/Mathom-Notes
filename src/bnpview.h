@@ -126,6 +126,7 @@ public Q_SLOTS:
     /** Note */
     void activatedTagShortcut();
     void exportToHTML();
+    void exportCurrentPageToPDF();
     void editNote();
     void cutNote();
     void copyNote();
@@ -228,6 +229,7 @@ public:
     QAction *actNewSubBasket;
     QAction *actNewSiblingBasket;
     QAction *m_actExportToHtml;
+    QAction *m_actExportCurrentPageToPdf;
     QAction *m_actPropBasket;
     QAction *m_actSortChildrenAsc;
     QAction *m_actSortChildrenDesc;
