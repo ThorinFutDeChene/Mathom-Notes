@@ -2382,11 +2382,12 @@ void BNPView::exportCurrentPageToPDF()
                     QStringLiteral("document-save")),
                 KStandardGuiItem::discard());
 
-        if (result == KMessageBox::Cancel)
+        if (result
+            != KMessageBox::PrimaryAction) {
             return;
+        }
 
-        if (result == KMessageBox::Ok)
-            askAgain = false;
+        askAgain = false;
     }
 
     config.writeEntry(
@@ -3270,11 +3271,12 @@ void BNPView::saveAsArchive()
                         QStringLiteral("document-save")),
                     KStandardGuiItem::discard());
 
-            if (result == KMessageBox::Cancel)
+            if (result
+                != KMessageBox::PrimaryAction) {
                 return;
+            }
 
-            if (result == KMessageBox::Ok)
-                askAgain = false;
+            askAgain = false;
         } else {
             askAgain = false;
         }
@@ -3360,11 +3362,12 @@ void BNPView::saveAllAsArchive()
                         QStringLiteral("document-save")),
                     KStandardGuiItem::discard());
 
-            if (result == KMessageBox::Cancel)
+            if (result
+                != KMessageBox::PrimaryAction) {
                 return;
+            }
 
-            if (result == KMessageBox::Ok)
-                askAgain = false;
+            askAgain = false;
         } else {
             askAgain = false;
         }
