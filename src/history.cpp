@@ -12,10 +12,15 @@
 #include "basketscene.h"
 #include "bnpview.h"
 #include "note.h"
+#include "notecontent.h"
+#include "tools.h"
 
 #include <KLocalizedString>
 
 #include <QDateTime>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 
 namespace
 {
@@ -263,6 +268,111 @@ void discardPagePositions(
             basket->discardSuspendedMathom(
                 position.note);
         }
+    }
+}
+
+bool copyPathRecursively(
+    const QString &source,
+    const QString &target)
+{
+    const QFileInfo info(source);
+
+    if (!info.exists())
+        return false;
+
+    if (!info.isDir())
+        return QFile::copy(source, target);
+
+    QDir dir;
+
+    if (!dir.mkpath(target))
+        return false;
+
+    const QFileInfoList children =
+        QDir(source).entryInfoList(
+            QDir::Dirs
+                | QDir::Files
+                | QDir::NoDotAndDotDot
+                | QDir::Hidden
+                | QDir::System);
+
+    for (const QFileInfo &child :
+         children) {
+        const QString childTarget =
+            QDir(target).filePath(
+                child.fileName());
+
+        if (!copyPathRecursively(
+                child.absoluteFilePath(),
+                childTarget)) {
+            Tools::deleteRecursively(target);
+            return false;
+        }
+    }
+
+    return true;
+}
+
+void collectTransferFiles(
+    Note *note,
+    QList<TransferredPageFile> &files)
+{
+    if (!note)
+        return;
+
+    if (note->content()
+        && note->content()->useFile()) {
+        TransferredPageFile file;
+        file.note = note;
+        file.sourceFileName =
+            note->content()->fileName();
+
+        files.append(file);
+    }
+
+    for (Note *child = note->firstChild();
+         child;
+         child = child->next()) {
+        collectTransferFiles(
+            child,
+            files);
+    }
+}
+
+void reparentTransferredTree(
+    Note *note,
+    BasketScene *target,
+    const QList<TransferredPageFile> &files,
+    bool forward)
+{
+    if (!note || !target)
+        return;
+
+    note->setParentBasket(target);
+
+    if (note->content()
+        && note->content()->useFile()) {
+        for (const TransferredPageFile &file :
+             files) {
+            if (file.note != note)
+                continue;
+
+            note->content()->setFileName(
+                forward
+                    ? file.targetFileName
+                    : file.sourceFileName);
+            break;
+        }
+    }
+
+    for (Note *child = note->firstChild();
+         child;
+         child = child->next()) {
+        reparentTransferredTree(
+            child,
+            target,
+            files,
+            forward);
     }
 }
 
@@ -595,6 +705,503 @@ void PageDeleteCommand::redo()
     }
 
     m_deleted = true;
+}
+
+
+/** Page transfer between hierarchy levels */
+
+PageTransferCommand::PageTransferCommand(
+    BasketScene *source,
+    BasketScene *target,
+    const QString &pageId,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_source(source)
+    , m_target(target)
+    , m_pageId(pageId)
+{
+    if (!m_source
+        || !m_target
+        || m_source == m_target
+        || m_pageId.isEmpty()) {
+        m_valid = false;
+        return;
+    }
+
+    m_page =
+        pageStateForHistory(
+            m_source,
+            m_pageId,
+            &m_sourcePageIndex);
+
+    if (m_page.id.isEmpty()) {
+        m_valid = false;
+        return;
+    }
+
+    if (m_source->isEncrypted()
+        || m_target->isEncrypted()) {
+        m_valid = false;
+        return;
+    }
+
+    setText(
+        i18n(
+            "Move Page \"%1\"",
+            m_page.title));
+}
+
+PageTransferCommand::~PageTransferCommand()
+{
+    /*
+     * File-backed Mathoms are copied while the conversion remains
+     * undoable. Once history finally forgets an active conversion, the
+     * stale originals in the old Shelf/Mathom-House can be removed.
+     */
+    if (!m_forward
+        || !m_source) {
+        return;
+    }
+
+    for (const TransferredPageFile &file :
+         m_files) {
+        if (!file.sourceFileName.isEmpty()) {
+            Tools::deleteRecursively(
+                m_source->fullPath()
+                + file.sourceFileName);
+        }
+    }
+}
+
+bool PageTransferCommand::initialize()
+{
+    if (m_initialized)
+        return true;
+
+    if (!m_valid
+        || !m_source
+        || !m_target) {
+        return false;
+    }
+
+    if (!m_source->isLoaded())
+        m_source->load();
+
+    if (!m_target->isLoaded())
+        m_target->load();
+
+    if (m_source->isLocked()
+        || m_target->isLocked()
+        || m_source->isEncrypted()
+        || m_target->isEncrypted()) {
+        m_valid = false;
+        return false;
+    }
+
+    m_page =
+        pageStateForHistory(
+            m_source,
+            m_pageId,
+            &m_sourcePageIndex);
+
+    if (m_page.id.isEmpty()) {
+        m_valid = false;
+        return false;
+    }
+
+    for (const BasketScene::PageInfo &page :
+         m_target->pages()) {
+        if (page.id == m_pageId) {
+            m_valid = false;
+            return false;
+        }
+    }
+
+    m_sourceCurrentPageId =
+        m_source->currentPageId();
+
+    m_targetCurrentPageId =
+        m_target->currentPageId();
+
+    m_targetPageIndex =
+        m_target->pages().size();
+
+    m_sourcePositions.clear();
+
+    collectPageRootsForHistory(
+        m_source->firstNote(),
+        m_pageId,
+        m_sourcePositions);
+
+    m_files.clear();
+
+    for (const DeletedMathomPosition &position :
+         m_sourcePositions) {
+        if (position.note) {
+            collectTransferFiles(
+                position.note,
+                m_files);
+        }
+    }
+
+    m_initialized = true;
+    return true;
+}
+
+bool PageTransferCommand::moveForward()
+{
+    if (!initialize()
+        || m_forward
+        || !m_source
+        || !m_target) {
+        return false;
+    }
+
+    QList<QString> copiedTargets;
+
+    for (TransferredPageFile &file :
+         m_files) {
+        if (!file.note)
+            continue;
+
+        if (file.targetFileName.isEmpty()) {
+            file.targetFileName =
+                Tools::fileNameForNewFile(
+                    file.sourceFileName,
+                    m_target->fullPath());
+        }
+
+        const QString sourcePath =
+            m_source->fullPath()
+            + file.sourceFileName;
+
+        const QString targetPath =
+            m_target->fullPath()
+            + file.targetFileName;
+
+        if (!copyPathRecursively(
+                sourcePath,
+                targetPath)) {
+            for (const QString &copied :
+                 copiedTargets) {
+                Tools::deleteRecursively(copied);
+            }
+
+            return false;
+        }
+
+        copiedTargets.append(targetPath);
+    }
+
+    if (m_source->isDuringEdit())
+        m_source->closeEditor();
+
+    if (m_target->isDuringEdit())
+        m_target->closeEditor();
+
+    suspendPagePositions(
+        m_source,
+        m_sourcePositions);
+
+    if (!m_source->detachPageForUndo(
+            m_pageId,
+            /*allowLastPage=*/true,
+            QString())) {
+        restorePagePositions(
+            m_source,
+            m_sourcePositions);
+
+        for (const QString &copied :
+             copiedTargets) {
+            Tools::deleteRecursively(copied);
+        }
+
+        return false;
+    }
+
+    if (!m_target->restorePageForUndo(
+            pageInfoFromHistory(m_page),
+            m_targetPageIndex,
+            m_pageId)) {
+        m_source->restorePageForUndo(
+            pageInfoFromHistory(m_page),
+            m_sourcePageIndex,
+            m_sourceCurrentPageId);
+
+        restorePagePositions(
+            m_source,
+            m_sourcePositions);
+
+        for (const QString &copied :
+             copiedTargets) {
+            Tools::deleteRecursively(copied);
+        }
+
+        return false;
+    }
+
+    for (const TransferredPageFile &file :
+         m_files) {
+        if (!file.sourceFileName.isEmpty()) {
+            m_source->removeWatchedFile(
+                m_source->fullPath()
+                + file.sourceFileName);
+        }
+    }
+
+    Note *previous =
+        m_target->lastNote();
+
+    for (const DeletedMathomPosition &position :
+         m_sourcePositions) {
+        Note *root =
+            position.note;
+
+        if (!root)
+            continue;
+
+        reparentTransferredTree(
+            root,
+            m_target,
+            m_files,
+            /*forward=*/true);
+
+        m_target->restoreSuspendedMathom(
+            root,
+            nullptr,
+            previous,
+            nullptr);
+
+        previous = root;
+    }
+
+    for (const TransferredPageFile &file :
+         m_files) {
+        if (!file.targetFileName.isEmpty()) {
+            m_target->addWatchedFile(
+                m_target->fullPath()
+                + file.targetFileName);
+        }
+    }
+
+    m_source->save();
+    m_target->save();
+
+    m_forward = true;
+
+    revealBasketForHistory(
+        m_target,
+        m_pageId);
+
+    return true;
+}
+
+bool PageTransferCommand::moveBackward()
+{
+    if (!m_initialized
+        || !m_forward
+        || !m_source
+        || !m_target) {
+        return false;
+    }
+
+    for (const DeletedMathomPosition &position :
+         m_sourcePositions) {
+        if (position.note) {
+            m_target->suspendMathomForUndo(
+                position.note);
+        }
+    }
+
+    if (!m_target->detachPageForUndo(
+            m_pageId,
+            /*allowLastPage=*/true,
+            m_targetCurrentPageId)) {
+        Note *previous =
+            m_target->lastNote();
+
+        for (const DeletedMathomPosition &position :
+             m_sourcePositions) {
+            if (!position.note)
+                continue;
+
+            m_target->restoreSuspendedMathom(
+                position.note,
+                nullptr,
+                previous,
+                nullptr);
+
+            previous =
+                position.note;
+        }
+
+        return false;
+    }
+
+    for (const TransferredPageFile &file :
+         m_files) {
+        if (!file.targetFileName.isEmpty()) {
+            m_target->removeWatchedFile(
+                m_target->fullPath()
+                + file.targetFileName);
+        }
+    }
+
+    for (const DeletedMathomPosition &position :
+         m_sourcePositions) {
+        if (!position.note)
+            continue;
+
+        reparentTransferredTree(
+            position.note,
+            m_source,
+            m_files,
+            /*forward=*/false);
+    }
+
+    if (!m_source->restorePageForUndo(
+            pageInfoFromHistory(m_page),
+            m_sourcePageIndex,
+            m_sourceCurrentPageId)) {
+        return false;
+    }
+
+    restorePagePositions(
+        m_source,
+        m_sourcePositions);
+
+    for (const TransferredPageFile &file :
+         m_files) {
+        if (!file.sourceFileName.isEmpty()) {
+            m_source->addWatchedFile(
+                m_source->fullPath()
+                + file.sourceFileName);
+        }
+
+        if (!file.targetFileName.isEmpty()) {
+            Tools::deleteRecursively(
+                m_target->fullPath()
+                + file.targetFileName);
+        }
+    }
+
+    m_source->save();
+    m_target->save();
+
+    m_forward = false;
+
+    revealBasketForHistory(
+        m_source,
+        m_pageId);
+
+    return true;
+}
+
+void PageTransferCommand::undo()
+{
+    moveBackward();
+}
+
+void PageTransferCommand::redo()
+{
+    moveForward();
+}
+
+
+/** Mathom-House / Shelf hierarchy level conversion */
+
+BasketHierarchyMoveCommand::BasketHierarchyMoveCommand(
+    BNPView *view,
+    BasketScene *basket,
+    BasketScene *newParent,
+    int newIndex,
+    const QString &newIcon,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_view(view)
+    , m_basket(basket)
+    , m_newParent(newParent)
+    , m_newIndex(newIndex)
+    , m_newIcon(newIcon)
+{
+    if (!m_view || !m_basket)
+        return;
+
+    m_oldParent =
+        m_view->parentBasketOf(
+            m_basket);
+
+    BasketListViewItem *item =
+        m_view->listViewItemForBasket(
+            m_basket);
+
+    if (!item)
+        return;
+
+    if (item->parent()) {
+        m_oldIndex =
+            item->parent()
+                ->indexOfChild(item);
+    } else {
+        m_oldIndex =
+            item->treeWidget()
+                ->indexOfTopLevelItem(item);
+    }
+
+    m_oldIcon =
+        m_basket->icon();
+
+    setText(
+        m_newParent
+            ? i18n(
+                  "Convert Mathom-House \"%1\" to Shelf",
+                  m_basket->basketName())
+            : i18n(
+                  "Convert Shelf \"%1\" to Mathom-House",
+                  m_basket->basketName()));
+}
+
+bool BasketHierarchyMoveCommand::apply(
+    BasketScene *parentBasket,
+    int index,
+    const QString &icon)
+{
+    if (!m_view || !m_basket)
+        return false;
+
+    if (!m_view->moveBasketForConversion(
+            m_basket,
+            parentBasket,
+            index)) {
+        return false;
+    }
+
+    m_basket->setShelfIdentity(
+        icon,
+        m_basket->basketName());
+
+    m_basket->save();
+    m_view->save();
+    m_view->setCurrentBasket(
+        m_basket);
+
+    return true;
+}
+
+void BasketHierarchyMoveCommand::undo()
+{
+    apply(
+        m_oldParent,
+        m_oldIndex,
+        m_oldIcon);
+}
+
+void BasketHierarchyMoveCommand::redo()
+{
+    apply(
+        m_newParent,
+        m_newIndex,
+        m_newIcon);
 }
 
 
