@@ -39,6 +39,8 @@ private:
 
     BasketScene *m_basket = nullptr;
     QListWidget *m_list = nullptr;
+    QToolButton *m_addButton = nullptr;
+    QToolButton *m_removeButton = nullptr;
     QToolButton *m_sortButton = nullptr;
     SortMode m_sortMode = SortMode::Manual;
     bool m_rebuilding = false;
