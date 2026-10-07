@@ -823,9 +823,17 @@ void HTMLExporter::exportBasketPage(
               "   body { margin: 10px; font: 11px sans-serif; }\n" // TODO: Use user font
               "   h1 { text-align: center; }\n"
               "   .pageTitle { margin: 0 0 6px 0; font-size: 120%; }\n"
-              "   .pages { margin: 0 0 8px 0; padding: 6px; border: 1px solid #bbb; border-radius: 5px; }\n"
-              "   .pages a, .pages span { display: inline-block; margin: 2px 4px 2px 0; padding: 3px 6px; text-decoration: none; }\n"
-              "   .pages .current { font-weight: bold; border-bottom: 2px solid currentColor; }\n"
+              "   .basketSurrounder.hasPages { display: flex; align-items: flex-start; gap: 12px; }\n"
+              "   .basketSurrounder.hasPages .pageContent { flex: 1 1 auto; min-width: 0; overflow-x: auto; }\n"
+              "   .pages { flex: 0 0 190px; box-sizing: border-box; margin: 0; padding: 8px; border: 1px solid #bbb; border-radius: 5px; position: sticky; top: 10px; }\n"
+              "   .pagesTitle { margin: 0 0 6px 0; font-weight: bold; }\n"
+              "   .pages a, .pages span { display: block; margin: 0 0 3px 0; padding: 5px 7px; border-radius: 4px; text-decoration: none; }\n"
+              "   .pages .current { font-weight: bold; border-left: 3px solid currentColor; background: rgba(127,127,127,0.12); }\n"
+              "   @media (max-width: 800px) {\n"
+              "    .basketSurrounder.hasPages { display: block; }\n"
+              "    .basketSurrounder.hasPages .pageContent { overflow-x: auto; }\n"
+              "    .pages { position: static; width: 100%; margin: 8px 0 0 0; }\n"
+              "   }\n"
               "   img { border: none; vertical-align: middle; }\n";
     if (withBasketTree) {
         stream << "   .tree { margin: 0; padding: 1px 0 1px 1px; width: 150px; _width: 149px; overflow: hidden; float: left; }\n"
@@ -950,22 +958,22 @@ void HTMLExporter::exportBasketPage(
     //      stream <<
     //          "  <p>" << i18n("Notes matching the filter &quot;%1&quot;:", Tools::textToHTMLWithoutP(decoration()->filterData().string)) << "</p>\n";
 
-    stream << "  <div class=\"basketSurrounder\">\n";
+    stream << "  <div class=\"basketSurrounder";
+
+    if (basket->pages().size() > 1)
+        stream << " hasPages";
+
+    stream << "\">\n"
+              "   <div class=\"pageContent\">\n";
 
     if (!pageTitle.isEmpty()) {
         stream
-            << "   <h2 class=\"pageTitle\">"
+            << "    <h2 class=\"pageTitle\">"
             << Tools::textToHTMLWithoutP(pageTitle)
             << "</h2>\n";
     }
 
-    writePageNavigation(
-        basket,
-        pageId,
-        isSubBasket,
-        isDefaultPage);
-
-    stream << R"(   <div class="basket" style="position: relative; min-width: 100%; min-height: calc(100vh - 100px); )";
+    stream << R"(    <div class="basket" style="position: relative; min-width: 100%; min-height: calc(100vh - 100px); )";
     if (!basket->isColumnsLayout()) {
         stream << "height: " << basket->sceneRect().height() << "px; width: " << basket->sceneRect().width() << "px; ";
     }
@@ -986,7 +994,14 @@ void HTMLExporter::exportBasketPage(
                   "   </table>\n";
     }
 
-    stream << "   </div>\n";
+    stream << "    </div>\n"
+              "   </div>\n";
+
+    writePageNavigation(
+        basket,
+        pageId,
+        isSubBasket,
+        isDefaultPage);
 
     stream << QStringLiteral(
                   "  </div>\n"
@@ -1133,7 +1148,10 @@ void HTMLExporter::writePageNavigation(
 
     stream << "   <nav class=\"pages\" aria-label=\""
            << i18n("Pages")
-           << "\">\n";
+           << "\">\n"
+           << "    <div class=\"pagesTitle\">"
+           << i18n("Pages")
+           << "</div>\n";
 
     for (const BasketScene::PageInfo &page :
          basket->pages()) {
