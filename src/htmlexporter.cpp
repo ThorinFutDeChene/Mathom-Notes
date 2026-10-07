@@ -32,6 +32,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QList>
 #include <QPainter>
 #include <QPixmap>
@@ -468,41 +469,119 @@ void HTMLExporter::exportBasketPage(
     const QString &pageId,
     bool isDefaultPage)
 {
-    Q_UNUSED(pageId)
-
     currentBasket = basket;
 
-    bool hasBackgroundColor = false;
-    bool hasTextColor = false;
+    const QColor backgroundSetting =
+        basket->currentPageBackgroundColorSetting();
 
-    if (basket->backgroundColorSetting().isValid()) {
-        hasBackgroundColor = true;
-        backgroundColorName = basket->backgroundColor().name().toLower().mid(1);
-    }
-    if (basket->textColorSetting().isValid()) {
-        hasTextColor = true;
-    }
+    const QColor textSetting =
+        basket->currentPageTextColorSetting();
 
-    // Compute the absolute & relative paths for this basket:
-    filesFolderPath = i18nc("HTML export folder (files)", "%1_files", filePath) + QLatin1Char('/');
-    if (isSubBasket) {
-        basketFilePath = basketsFolderPath + basket->folderName().left(basket->folderName().length() - 1) + QStringLiteral(".html");
-        filesFolderName = QStringLiteral("../");
+    const bool hasBackgroundColor =
+        backgroundSetting.isValid();
+
+    const bool hasTextColor =
+        textSetting.isValid();
+
+    backgroundColorName =
+        hasBackgroundColor
+            ? basket->backgroundColor()
+                  .name()
+                  .toLower()
+                  .mid(1)
+            : QStringLiteral("transparent");
+
+    // The historical root document lives next to the chosen .html file.
+    // Every shelf document and every additional Page lives in the
+    // mathom-houses directory.
+    m_currentDocumentInBasketsFolder =
+        isSubBasket
+        || !isDefaultPage;
+
+    filesFolderPath =
+        i18nc(
+            "HTML export folder (files)",
+            "%1_files",
+            filePath)
+        + QLatin1Char('/');
+
+    basketFilePath =
+        pageDocumentPath(
+            basket,
+            isSubBasket,
+            pageId,
+            isDefaultPage);
+
+    if (m_currentDocumentInBasketsFolder) {
+        filesFolderName =
+            QStringLiteral("../");
+
+        const QString documentBaseName =
+            QFileInfo(basketFilePath)
+                .completeBaseName();
+
         dataFolderName =
-            basket->folderName().left(basket->folderName().length() - 1) + QLatin1Char('-') + i18nc("HTML export folder (data)", "data") + QLatin1Char('/');
-        dataFolderPath = basketsFolderPath + dataFolderName;
-        basketsFolderName = QString();
+            documentBaseName
+            + QLatin1Char('-')
+            + i18nc(
+                "HTML export folder (data)",
+                "data")
+            + QLatin1Char('/');
+
+        dataFolderPath =
+            basketsFolderPath
+            + dataFolderName;
+
+        basketsFolderName =
+            QString();
     } else {
-        basketFilePath = filePath;
-        filesFolderName = i18nc("HTML export folder (files)", "%1_files", QUrl::fromLocalFile(filePath).fileName()) + QLatin1Char('/');
-        dataFolderName = filesFolderName + i18nc("HTML export folder (data)", "data") + QLatin1Char('/');
-        dataFolderPath = filesFolderPath + i18nc("HTML export folder (data)", "data") + QLatin1Char('/');
-        basketsFolderName = filesFolderName + i18nc("HTML export folder (Mathom-Houses)", "mathom-houses") + QLatin1Char('/');
+        filesFolderName =
+            i18nc(
+                "HTML export folder (files)",
+                "%1_files",
+                QUrl::fromLocalFile(filePath)
+                    .fileName())
+            + QLatin1Char('/');
+
+        dataFolderName =
+            filesFolderName
+            + i18nc(
+                "HTML export folder (data)",
+                "data")
+            + QLatin1Char('/');
+
+        dataFolderPath =
+            filesFolderPath
+            + i18nc(
+                "HTML export folder (data)",
+                "data")
+            + QLatin1Char('/');
+
+        basketsFolderName =
+            filesFolderName
+            + i18nc(
+                "HTML export folder (Mathom-Houses)",
+                "mathom-houses")
+            + QLatin1Char('/');
     }
-    iconsFolderName = (isSubBasket ? QStringLiteral("../") : filesFolderName) + i18nc("HTML export folder (icons)", "icons")
-        + QLatin1Char('/'); // eg.: "foo.html_files/icons/"   or "../icons/"
-    imagesFolderName = (isSubBasket ? QStringLiteral("../") : filesFolderName) + i18nc("HTML export folder (images)", "images")
-        + QLatin1Char('/'); // eg.: "foo.html_files/images/"  or "../images/"
+
+    iconsFolderName =
+        (m_currentDocumentInBasketsFolder
+             ? QStringLiteral("../")
+             : filesFolderName)
+        + i18nc(
+            "HTML export folder (icons)",
+            "icons")
+        + QLatin1Char('/');
+
+    imagesFolderName =
+        (m_currentDocumentInBasketsFolder
+             ? QStringLiteral("../")
+             : filesFolderName)
+        + i18nc(
+            "HTML export folder (images)",
+            "images")
+        + QLatin1Char('/');
 
     qCDebug(BASKET_LOG) << "Exporting ================================================";
     qCDebug(BASKET_LOG) << "  filePath:" << filePath;
@@ -520,7 +599,7 @@ void HTMLExporter::exportBasketPage(
 
     // Create the data folder for this basket:
     QDir dir;
-    dir.mkdir(dataFolderPath);
+    dir.mkpath(dataFolderPath);
 
     // Generate basket icons:
     QString basketIcon16 = iconsFolderName + copyIcon(basket->icon(), 16);
