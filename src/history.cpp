@@ -1097,6 +1097,14 @@ bool PageTransferCommand::moveBackward()
     return true;
 }
 
+bool PageTransferCommand::executeInitial()
+{
+    if (!m_firstRedo)
+        return false;
+
+    return moveForward();
+}
+
 void PageTransferCommand::undo()
 {
     moveBackward();
@@ -1104,6 +1112,16 @@ void PageTransferCommand::undo()
 
 void PageTransferCommand::redo()
 {
+    /*
+     * The initial conversion is performed transactionally before the
+     * command is pushed. QUndoStack::push() calls redo() immediately, so
+     * the first redo must not move the Page a second time.
+     */
+    if (m_firstRedo) {
+        m_firstRedo = false;
+        return;
+    }
+
     moveForward();
 }
 
