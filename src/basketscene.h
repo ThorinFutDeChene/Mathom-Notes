@@ -241,6 +241,7 @@ public:
 
     QString ensureTodayPage();
     QString createPage();
+    bool deletePage(const QString &pageId);
     void setCurrentPageId(const QString &pageId);
     void renamePage(const QString &pageId, const QString &title);
     void reorderPages(const QStringList &pageIds);
