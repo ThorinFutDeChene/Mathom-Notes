@@ -79,6 +79,7 @@ private:
 
     int documentCount(BasketScene *basket) const;
     bool noteBelongsToCurrentPage(Note *note) const;
+    bool shouldExportNote(Note *note) const;
     int exportableDirectChildCount(Note *note) const;
 
     void saveToFile(
