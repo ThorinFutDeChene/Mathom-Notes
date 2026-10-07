@@ -70,6 +70,28 @@ public:
     void setCurrentBasket(BasketScene *basket);
     void removeBasket(BasketScene *basket);
 
+    bool moveBasketForConversion(
+        BasketScene *basket,
+        BasketScene *newParent,
+        int index);
+
+    void convertPageToShelf(
+        BasketScene *basket,
+        const QString &pageId);
+
+    void convertPageToMathomHouse(
+        BasketScene *basket,
+        const QString &pageId);
+
+    void convertShelfToPage(
+        BasketScene *basket);
+
+    void convertShelfToMathomHouse(
+        BasketScene *basket);
+
+    void convertMathomHouseToShelf(
+        BasketScene *basket);
+
     // Helpers used by the global Undo/Redo history.
     BasketListViewItem *detachBasketForUndo(
         BasketListViewItem *item);
