@@ -154,11 +154,23 @@ qreal Note::bottom() const
 
 void Note::setParentBasket(BasketScene *basket)
 {
-    if (m_basket)
+    if (m_basket == basket)
+        return;
+
+    if (m_basket) {
         m_basket->removeItem(this);
+        m_basket->removeAnimation(m_animX);
+        m_basket->removeAnimation(m_animY);
+    }
+
     m_basket = basket;
-    if (m_basket)
+    setParent(basket);
+
+    if (m_basket) {
         m_basket->addItem(this);
+        m_basket->addAnimation(m_animX);
+        m_basket->addAnimation(m_animY);
+    }
 }
 
 QString Note::addedStringDate()
