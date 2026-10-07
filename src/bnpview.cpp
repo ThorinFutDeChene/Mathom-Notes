@@ -1991,7 +1991,8 @@ void BNPView::convertShelfToPage(
             parentBasket,
             pageId);
 
-    if (!transfer->isValid()) {
+    if (!transfer->isValid()
+        || !transfer->executeInitial()) {
         delete transfer;
         return;
     }
@@ -2054,29 +2055,17 @@ void BNPView::convertPageToShelf(
     if (pageTitle.isEmpty())
         return;
 
-    m_undoStack->beginMacro(
-        i18n(
-            "Convert Page \"%1\" to Shelf",
-            pageTitle));
-
     BasketScene *created =
         BasketFactory::newBasket(
             QStringLiteral("mathom-shelf"),
             pageTitle,
             basket);
 
-    if (!created) {
-        m_undoStack->endMacro();
+    if (!created)
         return;
-    }
 
     if (!created->isLoaded())
         created->load();
-
-    m_undoStack->push(
-        new BasketCreateCommand(
-            this,
-            created));
 
     auto *transfer =
         new PageTransferCommand(
@@ -2084,11 +2073,36 @@ void BNPView::convertPageToShelf(
             created,
             pageId);
 
-    if (!transfer->isValid()) {
+    if (!transfer->isValid()
+        || !transfer->executeInitial()) {
         delete transfer;
-        m_undoStack->endMacro();
+
+        BasketListViewItem *createdItem =
+            listViewItemForBasket(
+                created);
+
+        if (createdItem) {
+            BasketListViewItem *detached =
+                detachBasketForUndo(
+                    createdItem);
+
+            if (detached)
+                discardDetachedBasketForUndo(
+                    detached);
+        }
+
         return;
     }
+
+    m_undoStack->beginMacro(
+        i18n(
+            "Convert Page \"%1\" to Shelf",
+            pageTitle));
+
+    m_undoStack->push(
+        new BasketCreateCommand(
+            this,
+            created));
 
     m_undoStack->push(transfer);
     m_undoStack->endMacro();
@@ -2137,29 +2151,17 @@ void BNPView::convertPageToMathomHouse(
     if (pageTitle.isEmpty())
         return;
 
-    m_undoStack->beginMacro(
-        i18n(
-            "Convert Page \"%1\" to Mathom-House",
-            pageTitle));
-
     BasketScene *created =
         BasketFactory::newBasket(
             QStringLiteral("mathom-house"),
             pageTitle,
             nullptr);
 
-    if (!created) {
-        m_undoStack->endMacro();
+    if (!created)
         return;
-    }
 
     if (!created->isLoaded())
         created->load();
-
-    m_undoStack->push(
-        new BasketCreateCommand(
-            this,
-            created));
 
     auto *transfer =
         new PageTransferCommand(
@@ -2167,11 +2169,36 @@ void BNPView::convertPageToMathomHouse(
             created,
             pageId);
 
-    if (!transfer->isValid()) {
+    if (!transfer->isValid()
+        || !transfer->executeInitial()) {
         delete transfer;
-        m_undoStack->endMacro();
+
+        BasketListViewItem *createdItem =
+            listViewItemForBasket(
+                created);
+
+        if (createdItem) {
+            BasketListViewItem *detached =
+                detachBasketForUndo(
+                    createdItem);
+
+            if (detached)
+                discardDetachedBasketForUndo(
+                    detached);
+        }
+
         return;
     }
+
+    m_undoStack->beginMacro(
+        i18n(
+            "Convert Page \"%1\" to Mathom-House",
+            pageTitle));
+
+    m_undoStack->push(
+        new BasketCreateCommand(
+            this,
+            created));
 
     m_undoStack->push(transfer);
     m_undoStack->endMacro();
