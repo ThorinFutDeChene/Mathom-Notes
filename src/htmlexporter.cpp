@@ -42,7 +42,6 @@
 #include <QTextStream>
 
 #include <basket_debug.h>
-#include <basket_version.h>
 
 HTMLExporter::HTMLExporter(BasketScene *basket)
     : dialog(new QProgressDialog())
@@ -224,6 +223,14 @@ QString HTMLExporter::defaultPageId(
     if (!basket
         || basket->pages().isEmpty()) {
         return {};
+    }
+
+    const auto remembered =
+        m_defaultPageIds.constFind(basket);
+
+    if (remembered
+        != m_defaultPageIds.cend()) {
+        return remembered.value();
     }
 
     const QString current =
@@ -457,8 +464,30 @@ void HTMLExporter::exportBasket(
     const QString originalPageId =
         basket->currentPageId();
 
-    const QString defaultId =
-        defaultPageId(basket);
+    QString defaultId;
+
+    if (!basket->pages().isEmpty()) {
+        defaultId =
+            originalPageId;
+
+        bool validDefault = false;
+
+        for (const BasketScene::PageInfo &page :
+             basket->pages()) {
+            if (page.id == defaultId) {
+                validDefault = true;
+                break;
+            }
+        }
+
+        if (!validDefault)
+            defaultId =
+                basket->pages().first().id;
+
+        m_defaultPageIds.insert(
+            basket,
+            defaultId);
+    }
 
     if (basket->pages().isEmpty()) {
         exportBasketPage(
@@ -784,7 +813,7 @@ void HTMLExporter::exportBasketPage(
               " <head>\n"
               "  <meta http-equiv=\"Content-Type\" content=\"text/html; charset=UTF-8\">\n"
               "  <meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"><meta name=\"Generator\" content=\""
-           << QGuiApplication::applicationDisplayName() << " " << BASKET_VERSION_STRING << " " << KAboutData::applicationData().homepage()
+           << QGuiApplication::applicationDisplayName() << " " << MATHOM_VERSION_STRING << " " << KAboutData::applicationData().homepage()
            << "\">\n"
               "  <style type=\"text/css\">\n"
               //      "   @media print {\n"
@@ -964,7 +993,7 @@ void HTMLExporter::exportBasketPage(
                   .arg(i18n("Made with <a href=\"%1\">%2</a> %3, a tool to organize mathoms and keep information at hand.",
                             KAboutData::applicationData().homepage(),
                             QGuiApplication::applicationDisplayName(),
-                            QStringLiteral(BASKET_VERSION_STRING)));
+                            QStringLiteral(MATHOM_VERSION_STRING)));
 
     stream << " </body>\n"
               "</html>\n";
