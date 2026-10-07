@@ -1985,6 +1985,12 @@ void BNPView::convertShelfToPage(
     const QString pageId =
         basket->pages().first().id;
 
+    const QString originalPageTitle =
+        basket->pages().first().title;
+
+    const QString shelfTitle =
+        basket->basketName();
+
     auto *transfer =
         new PageTransferCommand(
             basket,
@@ -2000,9 +2006,23 @@ void BNPView::convertShelfToPage(
     m_undoStack->beginMacro(
         i18n(
             "Convert Shelf \"%1\" to Page",
-            basket->basketName()));
+            shelfTitle));
 
     m_undoStack->push(transfer);
+
+    /*
+     * A Shelf converted to a Page keeps the Shelf identity at the new
+     * hierarchy level. The old Page title is restored automatically by
+     * Undo before the Page is transferred back into the Shelf.
+     */
+    if (originalPageTitle != shelfTitle) {
+        m_undoStack->push(
+            new PageRenameCommand(
+                parentBasket,
+                pageId,
+                originalPageTitle,
+                shelfTitle));
+    }
 
     m_undoStack->push(
         new BasketDeleteCommand(
