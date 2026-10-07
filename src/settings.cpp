@@ -198,7 +198,21 @@ void Settings::loadConfig()
     setAllowDevelopmentUpdates(config.readEntry("allowDevelopmentVersions", false));
 
     config = Global::config()->group(QStringLiteral("Backups"));
-    setAutomaticBackupsEnabled(config.readEntry("automaticEnabled", true));
+
+    // 3.8.0-dev4 wrote "automaticEnabled=false" for existing users because
+    // automatic backups were initially disabled by default.  From dev5 onward
+    // automatic backups are the default, so migrate that old persisted value
+    // exactly once.  The migration marker then preserves every later explicit
+    // user choice.
+    if (!config.readEntry("automaticBackupDefaultMigrated", false)) {
+        setAutomaticBackupsEnabled(true);
+        config.writeEntry("automaticEnabled", true);
+        config.writeEntry("automaticBackupDefaultMigrated", true);
+        config.sync();
+    } else {
+        setAutomaticBackupsEnabled(
+            config.readEntry("automaticEnabled", true));
+    }
 }
 
 void Settings::saveConfig()
@@ -273,6 +287,7 @@ void Settings::saveConfig()
 
     config = Global::config()->group(QStringLiteral("Backups"));
     config.writeEntry("automaticEnabled", automaticBackupsEnabled());
+    config.writeEntry("automaticBackupDefaultMigrated", true);
 
     config.sync();
 }
