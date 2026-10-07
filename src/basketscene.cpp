@@ -2475,6 +2475,170 @@ bool BasketScene::deletePage(
     return true;
 }
 
+bool BasketScene::detachPageForUndo(
+    const QString &pageId,
+    bool allowLastPage,
+    const QString &preferredCurrentPageId)
+{
+    if (pageId.isEmpty())
+        return false;
+
+    if (!allowLastPage
+        && m_pages.size() <= 1) {
+        return false;
+    }
+
+    int pageIndex = -1;
+
+    for (int index = 0;
+         index < m_pages.size();
+         ++index) {
+        if (m_pages.at(index).id == pageId) {
+            pageIndex = index;
+            break;
+        }
+    }
+
+    if (pageIndex < 0)
+        return false;
+
+    if (isDuringEdit())
+        closeEditor();
+
+    const QString oldCurrentPageId =
+        m_currentPageId;
+
+    m_pages.removeAt(pageIndex);
+
+    const auto containsPage =
+        [this](const QString &candidate) {
+            if (candidate.isEmpty())
+                return false;
+
+            for (const PageInfo &page :
+                 std::as_const(m_pages)) {
+                if (page.id == candidate)
+                    return true;
+            }
+
+            return false;
+        };
+
+    if (oldCurrentPageId == pageId
+        || !containsPage(oldCurrentPageId)) {
+
+        if (containsPage(
+                preferredCurrentPageId)) {
+            m_currentPageId =
+                preferredCurrentPageId;
+        } else if (!m_pages.isEmpty()) {
+            const int replacementIndex =
+                std::min(
+                    pageIndex,
+                    m_pages.size() - 1);
+
+            m_currentPageId =
+                m_pages.at(
+                    replacementIndex)
+                    .id;
+        } else {
+            m_currentPageId.clear();
+        }
+    }
+
+    refreshPageAppearance();
+
+    if (m_loaded) {
+        filterAgain(
+            /*andEnsureVisible=*/false);
+        relayoutNotes(
+            /*animate=*/false);
+    }
+
+    save();
+
+    Q_EMIT pagesChanged();
+
+    if (m_currentPageId
+        != oldCurrentPageId) {
+        Q_EMIT currentPageChanged(
+            m_currentPageId);
+    }
+
+    return true;
+}
+
+bool BasketScene::restorePageForUndo(
+    const PageInfo &page,
+    int index,
+    const QString &preferredCurrentPageId)
+{
+    if (page.id.isEmpty())
+        return false;
+
+    for (const PageInfo &existing :
+         std::as_const(m_pages)) {
+        if (existing.id == page.id)
+            return false;
+    }
+
+    if (isDuringEdit())
+        closeEditor();
+
+    const QString oldCurrentPageId =
+        m_currentPageId;
+
+    const int insertionIndex =
+        std::clamp(
+            index,
+            0,
+            m_pages.size());
+
+    m_pages.insert(
+        insertionIndex,
+        page);
+
+    bool preferredExists = false;
+
+    for (const PageInfo &existing :
+         std::as_const(m_pages)) {
+        if (existing.id
+            == preferredCurrentPageId) {
+            preferredExists = true;
+            break;
+        }
+    }
+
+    if (preferredExists) {
+        m_currentPageId =
+            preferredCurrentPageId;
+    } else if (m_currentPageId.isEmpty()) {
+        m_currentPageId =
+            page.id;
+    }
+
+    refreshPageAppearance();
+
+    if (m_loaded) {
+        filterAgain(
+            /*andEnsureVisible=*/false);
+        relayoutNotes(
+            /*animate=*/false);
+    }
+
+    save();
+
+    Q_EMIT pagesChanged();
+
+    if (m_currentPageId
+        != oldCurrentPageId) {
+        Q_EMIT currentPageChanged(
+            m_currentPageId);
+    }
+
+    return true;
+}
+
 QString BasketScene::ensureTodayPage()
 {
     const QDate today = QDate::currentDate();
@@ -5853,23 +6017,47 @@ void BasketScene::discardSuspendedMathom(
         return;
 
     /*
-     * This happens when creation was undone and the user performs a new
-     * action instead of Redo. The detached Mathom then becomes genuinely
-     * obsolete.
+     * This happens when an Undoable deletion remains active and the
+     * command finally leaves history. A suspended root can now be an
+     * entire Page column/group, so collect every file-backed Mathom in
+     * the subtree before destroying it.
      */
-    QString contentFile;
+    QStringList contentFiles;
 
-    if (note->content()
-        && note->content()->useFile()) {
-        contentFile =
-            note->content()->fullPath();
-    }
+    std::function<void(Note *)> collectFiles =
+        [&](Note *candidate) {
+            if (!candidate)
+                return;
+
+            if (candidate->content()
+                && candidate
+                    ->content()
+                    ->useFile()) {
+                contentFiles.append(
+                    candidate
+                        ->content()
+                        ->fullPath());
+            }
+
+            for (Note *child =
+                     candidate->firstChild();
+                 child;
+                 child = child->next()) {
+                collectFiles(child);
+            }
+        };
+
+    collectFiles(note);
 
     delete note;
 
-    if (!contentFile.isEmpty())
-        Tools::deleteRecursively(
-            contentFile);
+    for (const QString &contentFile :
+         std::as_const(contentFiles)) {
+        if (!contentFile.isEmpty()) {
+            Tools::deleteRecursively(
+                contentFile);
+        }
+    }
 }
 
 void BasketScene::inactivityAutoSaveTimeout()
