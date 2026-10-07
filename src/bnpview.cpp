@@ -16,11 +16,16 @@
 #include <QKeyEvent>
 #include <QList>
 #include <QMenu>
+#include <QPageLayout>
+#include <QPageSize>
+#include <QPainter>
+#include <QPdfWriter>
 #include <QPixmap>
 #include <QPointer>
 #include <QProgressDialog>
 #include <QRegularExpression>
 #include <QResizeEvent>
+#include <QSaveFile>
 #include <QShowEvent>
 #include <QStackedWidget>
 #include <QSplitterHandle>
@@ -82,6 +87,7 @@
 #include "xmlwork.h"
 
 #include <QFileDialog>
+#include <QFileInfo>
 #include <QResource>
 #include <QStandardPaths>
 #include <qdbusconnection.h>
@@ -539,10 +545,21 @@ void BNPView::setupActions()
     m_actOpenArchive = a;
 
     a = ac->addAction(QStringLiteral("basket_export_html"), this, &BNPView::exportToHTML);
-    a->setText(i18n("&HTML Web Page..."));
+    a->setText(i18n("&HTML Web Site..."));
     a->setIcon(MathomIcons::icon(QStringLiteral("text-html")));
     a->setShortcut(0);
     m_actExportToHtml = a;
+
+    a = ac->addAction(
+        QStringLiteral("basket_export_current_page_pdf"),
+        this,
+        &BNPView::exportCurrentPageToPDF);
+    a->setText(i18n("Current &Page as PDF..."));
+    a->setIcon(MathomIcons::icon(QStringLiteral("application-pdf")));
+    a->setShortcut(0);
+    a->setStatusTip(
+        i18n("Exports the current Page to a PDF document"));
+    m_actExportCurrentPageToPdf = a;
 
     a = ac->addAction(QStringLiteral("basket_import_text_file"), this, &BNPView::importTextFile);
     a->setText(i18n("Text &File..."));
@@ -2206,8 +2223,321 @@ DecoratedBasket *BNPView::currentDecoratedBasket()
 
 void BNPView::exportToHTML()
 {
-    HTMLExporter exporter(currentBasket());
+    BasketScene *basket =
+        currentBasket();
+
+    if (!basket)
+        return;
+
+    if (basket->isDuringEdit()
+        && !basket->closeEditor()) {
+        return;
+    }
+
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("EXPORT_HTML_BEGIN"),
+        {{QStringLiteral("folder"),
+          basket->folderName()},
+         {QStringLiteral("page"),
+          basket->currentPageId()}});
+
+    HTMLExporter exporter(basket);
+
+    DiagnosticManager::instance().logEvent(
+        exporter.succeeded()
+            ? QStringLiteral("EXPORT_HTML_OK")
+            : QStringLiteral("EXPORT_HTML_END"),
+        {{QStringLiteral("folder"),
+          basket->folderName()},
+         {QStringLiteral("page"),
+          basket->currentPageId()},
+         {QStringLiteral("success"),
+          exporter.succeeded()}});
 }
+
+void BNPView::exportCurrentPageToPDF()
+{
+    BasketScene *basket =
+        currentBasket();
+
+    if (!basket)
+        return;
+
+    if (!basket->isLoaded())
+        basket->load();
+
+    if (basket->isLocked()) {
+        KMessageBox::error(
+            this,
+            i18n(
+                "The current Mathom-House is locked and "
+                "cannot be exported to PDF."));
+        return;
+    }
+
+    // Finish any in-place edit first so the PDF contains the latest
+    // committed Mathom contents rather than the editor widget.
+    if (basket->isDuringEdit()
+        && !basket->closeEditor()) {
+        return;
+    }
+
+    basket->relayoutNotes(false);
+
+    const QRectF sourceRect =
+        basket->sceneRect();
+
+    if (!sourceRect.isValid()
+        || sourceRect.width() <= 0.0
+        || sourceRect.height() <= 0.0) {
+        KMessageBox::error(
+            this,
+            i18n(
+                "The current Page has no valid printable area."));
+        return;
+    }
+
+    QString pageTitle;
+
+    for (const BasketScene::PageInfo &page :
+         basket->pages()) {
+        if (page.id
+            == basket->currentPageId()) {
+            pageTitle = page.title;
+            break;
+        }
+    }
+
+    QString documentTitle =
+        basket->basketName();
+
+    if (!pageTitle.isEmpty()) {
+        documentTitle +=
+            QStringLiteral(" - ")
+            + pageTitle;
+    }
+
+    QString safeName =
+        documentTitle;
+
+    safeName.replace(
+        QRegularExpression(
+            QStringLiteral("[\\/:*?\"<>|]")),
+        QStringLiteral("_"));
+
+    KConfigGroup config =
+        Global::config()->group(
+            QStringLiteral("Export to PDF"));
+
+    const QString folder =
+        config.readEntry(
+            "lastFolder",
+            QDir::homePath());
+
+    QString destination =
+        QDir(folder)
+            .filePath(
+                safeName
+                + QStringLiteral(".pdf"));
+
+    const QString filter =
+        i18n("PDF Documents (*.pdf);;All Files (*)");
+
+    for (bool askAgain = true;
+         askAgain;) {
+        destination =
+            QFileDialog::getSaveFileName(
+                this,
+                i18n("Export Current Page to PDF"),
+                destination,
+                filter);
+
+        if (destination.isEmpty())
+            return;
+
+        if (!destination.endsWith(
+                QStringLiteral(".pdf"),
+                Qt::CaseInsensitive)) {
+            destination +=
+                QStringLiteral(".pdf");
+        }
+
+        if (!QFile::exists(destination)) {
+            askAgain = false;
+            continue;
+        }
+
+        const int result =
+            KMessageBox::questionTwoActionsCancel(
+                this,
+                QStringLiteral("<qt>")
+                    + i18n(
+                        "The file <b>%1</b> already exists. "
+                        "Do you really want to overwrite it?",
+                        QFileInfo(destination)
+                            .fileName()),
+                i18n("Overwrite File?"),
+                KGuiItem(
+                    i18n("&Overwrite"),
+                    QStringLiteral("document-save")),
+                KStandardGuiItem::discard());
+
+        if (result == KMessageBox::Cancel)
+            return;
+
+        if (result == KMessageBox::Ok)
+            askAgain = false;
+    }
+
+    config.writeEntry(
+        "lastFolder",
+        QFileInfo(destination)
+            .absolutePath());
+    config.sync();
+
+    QVariantMap diagnosticDetails;
+    diagnosticDetails.insert(
+        QStringLiteral("folder"),
+        basket->folderName());
+    diagnosticDetails.insert(
+        QStringLiteral("page"),
+        basket->currentPageId());
+    diagnosticDetails.insert(
+        QStringLiteral("width"),
+        sourceRect.width());
+    diagnosticDetails.insert(
+        QStringLiteral("height"),
+        sourceRect.height());
+
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("EXPORT_PDF_BEGIN"),
+        diagnosticDetails);
+
+    QSaveFile output(destination);
+
+    if (!output.open(QIODevice::WriteOnly)) {
+        diagnosticDetails.insert(
+            QStringLiteral("phase"),
+            QStringLiteral("open-output"));
+
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("EXPORT_PDF_FAIL"),
+            diagnosticDetails);
+
+        KMessageBox::error(
+            this,
+            i18n(
+                "Mathom could not create the PDF file."));
+        return;
+    }
+
+    bool renderSucceeded = false;
+
+    {
+        QPdfWriter writer(&output);
+
+        // Render one Mathom Page as one PDF page. 96 DPI keeps the
+        // Mathom scene geometry close to its on-screen proportions.
+        constexpr int PdfResolution = 96;
+        constexpr qreal MillimetresPerInch = 25.4;
+        constexpr qreal MaximumPdfDimensionMm = 5000.0;
+
+        writer.setResolution(PdfResolution);
+
+        const qreal widthMm =
+            qBound(
+                MillimetresPerInch,
+                sourceRect.width()
+                    * MillimetresPerInch
+                    / PdfResolution,
+                MaximumPdfDimensionMm);
+
+        const qreal heightMm =
+            qBound(
+                MillimetresPerInch,
+                sourceRect.height()
+                    * MillimetresPerInch
+                    / PdfResolution,
+                MaximumPdfDimensionMm);
+
+        writer.setPageSize(
+            QPageSize(
+                QSizeF(widthMm, heightMm),
+                QPageSize::Millimeter,
+                QStringLiteral("Mathom Page"),
+                QPageSize::ExactMatch));
+
+        writer.setPageMargins(
+            QMarginsF(),
+            QPageLayout::Millimeter);
+
+        writer.setTitle(documentTitle);
+        writer.setCreator(
+            QGuiApplication::applicationDisplayName());
+
+        QPainter painter(&writer);
+
+        if (painter.isActive()) {
+            const QRectF targetRect(
+                0.0,
+                0.0,
+                writer.width(),
+                writer.height());
+
+            basket->render(
+                &painter,
+                targetRect,
+                sourceRect,
+                Qt::KeepAspectRatio);
+
+            renderSucceeded =
+                painter.end();
+        }
+    }
+
+    if (!renderSucceeded) {
+        output.cancelWriting();
+
+        diagnosticDetails.insert(
+            QStringLiteral("phase"),
+            QStringLiteral("render"));
+
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("EXPORT_PDF_FAIL"),
+            diagnosticDetails);
+
+        KMessageBox::error(
+            this,
+            i18n(
+                "Mathom could not render the current Page "
+                "to PDF."));
+        return;
+    }
+
+    if (!output.commit()) {
+        diagnosticDetails.insert(
+            QStringLiteral("phase"),
+            QStringLiteral("commit"));
+
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("EXPORT_PDF_FAIL"),
+            diagnosticDetails);
+
+        KMessageBox::error(
+            this,
+            i18n(
+                "Mathom could not finish writing the PDF file."));
+        return;
+    }
+
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("EXPORT_PDF_OK"),
+        diagnosticDetails);
+
+    postStatusbarMessage(
+        i18n("Current Page exported to PDF."));
+}
+
 void BNPView::editNote()
 {
     currentBasket()->noteEdit();
