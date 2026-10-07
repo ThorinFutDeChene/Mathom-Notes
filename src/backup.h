@@ -25,8 +25,6 @@ public:
     ~BackupDialog() override;
 
 private Q_SLOTS:
-    void moveToAnotherFolder();
-    void useAnotherExistingFolder();
     void backup();
     void restore();
     void populateLastBackup();
