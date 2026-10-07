@@ -1949,6 +1949,211 @@ void waitForThread(
     thread.wait();
 }
 
+enum class AutomaticBackupLevel
+{
+    Daily,
+    Weekly,
+    Monthly
+};
+
+QString automaticBackupPrefix(
+    const AutomaticBackupLevel level)
+{
+    switch (level) {
+    case AutomaticBackupLevel::Daily:
+        return QStringLiteral(
+            "Mathom_Auto_Daily_");
+    case AutomaticBackupLevel::Weekly:
+        return QStringLiteral(
+            "Mathom_Auto_Weekly_");
+    case AutomaticBackupLevel::Monthly:
+        return QStringLiteral(
+            "Mathom_Auto_Monthly_");
+    }
+
+    return {};
+}
+
+QString automaticBackupConfigKey(
+    const AutomaticBackupLevel level)
+{
+    switch (level) {
+    case AutomaticBackupLevel::Daily:
+        return QStringLiteral(
+            "lastAutomaticDaily");
+    case AutomaticBackupLevel::Weekly:
+        return QStringLiteral(
+            "lastAutomaticWeekly");
+    case AutomaticBackupLevel::Monthly:
+        return QStringLiteral(
+            "lastAutomaticMonthly");
+    }
+
+    return {};
+}
+
+bool automaticBackupIsDue(
+    const AutomaticBackupLevel level,
+    const QDate &lastDate,
+    const QDate &today)
+{
+    if (!lastDate.isValid())
+        return true;
+
+    switch (level) {
+    case AutomaticBackupLevel::Daily:
+        return lastDate != today;
+
+    case AutomaticBackupLevel::Weekly: {
+        int lastWeekYear = 0;
+        int currentWeekYear = 0;
+
+        const int lastWeek =
+            lastDate.weekNumber(
+                &lastWeekYear);
+
+        const int currentWeek =
+            today.weekNumber(
+                &currentWeekYear);
+
+        return lastWeekYear
+                != currentWeekYear
+            || lastWeek
+                != currentWeek;
+    }
+
+    case AutomaticBackupLevel::Monthly:
+        return lastDate.year()
+                != today.year()
+            || lastDate.month()
+                != today.month();
+    }
+
+    return true;
+}
+
+bool copyFileAtomically(
+    const QString &sourcePath,
+    const QString &destinationPath,
+    QString *errorString)
+{
+    QFile source(sourcePath);
+
+    if (!source.open(
+            QIODevice::ReadOnly)) {
+        if (errorString) {
+            *errorString =
+                QStringLiteral(
+                    "Cannot open automatic backup source");
+        }
+        return false;
+    }
+
+    QSaveFile destination(
+        destinationPath);
+
+    if (!destination.open(
+            QIODevice::WriteOnly)) {
+        if (errorString) {
+            *errorString =
+                QStringLiteral(
+                    "Cannot create automatic backup destination");
+        }
+        return false;
+    }
+
+    while (!source.atEnd()) {
+        const QByteArray data =
+            source.read(
+                1024 * 1024);
+
+        if (data.isEmpty()
+            && source.error()
+                != QFileDevice::NoError) {
+            if (errorString) {
+                *errorString =
+                    QStringLiteral(
+                        "Cannot read automatic backup source");
+            }
+            destination.cancelWriting();
+            return false;
+        }
+
+        if (destination.write(data)
+            != data.size()) {
+            if (errorString) {
+                *errorString =
+                    QStringLiteral(
+                        "Cannot write automatic backup destination");
+            }
+            destination.cancelWriting();
+            return false;
+        }
+    }
+
+    if (!destination.commit()) {
+        if (errorString) {
+            *errorString =
+                QStringLiteral(
+                    "Cannot finalize automatic backup");
+        }
+        return false;
+    }
+
+    return true;
+}
+
+bool promoteAutomaticBackup(
+    const QString &validatedSource,
+    const QString &directory,
+    const AutomaticBackupLevel level,
+    const QDate &today,
+    QString *errorString)
+{
+    const QString prefix =
+        automaticBackupPrefix(level);
+
+    const QString fileName =
+        prefix
+        + today.toString(
+            Qt::ISODate)
+        + QStringLiteral(
+            ".mathom-backup");
+
+    const QString destination =
+        QDir(directory)
+            .filePath(fileName);
+
+    if (!copyFileAtomically(
+            validatedSource,
+            destination,
+            errorString)) {
+        return false;
+    }
+
+    const QStringList oldFiles =
+        QDir(directory)
+            .entryList(
+                {
+                    prefix
+                    + QStringLiteral(
+                        "*.mathom-backup")
+                },
+                QDir::Files);
+
+    for (const QString &oldFile :
+         oldFiles) {
+        if (oldFile == fileName)
+            continue;
+
+        QFile::remove(
+            QDir(directory)
+                .filePath(oldFile));
+    }
+
+    return true;
+}
+
 } // namespace
 
 BackupDialog::BackupDialog(QWidget *parent)
@@ -2693,6 +2898,249 @@ QString Backup::newSafetyBackupPath()
             return candidate;
         }
     }
+}
+
+QString Backup::automaticBackupDirectory()
+{
+    const QString dataFolder =
+        QDir::cleanPath(
+            Global::savesFolder());
+
+    const QFileInfo dataFolderInfo(
+        dataFolder);
+
+    return QDir(
+               dataFolderInfo
+                   .absolutePath())
+        .filePath(
+            QStringLiteral(
+                "mathom_backup"));
+}
+
+void Backup::startAutomaticBackupIfDue()
+{
+    if (!Settings::
+            automaticBackupsEnabled()) {
+        return;
+    }
+
+    if (!Global::config())
+        return;
+
+    const QDate today =
+        QDate::currentDate();
+
+    KConfigGroup backupConfig =
+        Global::config()->group(
+            QStringLiteral(
+                "Backups"));
+
+    const QList<AutomaticBackupLevel>
+        levels = {
+            AutomaticBackupLevel::Daily,
+            AutomaticBackupLevel::Weekly,
+            AutomaticBackupLevel::Monthly
+        };
+
+    QList<AutomaticBackupLevel>
+        dueLevels;
+
+    for (const AutomaticBackupLevel level :
+         levels) {
+        const QDate lastDate =
+            backupConfig.readEntry(
+                automaticBackupConfigKey(
+                    level),
+                QDate());
+
+        if (automaticBackupIsDue(
+                level,
+                lastDate,
+                today)) {
+            dueLevels.append(level);
+        }
+    }
+
+    if (dueLevels.isEmpty())
+        return;
+
+    const QString directory =
+        automaticBackupDirectory();
+
+    if (!QDir().mkpath(directory)) {
+        DiagnosticManager::instance()
+            .logEvent(
+                QStringLiteral(
+                    "AUTO_BACKUP_FAIL"),
+                {
+                    {
+                        QStringLiteral(
+                            "phase"),
+                        QStringLiteral(
+                            "create-directory")
+                    },
+                    {
+                        QStringLiteral(
+                            "directory"),
+                        directory
+                    }
+                });
+        return;
+    }
+
+    if (Global::bnpView)
+        Global::bnpView->save();
+
+    Settings::saveConfig();
+    Global::config()->sync();
+
+    const QString pendingFile =
+        QDir(directory)
+            .filePath(
+                QStringLiteral(
+                    ".Mathom_Auto_Pending_%1_%2.mathom-backup")
+                    .arg(
+                        QCoreApplication::
+                            applicationPid())
+                    .arg(
+                        QDateTime::
+                            currentMSecsSinceEpoch()));
+
+    DiagnosticManager::instance()
+        .logEvent(
+            QStringLiteral(
+                "AUTO_BACKUP_BEGIN"),
+            {
+                {
+                    QStringLiteral(
+                        "levels"),
+                    dueLevels.size()
+                }
+            });
+
+    auto *thread =
+        new BackupThread(
+            pendingFile,
+            Global::savesFolder());
+
+    QObject::connect(
+        thread,
+        &QThread::finished,
+        qApp,
+        [thread,
+         pendingFile,
+         directory,
+         dueLevels,
+         today]() {
+            if (!thread->success()) {
+                QFile::remove(
+                    pendingFile);
+
+                DiagnosticManager::
+                    instance()
+                    .logEvent(
+                        QStringLiteral(
+                            "AUTO_BACKUP_FAIL"),
+                        {
+                            {
+                                QStringLiteral(
+                                    "phase"),
+                                QStringLiteral(
+                                    "create")
+                            },
+                            {
+                                QStringLiteral(
+                                    "error"),
+                                thread->
+                                    errorString()
+                            }
+                        });
+
+                thread->deleteLater();
+                return;
+            }
+
+            QString errorString;
+
+            for (const AutomaticBackupLevel
+                     level :
+                 dueLevels) {
+                if (!promoteAutomaticBackup(
+                        pendingFile,
+                        directory,
+                        level,
+                        today,
+                        &errorString)) {
+                    QFile::remove(
+                        pendingFile);
+
+                    DiagnosticManager::
+                        instance()
+                        .logEvent(
+                            QStringLiteral(
+                                "AUTO_BACKUP_FAIL"),
+                            {
+                                {
+                                    QStringLiteral(
+                                        "phase"),
+                                    QStringLiteral(
+                                        "promote")
+                                },
+                                {
+                                    QStringLiteral(
+                                        "error"),
+                                    errorString
+                                }
+                            });
+
+                    thread->deleteLater();
+                    return;
+                }
+            }
+
+            QFile::remove(
+                pendingFile);
+
+            if (Global::config()) {
+                KConfigGroup group =
+                    Global::config()
+                        ->group(
+                            QStringLiteral(
+                                "Backups"));
+
+                for (const AutomaticBackupLevel
+                         level :
+                     dueLevels) {
+                    group.writeEntry(
+                        automaticBackupConfigKey(
+                            level),
+                        today);
+                }
+
+                group.sync();
+            }
+
+            DiagnosticManager::instance()
+                .logEvent(
+                    QStringLiteral(
+                        "AUTO_BACKUP_OK"),
+                    {
+                        {
+                            QStringLiteral(
+                                "levels"),
+                            dueLevels.size()
+                        },
+                        {
+                            QStringLiteral(
+                                "directory"),
+                            directory
+                        }
+                    });
+
+            thread->deleteLater();
+        });
+
+    thread->start();
 }
 
 BackupThread::BackupThread(
