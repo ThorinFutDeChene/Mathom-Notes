@@ -2150,16 +2150,11 @@ void CrossReferenceContent::exportToHTML(HTMLExporter *exporter, int /*indent*/)
     else
         title = basket->basketName();
 
-    // if the basket we're trying to link to is the basket that was exported then
-    // we have to use a special way to refer to it for the links.
-    if (basket == exporter->exportedBasket)
-        url = QStringLiteral("../../") + exporter->fileName;
-    else {
-        // if we're in the exported basket then the links have to include
-        // the sub directories.
-        if (exporter->currentBasket == exporter->exportedBasket)
-            url.prepend(exporter->basketsFolderName);
-        url.append(QStringLiteral(".html"));
+    if (basket) {
+        url =
+            exporter->linkToBasket(basket);
+    } else {
+        url += QStringLiteral(".html");
     }
 
     QString linkIcon = exporter->iconsFolderName + exporter->copyIcon(m_icon, LinkLook::crossReferenceLook->iconSize());
