@@ -382,6 +382,64 @@ int HTMLExporter::documentCount(
     return count;
 }
 
+bool HTMLExporter::noteBelongsToCurrentPage(
+    Note *note) const
+{
+    if (!note || !currentBasket)
+        return false;
+
+    const QString pageId =
+        currentBasket->currentPageId();
+
+    if (pageId.isEmpty())
+        return true;
+
+    if (note->content())
+        return note->pageId() == pageId;
+
+    if (currentBasket->currentPageOwnsLayout()
+        && note->parentNote() == nullptr
+        && note->pageId().isEmpty()) {
+        return false;
+    }
+
+    return note->pageId().isEmpty()
+        || note->pageId() == pageId;
+}
+
+bool HTMLExporter::shouldExportNote(
+    Note *note) const
+{
+    if (!noteBelongsToCurrentPage(note))
+        return false;
+
+    if (note->isGroup()
+        && !note->isColumn()
+        && exportableDirectChildCount(note) == 0) {
+        return false;
+    }
+
+    return true;
+}
+
+int HTMLExporter::exportableDirectChildCount(
+    Note *note) const
+{
+    if (!note)
+        return 0;
+
+    int count = 0;
+
+    for (Note *child = note->firstChild();
+         child;
+         child = child->next()) {
+        if (shouldExportNote(child))
+            ++count;
+    }
+
+    return count;
+}
+
 void HTMLExporter::exportBasket(
     BasketScene *basket,
     bool isSubBasket)
@@ -470,6 +528,25 @@ void HTMLExporter::exportBasketPage(
     bool isDefaultPage)
 {
     currentBasket = basket;
+
+    QString pageTitle;
+
+    for (const BasketScene::PageInfo &page :
+         basket->pages()) {
+        if (page.id == pageId) {
+            pageTitle = page.title;
+            break;
+        }
+    }
+
+    QString documentTitle =
+        basket->basketName();
+
+    if (!pageTitle.isEmpty()) {
+        documentTitle +=
+            QStringLiteral(" — ")
+            + pageTitle;
+    }
 
     const QColor backgroundSetting =
         basket->currentPageBackgroundColorSetting();
@@ -660,6 +737,12 @@ void HTMLExporter::exportBasketPage(
         borderColor = Tools::mixColor(basket->backgroundColor(), QColor(Qt::GlobalColor::black)).name();
     } else if (hasTextColor) {
         borderColor = Tools::mixColor(QColor(Qt::GlobalColor::white), basket->textColor()).name();
+    } else {
+        borderColor =
+            Tools::mixColor(
+                basket->palette().color(QPalette::Base),
+                basket->palette().color(QPalette::Text))
+                .name();
     }
     stream << "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.01//EN\" \"http://www.w3.org/TR/html4/strict.dtd\">\n"
               "<html>\n"
@@ -674,6 +757,10 @@ void HTMLExporter::exportBasketPage(
               //      "   }\n"
               "   body { margin: 10px; font: 11px sans-serif; }\n" // TODO: Use user font
               "   h1 { text-align: center; }\n"
+              "   .pageTitle { margin: 0 0 6px 0; font-size: 120%; }\n"
+              "   .pages { margin: 0 0 8px 0; padding: 6px; border: 1px solid #bbb; border-radius: 5px; }\n"
+              "   .pages a, .pages span { display: inline-block; margin: 2px 4px 2px 0; padding: 3px 6px; text-decoration: none; }\n"
+              "   .pages .current { font-weight: bold; border-bottom: 2px solid currentColor; }\n"
               "   img { border: none; vertical-align: middle; }\n";
     if (withBasketTree) {
         stream << "   .tree { margin: 0; padding: 1px 0 1px 1px; width: 150px; _width: 149px; overflow: hidden; float: left; }\n"
@@ -752,7 +839,7 @@ void HTMLExporter::exportBasketPage(
            << "; }\n"
               "  </style>\n"
               "  <title>"
-           << Tools::textToHTMLWithoutP(basket->basketName())
+           << Tools::textToHTMLWithoutP(documentTitle)
            << "</title>\n"
               "  <link rel=\"shortcut icon\" type=\"image/png\" href=\""
            << basketIcon16 << "\">\n";
@@ -788,6 +875,19 @@ void HTMLExporter::exportBasketPage(
     //          "  <p>" << i18n("Notes matching the filter &quot;%1&quot;:", Tools::textToHTMLWithoutP(decoration()->filterData().string)) << "</p>\n";
 
     stream << "  <div class=\"basketSurrounder\">\n";
+
+    if (!pageTitle.isEmpty()) {
+        stream
+            << "   <h2 class=\"pageTitle\">"
+            << Tools::textToHTMLWithoutP(pageTitle)
+            << "</h2>\n";
+    }
+
+    writePageNavigation(
+        basket,
+        pageId,
+        isSubBasket,
+        isDefaultPage);
 
     stream << R"(   <div class="basket" style="position: relative; min-width: 100%; min-height: calc(100vh - 100px); )";
     if (!basket->isColumnsLayout()) {
@@ -827,17 +927,13 @@ void HTMLExporter::exportBasketPage(
     stream.setDevice(nullptr);
     dialog->setValue(dialog->value() + 1); // Basket exportation finished
 
-    // Recursively export child baskets:
-    BasketListViewItem *item = Global::bnpView->listViewItemForBasket(basket);
-    if (item->childCount() >= 0) {
-        for (int i = 0; i < item->childCount(); i++) {
-            exportBasket(((BasketListViewItem *)item->child(i))->basket(), /*isSubBasket=*/true);
-        }
-    }
 }
 
 void HTMLExporter::exportNote(Note *note, int indent)
 {
+    if (!shouldExportNote(note))
+        return;
+
     QString spaces;
 
     if (note->isColumn()) {
@@ -869,6 +965,9 @@ void HTMLExporter::exportNote(Note *note, int indent)
 
         // Export child notes:
         for (Note *child = note->firstChild(); child; child = child->next()) {
+            if (!shouldExportNote(child))
+                continue;
+
             stream << spaces.fill(QLatin1Char(' '), indent + 1);
             exportNote(child, indent + 1);
             stream << '\n';
@@ -890,14 +989,20 @@ void HTMLExporter::exportNote(Note *note, int indent)
                << spaces.fill(QLatin1Char(' '), indent) << "<table" << freeStyle
                << ">\n"; // Note content is expected to be on the same HTML line, but NOT groups
         int i = 0;
+        const int exportedChildCount =
+            exportableDirectChildCount(note);
+
         for (Note *child = note->firstChild(); child; child = child->next()) {
+            if (!shouldExportNote(child))
+                continue;
+
             stream << spaces.fill(QLatin1Char(' '), indent);
             if (i == 0)
                 stream << R"( <tr><td class="groupHandle"><img src=")" << QUrl(imagesFolderName).toString()
                        << (note->isFolded() ? "expand_group_" : "fold_group_") << backgroundColorName << ".png"
                        << "\" width=\"" << Note::EXPANDER_WIDTH << "\" height=\"" << Note::EXPANDER_HEIGHT << "\"></td>\n";
             else if (i == 1)
-                stream << R"( <tr><td class="freeSpace" rowspan=")" << note->countDirectChilds() << "\"></td>\n";
+                stream << R"( <tr><td class="freeSpace" rowspan=")" << exportedChildCount << "\"></td>\n";
             else
                 stream << " <tr>\n";
             stream << spaces.fill(QLatin1Char(' '), indent) << "  <td>";
@@ -933,6 +1038,59 @@ void HTMLExporter::exportNote(Note *note, int indent)
     }
 }
 
+void HTMLExporter::writePageNavigation(
+    BasketScene *basket,
+    const QString &pageId,
+    bool isSubBasket,
+    bool isDefaultPage)
+{
+    Q_UNUSED(isSubBasket)
+    Q_UNUSED(isDefaultPage)
+
+    if (!basket
+        || basket->pages().size() <= 1) {
+        return;
+    }
+
+    const QString defaultId =
+        defaultPageId(basket);
+
+    stream << "   <nav class=\"pages\" aria-label=\""
+           << i18n("Pages")
+           << "\">\n";
+
+    for (const BasketScene::PageInfo &page :
+         basket->pages()) {
+        const QString title =
+            Tools::textToHTMLWithoutP(page.title);
+
+        if (page.id == pageId) {
+            stream
+                << "    <span class=\"current\">"
+                << title
+                << "</span>\n";
+            continue;
+        }
+
+        const bool targetIsDefault =
+            page.id == defaultId;
+
+        stream
+            << "    <a href=\""
+            << QUrl(
+                   pageDocumentLink(
+                       basket,
+                       page.id,
+                       targetIsDefault))
+                   .toString()
+            << "\">"
+            << title
+            << "</a>\n";
+    }
+
+    stream << "   </nav>\n";
+}
+
 void HTMLExporter::writeBasketTree(BasketScene *currentBasket)
 {
     stream << "  <ul class=\"tree\">\n";
@@ -945,16 +1103,8 @@ void HTMLExporter::writeBasketTree(BasketScene *currentBasket, BasketScene *bask
     // Compute variable HTML code:
     QString spaces;
     QString cssClass = (basket == currentBasket ? QStringLiteral(" class=\"current\"") : QString());
-    QString link(QLatin1Char('#'));
-    if (currentBasket != basket) {
-        if (currentBasket == exportedBasket) {
-            link = basketsFolderName + basket->folderName().left(basket->folderName().length() - 1) + QStringLiteral(".html");
-        } else if (basket == exportedBasket) {
-            link = QStringLiteral("../../") + fileName;
-        } else {
-            link = basket->folderName().left(basket->folderName().length() - 1) + QStringLiteral(".html");
-        }
-    }
+    const QString link =
+        linkToBasket(basket);
     QString spanStyle = QStringLiteral(" style=\"");
     if (basket->backgroundColorSetting().isValid()) {
         spanStyle += QStringLiteral("background-color: ") + basket->backgroundColor().name() + QStringLiteral("; ");
