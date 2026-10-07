@@ -141,6 +141,92 @@ struct DeletedMathomPosition
 };
 
 
+struct TransferredPageFile
+{
+    QPointer<Note> note;
+    QString sourceFileName;
+    QString targetFileName;
+};
+
+
+class PageTransferCommand : public QUndoCommand
+{
+public:
+    PageTransferCommand(
+        BasketScene *source,
+        BasketScene *target,
+        const QString &pageId,
+        QUndoCommand *parent = nullptr);
+
+    ~PageTransferCommand() override;
+
+    void undo() override;
+    void redo() override;
+
+    bool isValid() const
+    {
+        return m_valid;
+    }
+
+private:
+    bool initialize();
+    bool moveForward();
+    bool moveBackward();
+
+    QPointer<BasketScene> m_source;
+    QPointer<BasketScene> m_target;
+
+    QString m_pageId;
+    PageHistoryState m_page;
+
+    QList<DeletedMathomPosition> m_sourcePositions;
+    QList<TransferredPageFile> m_files;
+
+    QString m_sourceCurrentPageId;
+    QString m_targetCurrentPageId;
+
+    int m_sourcePageIndex = -1;
+    int m_targetPageIndex = -1;
+
+    bool m_initialized = false;
+    bool m_forward = false;
+    bool m_valid = true;
+};
+
+
+class BasketHierarchyMoveCommand : public QUndoCommand
+{
+public:
+    BasketHierarchyMoveCommand(
+        BNPView *view,
+        BasketScene *basket,
+        BasketScene *newParent,
+        int newIndex,
+        const QString &newIcon,
+        QUndoCommand *parent = nullptr);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    bool apply(
+        BasketScene *parentBasket,
+        int index,
+        const QString &icon);
+
+    BNPView *m_view = nullptr;
+    QPointer<BasketScene> m_basket;
+    QPointer<BasketScene> m_oldParent;
+    QPointer<BasketScene> m_newParent;
+
+    int m_oldIndex = -1;
+    int m_newIndex = -1;
+
+    QString m_oldIcon;
+    QString m_newIcon;
+};
+
+
 class PageCreateCommand : public QUndoCommand
 {
 public:
