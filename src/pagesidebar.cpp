@@ -113,7 +113,23 @@ PageSidebar::PageSidebar(QWidget *parent)
         if (!m_basket)
             return;
 
-        const QString pageId = m_basket->createPage();
+        const QString previousPageId =
+            m_basket->currentPageId();
+
+        const QString pageId =
+            m_basket->createPage();
+
+        if (Global::bnpView
+            && Global::bnpView->globalUndoStack()) {
+            Global::bnpView
+                ->globalUndoStack()
+                ->push(
+                    new PageCreateCommand(
+                        m_basket,
+                        pageId,
+                        previousPageId));
+        }
+
         rebuild();
         selectPage(pageId);
     });
@@ -150,7 +166,17 @@ PageSidebar::PageSidebar(QWidget *parent)
         if (answer != QMessageBox::Yes)
             return;
 
-        m_basket->deletePage(pageId);
+        if (Global::bnpView
+            && Global::bnpView->globalUndoStack()) {
+            Global::bnpView
+                ->globalUndoStack()
+                ->push(
+                    new PageDeleteCommand(
+                        m_basket,
+                        pageId));
+        } else {
+            m_basket->deletePage(pageId);
+        }
     });
 
     connect(m_list, &QListWidget::currentItemChanged, this, [this](QListWidgetItem *current, QListWidgetItem *) {
