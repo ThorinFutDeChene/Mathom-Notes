@@ -242,6 +242,18 @@ public:
     QString ensureTodayPage();
     QString createPage();
     bool deletePage(const QString &pageId);
+
+    // Low-level helpers used exclusively by the global Undo/Redo history.
+    bool detachPageForUndo(
+        const QString &pageId,
+        bool allowLastPage,
+        const QString &preferredCurrentPageId = QString());
+
+    bool restorePageForUndo(
+        const PageInfo &page,
+        int index,
+        const QString &preferredCurrentPageId = QString());
+
     void setCurrentPageId(const QString &pageId);
     void renamePage(const QString &pageId, const QString &title);
     void reorderPages(const QStringList &pageIds);
