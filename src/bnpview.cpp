@@ -2322,7 +2322,7 @@ void BNPView::exportCurrentPageToPDF()
 
     safeName.replace(
         QRegularExpression(
-            QStringLiteral("[\\/:*?\"<>|]")),
+            QStringLiteral("[\\\\/:*?\"<>|]")),
         QStringLiteral("_"));
 
     KConfigGroup config =
