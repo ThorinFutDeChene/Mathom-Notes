@@ -18,6 +18,7 @@ class KComboBox;
 
 class QString;
 class QCheckBox;
+class QLabel;
 class QPushButton;
 class QPoint;
 class QSize;
@@ -110,6 +111,8 @@ protected:
     static bool s_versionSyncEnabled;
     /** Updates */
     static bool s_allowDevelopmentUpdates;
+    /** Backups */
+    static bool s_automaticBackupsEnabled;
 
 public: /* And the following methods are just getter / setters */
     /** App settings GET */
@@ -294,6 +297,11 @@ public: /* And the following methods are just getter / setters */
     {
         return s_allowDevelopmentUpdates;
     }
+    /** Backups */
+    static inline bool automaticBackupsEnabled()
+    {
+        return s_automaticBackupsEnabled;
+    }
 
     /** App settings SET */
     static void setTreeOnLeft(bool onLeft);
@@ -461,6 +469,11 @@ public: /* And the following methods are just getter / setters */
     {
         s_allowDevelopmentUpdates = enable;
     }
+    // Backups
+    static inline void setAutomaticBackupsEnabled(bool enable)
+    {
+        s_automaticBackupsEnabled = enable;
+    }
 
 public:
     /* Save and load config */
@@ -536,6 +549,23 @@ private:
     KComboBox *m_treeOnLeft;
     KComboBox *m_filterOnTop;
     QCheckBox *m_allowDevelopmentUpdates;
+};
+
+class BASKET_EXPORT BackupSettingsPage : public AbstractSettingsPage
+{
+    Q_OBJECT
+
+public:
+    explicit BackupSettingsPage(QObject *parent, const KPluginMetaData &data = KPluginMetaData());
+    ~BackupSettingsPage() override = default;
+
+    void load() override;
+    void save() override;
+    void defaults() override;
+
+private:
+    QCheckBox *m_automaticBackups = nullptr;
+    QLabel *m_destination = nullptr;
 };
 
 class BASKET_EXPORT BasketsPage : public AbstractSettingsPage
