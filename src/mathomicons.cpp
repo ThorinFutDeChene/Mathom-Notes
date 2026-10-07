@@ -132,3 +132,37 @@ QIcon MathomIcons::hierarchy(const QString &storedIcon, bool topLevel)
         ? icon(QStringLiteral("mathom-house"))
         : icon(QStringLiteral("mathom-shelf"));
 }
+
+bool MathomIcons::isDefaultHierarchyIcon(
+    const QString &storedIcon)
+{
+    return storedIcon.isEmpty()
+        || storedIcon == QStringLiteral("basket")
+        || storedIcon == QStringLiteral("org.kde.basket")
+        || storedIcon == QStringLiteral("fr.thorinux.mathom")
+        || storedIcon == QStringLiteral("mathom-house")
+        || storedIcon == QStringLiteral("mathom-shelf");
+}
+
+QString MathomIcons::convertedHierarchyName(
+    const QString &storedIcon,
+    bool topLevel)
+{
+    if (isDefaultHierarchyIcon(storedIcon)) {
+        return topLevel
+            ? QStringLiteral("mathom-house")
+            : QStringLiteral("mathom-shelf");
+    }
+
+    const QString customPath =
+        resolveCustomPath(storedIcon);
+
+    if (!customPath.isEmpty())
+        return customPath;
+
+    /*
+     * Theme icons explicitly chosen by the user are custom choices too.
+     * Keep them unchanged when the hierarchy level changes.
+     */
+    return storedIcon;
+}

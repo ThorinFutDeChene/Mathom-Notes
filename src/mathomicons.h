@@ -26,6 +26,8 @@ BASKET_EXPORT QIcon hierarchy(const QString &storedIcon, bool topLevel);
 BASKET_EXPORT QIcon icon(const QString &nameOrPath);
 BASKET_EXPORT QString resolveCustomPath(const QString &nameOrPath);
 BASKET_EXPORT QString canonicalHierarchyName(const QString &storedIcon, bool topLevel);
+BASKET_EXPORT bool isDefaultHierarchyIcon(const QString &storedIcon);
+BASKET_EXPORT QString convertedHierarchyName(const QString &storedIcon, bool topLevel);
 BASKET_EXPORT QString customIconsFolder();
 }
 

@@ -107,7 +107,76 @@ PageSidebar::PageSidebar(QWidget *parent)
     m_list->setDragDropMode(QAbstractItemView::InternalMove);
     m_list->setDefaultDropAction(Qt::MoveAction);
     m_list->setDropIndicatorShown(true);
+    m_list->setContextMenuPolicy(
+        Qt::CustomContextMenu);
     layout->addWidget(m_list, 1);
+
+    connect(
+        m_list,
+        &QListWidget::customContextMenuRequested,
+        this,
+        [this](const QPoint &pos) {
+            if (!m_basket
+                || !Global::bnpView) {
+                return;
+            }
+
+            QListWidgetItem *item =
+                m_list->itemAt(pos);
+
+            if (!item)
+                return;
+
+            m_list->setCurrentItem(item);
+
+            const QString pageId =
+                item->data(
+                    PageIdRole)
+                    .toString();
+
+            if (pageId.isEmpty())
+                return;
+
+            QMenu menu(this);
+
+            QAction *toShelf =
+                menu.addAction(
+                    i18n("Convert to Shelf"));
+
+            connect(
+                toShelf,
+                &QAction::triggered,
+                this,
+                [this, pageId]() {
+                    if (Global::bnpView) {
+                        Global::bnpView
+                            ->convertPageToShelf(
+                                m_basket,
+                                pageId);
+                    }
+                });
+
+            QAction *toHouse =
+                menu.addAction(
+                    i18n("Convert to Mathom-House"));
+
+            connect(
+                toHouse,
+                &QAction::triggered,
+                this,
+                [this, pageId]() {
+                    if (Global::bnpView) {
+                        Global::bnpView
+                            ->convertPageToMathomHouse(
+                                m_basket,
+                                pageId);
+                    }
+                });
+
+            menu.exec(
+                m_list->viewport()
+                    ->mapToGlobal(pos));
+        });
 
     connect(m_addButton, &QToolButton::clicked, this, [this]() {
         if (!m_basket)
