@@ -376,11 +376,6 @@ PageCreateCommand::PageCreateCommand(
     if (m_page.id.isEmpty())
         return;
 
-    collectPageRootsForHistory(
-        m_basket->firstNote(),
-        m_page.id,
-        m_positions);
-
     setText(
         i18n(
             "Create Page \"%1\"",
@@ -410,6 +405,25 @@ void PageCreateCommand::undo()
     revealBasketForHistory(
         m_basket,
         m_page.id);
+
+    /*
+     * Capture the Page exactly as it exists when creation is undone.
+     * Normally later Page actions have already been undone first, but
+     * refreshing here also keeps the command safe if an older, untracked
+     * setting changed the Page after creation.
+     */
+    m_page =
+        pageStateForHistory(
+            m_basket,
+            m_page.id,
+            &m_pageIndex);
+
+    m_positions.clear();
+
+    collectPageRootsForHistory(
+        m_basket->firstNote(),
+        m_page.id,
+        m_positions);
 
     suspendPagePositions(
         m_basket,
