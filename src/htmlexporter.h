@@ -8,6 +8,7 @@
 #ifndef HTMLEXPORTER_H
 #define HTMLEXPORTER_H
 
+#include <QHash>
 #include <QScopedPointer>
 #include <QString>
 #include <QTextStream>
@@ -119,6 +120,7 @@ public: // Used by NoteContent HTML exporters.
     QScopedPointer<QProgressDialog> dialog;
 
 private:
+    QHash<BasketScene *, QString> m_defaultPageIds;
     bool m_currentDocumentInBasketsFolder = false;
     bool m_failed = false;
     bool m_succeeded = false;
