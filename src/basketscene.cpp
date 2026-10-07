@@ -2353,6 +2353,128 @@ QString BasketScene::createPage()
     return page.id;
 }
 
+bool BasketScene::deletePage(
+    const QString &pageId)
+{
+    if (pageId.isEmpty()
+        || m_pages.size() <= 1) {
+        return false;
+    }
+
+    int pageIndex = -1;
+
+    for (int index = 0;
+         index < m_pages.size();
+         ++index) {
+        if (m_pages.at(index).id == pageId) {
+            pageIndex = index;
+            break;
+        }
+    }
+
+    if (pageIndex < 0)
+        return false;
+
+    if (isDuringEdit())
+        closeEditor();
+
+    const QString replacementPageId =
+        pageIndex + 1 < m_pages.size()
+            ? m_pages.at(pageIndex + 1).id
+            : m_pages.at(pageIndex - 1).id;
+
+    const bool deletingCurrentPage =
+        m_currentPageId == pageId;
+
+    /*
+     * Delete every real Mathom owned by the Page through the historical
+     * deletion path. This also removes file-backed Mathom contents and
+     * safely collapses legacy shared groups when needed.
+     */
+    unselectAll();
+
+    std::function<void(Note *)> selectPageMathoms =
+        [&](Note *first) {
+            for (Note *note = first;
+                 note;
+                 note = note->next()) {
+                if (note->content()) {
+                    if (note->pageId() == pageId)
+                        note->setSelected(true);
+                } else {
+                    selectPageMathoms(
+                        note->firstChild());
+                }
+            }
+        };
+
+    selectPageMathoms(firstNote());
+
+    Note *note = firstNote();
+
+    while (note) {
+        Note *next = note->next();
+
+        note->deleteSelectedNotes(
+            /*deleteFilesToo=*/true,
+            &m_notesToBeDeleted);
+
+        note = next;
+    }
+
+    if (!m_notesToBeDeleted.isEmpty())
+        doCleanUp();
+
+    /*
+     * Page-owned column layouts deliberately survive normal Mathom
+     * deletion. Remove the now-empty structural roots belonging to the
+     * deleted Page. Never remove a mixed legacy structure.
+     */
+    note = firstNote();
+
+    while (note) {
+        Note *next = note->next();
+
+        if (!note->content()
+            && note->pageId() == pageId
+            && pageIdsInNoteTree(note).isEmpty()) {
+            unplugNote(note);
+            delete note;
+        }
+
+        note = next;
+    }
+
+    m_pages.removeAt(pageIndex);
+
+    if (deletingCurrentPage)
+        m_currentPageId = replacementPageId;
+
+    refreshPageAppearance();
+
+    if (m_loaded) {
+        filterAgain(
+            /*andEnsureVisible=*/false);
+        relayoutNotes(
+            /*animate=*/false);
+    }
+
+    save();
+
+    Q_EMIT pagesChanged();
+
+    if (deletingCurrentPage)
+        Q_EMIT currentPageChanged(
+            m_currentPageId);
+
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("PAGE_DELETE"),
+        {{QStringLiteral("remaining_pages"),
+          m_pages.size()}});
+
+    return true;
+}
+
 QString BasketScene::ensureTodayPage()
 {
     const QDate today = QDate::currentDate();
