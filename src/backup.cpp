@@ -7,11 +7,8 @@
 
 #include "bnpview.h"
 #include "diagnosticmanager.h"
-#include "formatimporter.h"
 #include "global.h"
 #include "settings.h"
-#include "tools.h"
-#include "variouswidgets.h"
 
 #include <algorithm>
 
@@ -37,8 +34,6 @@
 #include <QSet>
 #include <QStandardPaths>
 #include <QTemporaryDir>
-#include <QTextStream>
-#include <QUrl>
 #include <QVBoxLayout>
 
 #include <KAboutData>
@@ -1962,134 +1957,31 @@ BackupDialog::BackupDialog(QWidget *parent)
     setModal(true);
     setWindowTitle(i18n("Backup & Restore"));
 
-    auto *mainWidget =
-        new QWidget(this);
-
     auto *mainLayout =
-        new QVBoxLayout;
-
-    setLayout(mainLayout);
-    mainLayout->addWidget(mainWidget);
-
-    auto *page =
-        new QWidget(this);
-
-    auto *pageVBoxLayout =
-        new QVBoxLayout(page);
-
-    pageVBoxLayout->setContentsMargins({});
-    mainLayout->addWidget(page);
-
-    QString savesFolder =
-        Global::savesFolder();
-
-    savesFolder =
-        savesFolder.left(
-            savesFolder.length() - 1);
-
-    auto *folderGroup =
-        new QGroupBox(
-            i18n("Save Folder"),
-            page);
-
-    pageVBoxLayout->addWidget(
-        folderGroup);
-
-    auto *folderGroupLayout =
-        new QVBoxLayout;
-
-    folderGroup->setLayout(
-        folderGroupLayout);
-
-    folderGroupLayout->addWidget(
-        new QLabel(
-            QStringLiteral("<qt><nobr>")
-                + i18n(
-                    "Your Mathom data is currently stored in this folder:<br><b>%1</b>",
-                    savesFolder),
-            folderGroup));
-
-    auto *folderWidget =
-        new QWidget;
-
-    folderGroupLayout->addWidget(
-        folderWidget);
-
-    auto *folderLayout =
-        new QHBoxLayout(
-            folderWidget);
-
-    folderLayout->setContentsMargins(
-        0, 0, 0, 0);
-
-    auto *moveFolder =
-        new QPushButton(
-            i18n("&Move to Another Folder..."),
-            folderWidget);
-
-    auto *useFolder =
-        new QPushButton(
-            i18n("&Use Another Existing Folder..."),
-            folderWidget);
-
-    auto *helpLabel =
-        new HelpLabel(
-            i18n("Why to do that?"),
-            i18n(
-                "<p>You can move the folder where %1 stores its Mathom data to:</p><ul>"
-                "<li>Store your Mathom data in a visible place in your home folder, such as ~/Mathom, so you can back it up manually whenever you want.</li>"
-                "<li>Store your Mathom data on a server to share it between two computers.<br>"
-                "In this case, mount the shared-folder to the local file system and ask %1 to use that mount point.<br>"
-                "Warning: you should not run %1 at the same time on both computers, or you risk to loss data while the two applications are desynced.</li>"
-                "</ul><p>Please remember that you should not change the content of that folder manually (eg. adding a file directly to the data folder will not add a mathom to Mathom).</p>",
-                QGuiApplication::
-                    applicationDisplayName()),
-            folderWidget);
-
-    folderLayout->addWidget(moveFolder);
-    folderLayout->addWidget(useFolder);
-    folderLayout->addWidget(helpLabel);
-    folderLayout->addStretch();
-
-    connect(
-        moveFolder,
-        &QPushButton::clicked,
-        this,
-        &BackupDialog::
-            moveToAnotherFolder);
-
-    connect(
-        useFolder,
-        &QPushButton::clicked,
-        this,
-        &BackupDialog::
-            useAnotherExistingFolder);
+        new QVBoxLayout(this);
 
     auto *backupGroup =
         new QGroupBox(
-            i18n("Full Backups"),
-            page);
-
-    pageVBoxLayout->addWidget(
-        backupGroup);
+            i18n("Backup"),
+            this);
 
     auto *backupGroupLayout =
-        new QVBoxLayout;
+        new QVBoxLayout(
+            backupGroup);
 
-    backupGroup->setLayout(
-        backupGroupLayout);
+    m_backupFolder =
+        new QLabel(
+            backupGroup);
+
+    m_backupFolder->setTextInteractionFlags(
+        Qt::TextSelectableByMouse);
 
     backupGroupLayout->addWidget(
-        new QLabel(
-            i18n(
-                "A full Mathom backup contains all Mathom-Houses, shelves, Pages, mathoms, attachments, tags, profiles and Mathom settings."),
-            backupGroup));
+        m_backupFolder);
 
     auto *backupWidget =
-        new QWidget;
-
-    backupGroupLayout->addWidget(
-        backupWidget);
+        new QWidget(
+            backupGroup);
 
     auto *backupLayout =
         new QHBoxLayout(
@@ -2100,17 +1992,12 @@ BackupDialog::BackupDialog(QWidget *parent)
 
     auto *backupButton =
         new QPushButton(
-            i18n("&Create Full Backup..."),
+            i18n("&Backup..."),
             backupWidget);
 
     auto *restoreButton =
         new QPushButton(
-            i18n("&Restore Full Backup..."),
-            backupWidget);
-
-    m_lastBackup =
-        new QLabel(
-            QString(),
+            i18n("&Restore..."),
             backupWidget);
 
     backupLayout->addWidget(
@@ -2119,10 +2006,20 @@ BackupDialog::BackupDialog(QWidget *parent)
     backupLayout->addWidget(
         restoreButton);
 
-    backupLayout->addWidget(
+    backupLayout->addStretch();
+
+    backupGroupLayout->addWidget(
+        backupWidget);
+
+    m_lastBackup =
+        new QLabel(
+            backupGroup);
+
+    backupGroupLayout->addWidget(
         m_lastBackup);
 
-    backupLayout->addStretch();
+    mainLayout->addWidget(
+        backupGroup);
 
     connect(
         backupButton,
@@ -2138,14 +2035,12 @@ BackupDialog::BackupDialog(QWidget *parent)
 
     populateLastBackup();
 
-    (new QWidget(page))
-        ->setSizePolicy(
-            QSizePolicy::Expanding,
-            QSizePolicy::Expanding);
+    mainLayout->addStretch();
 
     auto *buttonBox =
         new QDialogButtonBox(
-            QDialogButtonBox::Close);
+            QDialogButtonBox::Close,
+            this);
 
     connect(
         buttonBox,
@@ -2169,6 +2064,21 @@ void BackupDialog::populateLastBackup()
         KSharedConfig::openConfig(),
         QStringLiteral("Backups"));
 
+    const QString fallbackFolder =
+        group.readPathEntry(
+            QStringLiteral("lastFolder"),
+            QDir::homePath());
+
+    const QString backupFolder =
+        group.readPathEntry(
+            QStringLiteral("backupFolder"),
+            fallbackFolder);
+
+    m_backupFolder->setText(
+        i18n(
+            "Backup destination: <b>%1</b>",
+            backupFolder));
+
     const QDateTime lastBackup =
         group.readEntry(
             QStringLiteral(
@@ -2176,12 +2086,12 @@ void BackupDialog::populateLastBackup()
             QDateTime());
 
     QString text =
-        i18n("Last full backup: never");
+        i18n("Last backup: never");
 
     if (lastBackup.isValid()) {
         text =
             i18n(
-                "Last full backup: %1",
+                "Last backup: %1",
                 lastBackup.toLocalTime()
                     .toString(
                         QStringLiteral(
@@ -2189,92 +2099,6 @@ void BackupDialog::populateLastBackup()
     }
 
     m_lastBackup->setText(text);
-}
-
-void BackupDialog::moveToAnotherFolder()
-{
-    const QString currentSavesFolder =
-        Global::savesFolder();
-
-    const QUrl selectedURL =
-        QFileDialog::
-            getExistingDirectoryUrl(
-                this,
-                i18n(
-                    "Choose a Folder Where to Move Mathom Data"),
-                QUrl::fromLocalFile(
-                    currentSavesFolder));
-
-    if (selectedURL.isEmpty())
-        return;
-
-    QString folder =
-        selectedURL.path();
-
-    QDir dir(folder);
-
-    if (dir.exists()) {
-        const QStringList content =
-            dir.entryList();
-
-        if (content.count() > 2) {
-            const int result =
-                KMessageBox::
-                    warningContinueCancel(
-                        nullptr,
-                        QStringLiteral("<qt>")
-                            + i18n(
-                                "The folder <b>%1</b> is not empty. Do you want to overwrite it?",
-                                folder),
-                        i18n(
-                            "Overwrite Folder?"),
-                        KGuiItem(
-                            i18n("&Overwrite"),
-                            QStringLiteral(
-                                "document-save")));
-
-            if (result
-                == KMessageBox::Cancel) {
-                return;
-            }
-        }
-
-        Tools::deleteRecursively(
-            folder);
-    }
-
-    FormatImporter copier;
-    copier.moveFolder(
-        currentSavesFolder,
-        folder);
-
-    Backup::setFolderAndRestart(
-        folder,
-        i18n(
-            "Your Mathom data has been successfully moved to <b>%1</b>. %2 is going to be restarted to take this change into account."));
-}
-
-void BackupDialog::useAnotherExistingFolder()
-{
-    const QString currentSavesFolder =
-        Global::savesFolder();
-
-    const QUrl selectedURL =
-        QFileDialog::
-            getExistingDirectoryUrl(
-                this,
-                i18n(
-                    "Choose a Folder Where to Move Mathom Data"),
-                QUrl::fromLocalFile(
-                    currentSavesFolder));
-
-    if (selectedURL.isEmpty())
-        return;
-
-    Backup::setFolderAndRestart(
-        selectedURL.path(),
-        i18n(
-            "Your Mathom data folder has been successfully changed to <b>%1</b>. %2 is going to be restarted to take this change into account."));
 }
 
 void BackupDialog::backup()
@@ -2288,10 +2112,15 @@ void BackupDialog::backup()
         config,
         QStringLiteral("Backups"));
 
-    const QString folder =
+    const QString fallbackFolder =
         configGroup.readPathEntry(
             QStringLiteral("lastFolder"),
             QDir::homePath());
+
+    const QString folder =
+        configGroup.readPathEntry(
+            QStringLiteral("backupFolder"),
+            fallbackFolder);
 
     const QString fileName =
         i18nc(
@@ -2393,7 +2222,7 @@ void BackupDialog::backup()
     }
 
     configGroup.writePathEntry(
-        QStringLiteral("lastFolder"),
+        QStringLiteral("backupFolder"),
         QFileInfo(destination)
             .absolutePath());
 
@@ -2431,10 +2260,15 @@ void BackupDialog::restore()
         config,
         QStringLiteral("Backups"));
 
-    const QString folder =
+    const QString fallbackFolder =
         configGroup.readPathEntry(
             QStringLiteral("lastFolder"),
             QDir::homePath());
+
+    const QString folder =
+        configGroup.readPathEntry(
+            QStringLiteral("restoreFolder"),
+            fallbackFolder);
 
     const QString path =
         QFileDialog::getOpenFileName(
@@ -2449,7 +2283,7 @@ void BackupDialog::restore()
         return;
 
     configGroup.writePathEntry(
-        QStringLiteral("lastFolder"),
+        QStringLiteral("restoreFolder"),
         QFileInfo(path)
             .absolutePath());
 
