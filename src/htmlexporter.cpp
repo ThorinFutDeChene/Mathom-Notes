@@ -44,97 +44,431 @@
 HTMLExporter::HTMLExporter(BasketScene *basket)
     : dialog(new QProgressDialog())
 {
+    if (!basket)
+        return;
+
     QDir dir;
 
-    // Compute a default file name & path:
-    KConfigGroup config = Global::config()->group(QStringLiteral("Export to HTML"));
-    QString folder = config.readEntry("lastFolder", QDir::homePath()) + QLatin1Char('/');
-    QString url = folder + QString(basket->basketName()).replace(QLatin1Char('/'), QLatin1Char('_')) + QStringLiteral(".html");
+    KConfigGroup config =
+        Global::config()->group(
+            QStringLiteral("Export to HTML"));
 
-    // Ask a file name & path to the user:
-    QString filter = QStringLiteral("*.html *.htm|") + i18n("HTML Documents") + QStringLiteral("\n*|") + i18n("All Files");
-    QString destination = url;
+    const QString folder =
+        config.readEntry(
+            "lastFolder",
+            QDir::homePath())
+        + QLatin1Char('/');
+
+    QString destination =
+        folder
+        + QString(basket->basketName())
+              .replace(QLatin1Char('/'), QLatin1Char('_'))
+        + QStringLiteral(".html");
+
+    const QString filter =
+        QStringLiteral("*.html *.htm|")
+        + i18n("HTML Documents")
+        + QStringLiteral("\n*|")
+        + i18n("All Files");
+
     for (bool askAgain = true; askAgain;) {
-        // Ask:
-        destination = QFileDialog::getSaveFileName(nullptr, i18n("Export to HTML"), destination, filter);
-        // User canceled?
+        destination =
+            QFileDialog::getSaveFileName(
+                nullptr,
+                i18n("Export to HTML"),
+                destination,
+                filter);
+
         if (destination.isEmpty())
             return;
-        // File already existing? Ask for overriding:
+
+        if (!destination.endsWith(
+                QStringLiteral(".html"),
+                Qt::CaseInsensitive)
+            && !destination.endsWith(
+                QStringLiteral(".htm"),
+                Qt::CaseInsensitive)) {
+            destination += QStringLiteral(".html");
+        }
+
         if (dir.exists(destination)) {
-            int result = KMessageBox::questionTwoActionsCancel(
-                nullptr,
-                QStringLiteral("<qt>")
-                    + i18n("The file <b>%1</b> already exists. Do you really want to overwrite it?", QUrl::fromLocalFile(destination).fileName()),
-                i18n("Overwrite File?"),
-                KGuiItem(i18n("&Overwrite"), QStringLiteral("document-save")),
-                KStandardGuiItem::discard());
+            const int result =
+                KMessageBox::questionTwoActionsCancel(
+                    nullptr,
+                    QStringLiteral("<qt>")
+                        + i18n(
+                            "The file <b>%1</b> already exists. "
+                            "Do you really want to overwrite it?",
+                            QUrl::fromLocalFile(destination)
+                                .fileName()),
+                    i18n("Overwrite File?"),
+                    KGuiItem(
+                        i18n("&Overwrite"),
+                        QStringLiteral("document-save")),
+                    KStandardGuiItem::discard());
+
             if (result == KMessageBox::Cancel)
                 return;
-            else if (result == KMessageBox::Ok)
+
+            if (result == KMessageBox::Ok)
                 askAgain = false;
-        } else
+        } else {
             askAgain = false;
+        }
     }
 
-    // Create the progress dialog that will always be shown during the export:
     dialog->setWindowTitle(i18n("Export to HTML"));
-    dialog->setLabelText(i18n("Exporting to HTML. Please wait..."));
+    dialog->setLabelText(
+        i18n("Exporting the Mathom-House to HTML. Please wait..."));
     dialog->setCancelButton(nullptr);
     dialog->setAutoClose(true);
     dialog->show();
 
-    // Remember the last folder used for HTML exploration:
-    config.writeEntry("lastFolder", QUrl::fromLocalFile(destination).adjusted(QUrl::RemoveFilename).path());
+    config.writeEntry(
+        "lastFolder",
+        QUrl::fromLocalFile(destination)
+            .adjusted(QUrl::RemoveFilename)
+            .path());
     config.sync();
 
     prepareExport(basket, destination);
-    exportBasket(basket, /*isSubBasketScene*/ false);
+    exportBasket(basket, false);
 
-    dialog->setValue(dialog->value() + 1); // Finishing finished
+    dialog->setValue(dialog->value() + 1);
+
+    m_succeeded =
+        QFile::exists(filePath);
 }
 
 HTMLExporter::~HTMLExporter() = default;
 
-void HTMLExporter::prepareExport(BasketScene *basket, const QString &fullPath)
+void HTMLExporter::prepareExport(
+    BasketScene *basket,
+    const QString &fullPath)
 {
-    dialog->setRange(0,
-                     /*Preparation:*/ 1 + /*Finishing:*/ 1 + /*Basket:*/ 1
-                         + /*SubBaskets:*/ Global::bnpView->basketCount(Global::bnpView->listViewItemForBasket(basket)));
+    dialog->setRange(
+        0,
+        1
+            + documentCount(basket)
+            + 1);
+
     dialog->setValue(0);
     qApp->processEvents();
 
-    // Remember the file path chosen by the user:
     filePath = fullPath;
-    fileName = QUrl::fromLocalFile(fullPath).fileName();
+    fileName =
+        QUrl::fromLocalFile(fullPath)
+            .fileName();
+
     exportedBasket = basket;
     currentBasket = nullptr;
 
-    BasketListViewItem *item = Global::bnpView->listViewItemForBasket(basket);
-    withBasketTree = (item->childCount() >= 0);
+    BasketListViewItem *item =
+        Global::bnpView
+            ? Global::bnpView->listViewItemForBasket(basket)
+            : nullptr;
 
-    // Create and empty the files folder:
-    QString filesFolderPath = i18nc("HTML export folder (files)", "%1_files", filePath) + QLatin1Char('/'); // eg.: "/home/seb/foo.html_files/"
+    withBasketTree =
+        item
+        && item->childCount() > 0;
+
+    filesFolderPath =
+        i18nc(
+            "HTML export folder (files)",
+            "%1_files",
+            filePath)
+        + QLatin1Char('/');
+
     Tools::deleteRecursively(filesFolderPath);
+
     QDir dir;
-    dir.mkdir(filesFolderPath);
 
-    // Create sub-folders:
-    iconsFolderPath = filesFolderPath + i18nc("HTML export folder (icons)", "icons") + QLatin1Char('/'); // eg.: "/home/seb/foo.html_files/icons/"
-    imagesFolderPath = filesFolderPath + i18nc("HTML export folder (images)", "images") + QLatin1Char('/'); // eg.: "/home/seb/foo.html_files/images/"
-    basketsFolderPath = filesFolderPath + i18nc("HTML export folder (Mathom-Houses)", "mathom-houses") + QLatin1Char('/'); // eg.: "/home/seb/foo.html_files/baskets/"
-    dir.mkdir(iconsFolderPath);
-    dir.mkdir(imagesFolderPath);
-    dir.mkdir(basketsFolderPath);
+    dir.mkpath(filesFolderPath);
 
-    dialog->setValue(dialog->value() + 1); // Preparation finished
+    iconsFolderPath =
+        filesFolderPath
+        + i18nc(
+            "HTML export folder (icons)",
+            "icons")
+        + QLatin1Char('/');
+
+    imagesFolderPath =
+        filesFolderPath
+        + i18nc(
+            "HTML export folder (images)",
+            "images")
+        + QLatin1Char('/');
+
+    basketsFolderPath =
+        filesFolderPath
+        + i18nc(
+            "HTML export folder (Mathom-Houses)",
+            "mathom-houses")
+        + QLatin1Char('/');
+
+    dir.mkpath(iconsFolderPath);
+    dir.mkpath(imagesFolderPath);
+    dir.mkpath(basketsFolderPath);
+
+    dialog->setValue(dialog->value() + 1);
 }
 
-void HTMLExporter::exportBasket(BasketScene *basket, bool isSubBasket)
+QString HTMLExporter::defaultPageId(
+    BasketScene *basket) const
 {
-    if (!basket->isLoaded()) {
-        basket->load();
+    if (!basket
+        || basket->pages().isEmpty()) {
+        return {};
     }
+
+    const QString current =
+        basket->currentPageId();
+
+    for (const BasketScene::PageInfo &page :
+         basket->pages()) {
+        if (page.id == current)
+            return current;
+    }
+
+    return basket->pages().first().id;
+}
+
+QString HTMLExporter::pageDocumentFileName(
+    BasketScene *basket,
+    const QString &pageId) const
+{
+    QString basketName =
+        basket
+            ? basket->folderName()
+            : QStringLiteral("mathom");
+
+    if (basketName.endsWith(QLatin1Char('/')))
+        basketName.chop(1);
+
+    return basketName
+        + QStringLiteral("-page-")
+        + pageId
+        + QStringLiteral(".html");
+}
+
+QString HTMLExporter::pageDocumentPath(
+    BasketScene *basket,
+    bool isSubBasket,
+    const QString &pageId,
+    bool isDefaultPage) const
+{
+    if (isDefaultPage) {
+        if (!isSubBasket)
+            return filePath;
+
+        QString basketName =
+            basket->folderName();
+
+        if (basketName.endsWith(QLatin1Char('/')))
+            basketName.chop(1);
+
+        return basketsFolderPath
+            + basketName
+            + QStringLiteral(".html");
+    }
+
+    return basketsFolderPath
+        + pageDocumentFileName(
+            basket,
+            pageId);
+}
+
+QString HTMLExporter::pageDocumentLink(
+    BasketScene *basket,
+    const QString &pageId,
+    bool targetIsDefaultPage) const
+{
+    if (targetIsDefaultPage) {
+        if (basket == exportedBasket) {
+            return m_currentDocumentInBasketsFolder
+                ? QStringLiteral("../../") + fileName
+                : QStringLiteral("#");
+        }
+
+        QString basketName =
+            basket->folderName();
+
+        if (basketName.endsWith(QLatin1Char('/')))
+            basketName.chop(1);
+
+        const QString target =
+            basketName
+            + QStringLiteral(".html");
+
+        return m_currentDocumentInBasketsFolder
+            ? target
+            : basketsFolderName + target;
+    }
+
+    const QString target =
+        pageDocumentFileName(
+            basket,
+            pageId);
+
+    return m_currentDocumentInBasketsFolder
+        ? target
+        : basketsFolderName + target;
+}
+
+QString HTMLExporter::linkToBasket(
+    BasketScene *basket) const
+{
+    if (!basket)
+        return QStringLiteral("#");
+
+    if (basket == exportedBasket) {
+        return m_currentDocumentInBasketsFolder
+            ? QStringLiteral("../../") + fileName
+            : QStringLiteral("#");
+    }
+
+    QString basketName =
+        basket->folderName();
+
+    if (basketName.endsWith(QLatin1Char('/')))
+        basketName.chop(1);
+
+    const QString target =
+        basketName
+        + QStringLiteral(".html");
+
+    return m_currentDocumentInBasketsFolder
+        ? target
+        : basketsFolderName + target;
+}
+
+int HTMLExporter::documentCount(
+    BasketScene *basket) const
+{
+    if (!basket)
+        return 0;
+
+    if (!basket->isLoaded())
+        basket->load();
+
+    int count =
+        qMax(
+            1,
+            basket->pages().size());
+
+    if (!Global::bnpView)
+        return count;
+
+    BasketListViewItem *item =
+        Global::bnpView
+            ->listViewItemForBasket(basket);
+
+    if (!item)
+        return count;
+
+    for (int index = 0;
+         index < item->childCount();
+         ++index) {
+        auto *childItem =
+            static_cast<BasketListViewItem *>(
+                item->child(index));
+
+        count +=
+            documentCount(
+                childItem->basket());
+    }
+
+    return count;
+}
+
+void HTMLExporter::exportBasket(
+    BasketScene *basket,
+    bool isSubBasket)
+{
+    if (!basket)
+        return;
+
+    if (!basket->isLoaded())
+        basket->load();
+
+    const QString originalPageId =
+        basket->currentPageId();
+
+    const QString defaultId =
+        defaultPageId(basket);
+
+    if (basket->pages().isEmpty()) {
+        exportBasketPage(
+            basket,
+            isSubBasket,
+            QString(),
+            true);
+    } else {
+        if (basket->currentPageId()
+            != defaultId) {
+            basket->setCurrentPageId(
+                defaultId);
+        }
+
+        exportBasketPage(
+            basket,
+            isSubBasket,
+            defaultId,
+            true);
+
+        for (const BasketScene::PageInfo &page :
+             basket->pages()) {
+            if (page.id == defaultId)
+                continue;
+
+            basket->setCurrentPageId(
+                page.id);
+
+            exportBasketPage(
+                basket,
+                isSubBasket,
+                page.id,
+                false);
+        }
+
+        if (!originalPageId.isEmpty()
+            && basket->currentPageId()
+                != originalPageId) {
+            basket->setCurrentPageId(
+                originalPageId);
+        }
+    }
+
+    if (!Global::bnpView)
+        return;
+
+    BasketListViewItem *item =
+        Global::bnpView
+            ->listViewItemForBasket(basket);
+
+    if (!item)
+        return;
+
+    for (int index = 0;
+         index < item->childCount();
+         ++index) {
+        auto *childItem =
+            static_cast<BasketListViewItem *>(
+                item->child(index));
+
+        exportBasket(
+            childItem->basket(),
+            true);
+    }
+}
+
+void HTMLExporter::exportBasketPage(
+    BasketScene *basket,
+    bool isSubBasket,
+    const QString &pageId,
+    bool isDefaultPage)
+{
+    Q_UNUSED(pageId)
 
     currentBasket = basket;
 
