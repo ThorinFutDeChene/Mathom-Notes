@@ -197,6 +197,11 @@ void BNPView::lateInit()
     }
 
     updateNavigationBar();
+
+    // Automatic backups are checked only after the Mathom data have
+    // been loaded successfully. The backup itself runs transparently
+    // in a worker thread and never blocks startup with a dialog.
+    Backup::startAutomaticBackupIfDue();
 }
 
 void BNPView::addWelcomeBaskets()
