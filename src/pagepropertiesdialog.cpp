@@ -15,14 +15,17 @@
 #include <QRadioButton>
 #include <QSpinBox>
 #include <QStyle>
+#include <QUndoStack>
 #include <QVBoxLayout>
 
 #include <KLocalizedString>
 
 #include "backgroundmanager.h"
 #include "basketscene.h"
+#include "bnpview.h"
 #include "gitwrapper.h"
 #include "global.h"
+#include "history.h"
 #include "kcolorcombo2.h"
 
 PagePropertiesDialog::PagePropertiesDialog(
@@ -242,15 +245,97 @@ PagePropertiesDialog::PagePropertiesDialog(
 
 void PagePropertiesDialog::applyChanges()
 {
-    m_basket->setCurrentPageAppearance(
-        m_backgroundImagesMap.value(
-            m_backgroundImage->currentIndex()),
-        m_backgroundColor->color(),
-        m_textColor->color());
+    if (!m_basket)
+        return;
 
-    m_basket->setCurrentPageDisposition(
-        m_freeForm->isChecked(),
-        m_columnCount->value());
+    const QString pageId =
+        m_basket->currentPageId();
+
+    if (pageId.isEmpty())
+        return;
+
+    PageHistoryState oldState;
+
+    for (const BasketScene::PageInfo &page :
+         m_basket->pages()) {
+        if (page.id != pageId)
+            continue;
+
+        oldState.id = page.id;
+        oldState.title = page.title;
+        oldState.dayKey = page.dayKey;
+        oldState.backgroundImage =
+            page.backgroundImage;
+        oldState.backgroundColor =
+            page.backgroundColor;
+        oldState.textColor =
+            page.textColor;
+        oldState.freeLayout =
+            page.freeLayout;
+        oldState.columnCount =
+            page.columnCount;
+        oldState.layoutOwned =
+            page.layoutOwned;
+        break;
+    }
+
+    if (oldState.id.isEmpty())
+        return;
+
+    PageHistoryState newState =
+        oldState;
+
+    newState.backgroundImage =
+        m_backgroundImagesMap.value(
+            m_backgroundImage->currentIndex());
+
+    newState.backgroundColor =
+        m_backgroundColor->color();
+
+    newState.textColor =
+        m_textColor->color();
+
+    newState.freeLayout =
+        m_freeForm->isChecked();
+
+    newState.columnCount =
+        m_columnCount->value();
+
+    const bool changed =
+        oldState.backgroundImage
+            != newState.backgroundImage
+        || oldState.backgroundColor
+            != newState.backgroundColor
+        || oldState.textColor
+            != newState.textColor
+        || oldState.freeLayout
+            != newState.freeLayout
+        || oldState.columnCount
+            != newState.columnCount;
+
+    if (!changed)
+        return;
+
+    if (Global::bnpView
+        && Global::bnpView->globalUndoStack()) {
+        Global::bnpView
+            ->globalUndoStack()
+            ->push(
+                new PagePropertiesCommand(
+                    m_basket,
+                    pageId,
+                    oldState,
+                    newState));
+    } else {
+        m_basket->setCurrentPageAppearance(
+            newState.backgroundImage,
+            newState.backgroundColor,
+            newState.textColor);
+
+        m_basket->setCurrentPageDisposition(
+            newState.freeLayout,
+            newState.columnCount);
+    }
 
     GitWrapper::commitBasket(m_basket);
 }
