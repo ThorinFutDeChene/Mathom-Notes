@@ -35,6 +35,7 @@
 #include <QFileInfo>
 #include <QList>
 #include <QPainter>
+#include <QPalette>
 #include <QPixmap>
 #include <QProgressDialog>
 #include <QTextStream>
@@ -67,10 +68,7 @@ HTMLExporter::HTMLExporter(BasketScene *basket)
         + QStringLiteral(".html");
 
     const QString filter =
-        QStringLiteral("*.html *.htm|")
-        + i18n("HTML Documents")
-        + QStringLiteral("\n*|")
-        + i18n("All Files");
+        i18n("HTML Documents (*.html *.htm);;All Files (*)");
 
     for (bool askAgain = true; askAgain;) {
         destination =
@@ -1044,8 +1042,8 @@ void HTMLExporter::writePageNavigation(
     bool isSubBasket,
     bool isDefaultPage)
 {
-    Q_UNUSED(isSubBasket)
-    Q_UNUSED(isDefaultPage)
+    Q_UNUSED(isSubBasket);
+    Q_UNUSED(isDefaultPage);
 
     if (!basket
         || basket->pages().size() <= 1) {
