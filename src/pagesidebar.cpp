@@ -13,7 +13,7 @@
 #include <QLabel>
 #include <QListWidget>
 #include <QMenu>
-#include <QPushButton>
+#include <QMessageBox>
 #include <QSignalBlocker>
 #include <QStringList>
 #include <QToolButton>
@@ -53,8 +53,19 @@ PageSidebar::PageSidebar(QWidget *parent)
     buttons->setContentsMargins(0, 0, 0, 0);
     buttons->setSpacing(4);
 
-    auto *newPage = new QPushButton(i18n("New Page"), this);
-    buttons->addWidget(newPage, 1);
+    m_addButton = new QToolButton(this);
+    m_addButton->setText(QStringLiteral("+"));
+    m_addButton->setToolTip(i18n("New Page"));
+    m_addButton->setAccessibleName(i18n("New Page"));
+    buttons->addWidget(m_addButton);
+
+    m_removeButton = new QToolButton(this);
+    m_removeButton->setText(QStringLiteral("-"));
+    m_removeButton->setToolTip(i18n("Delete Page"));
+    m_removeButton->setAccessibleName(i18n("Delete Page"));
+    buttons->addWidget(m_removeButton);
+
+    buttons->addStretch(1);
 
     m_sortButton = new QToolButton(this);
     m_sortButton->setText(i18n("Sort"));
@@ -98,13 +109,48 @@ PageSidebar::PageSidebar(QWidget *parent)
     m_list->setDropIndicatorShown(true);
     layout->addWidget(m_list, 1);
 
-    connect(newPage, &QPushButton::clicked, this, [this]() {
+    connect(m_addButton, &QToolButton::clicked, this, [this]() {
         if (!m_basket)
             return;
 
         const QString pageId = m_basket->createPage();
         rebuild();
         selectPage(pageId);
+    });
+
+    connect(m_removeButton, &QToolButton::clicked, this, [this]() {
+        if (!m_basket
+            || m_basket->pages().size() <= 1) {
+            return;
+        }
+
+        QListWidgetItem *current =
+            m_list->currentItem();
+
+        if (!current)
+            return;
+
+        const QString pageId =
+            current->data(PageIdRole).toString();
+
+        const QString pageTitle =
+            current->text();
+
+        const QMessageBox::StandardButton answer =
+            QMessageBox::question(
+                this,
+                i18n("Delete Page?"),
+                i18n(
+                    "Delete the Page \"%1\" and all Mathoms it contains?",
+                    pageTitle),
+                QMessageBox::Yes
+                    | QMessageBox::No,
+                QMessageBox::No);
+
+        if (answer != QMessageBox::Yes)
+            return;
+
+        m_basket->deletePage(pageId);
     });
 
     connect(m_list, &QListWidget::currentItemChanged, this, [this](QListWidgetItem *current, QListWidgetItem *) {
@@ -247,6 +293,13 @@ void PageSidebar::rebuild()
     const QSignalBlocker blocker(m_list);
 
     m_list->clear();
+
+    m_addButton->setEnabled(
+        m_basket != nullptr);
+
+    m_removeButton->setEnabled(
+        m_basket
+        && m_basket->pages().size() > 1);
 
     if (!m_basket) {
         m_rebuilding = false;
