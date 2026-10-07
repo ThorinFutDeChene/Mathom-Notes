@@ -2353,6 +2353,294 @@ QString BasketScene::createPage()
     return page.id;
 }
 
+bool BasketScene::deletePage(
+    const QString &pageId)
+{
+    if (pageId.isEmpty()
+        || m_pages.size() <= 1) {
+        return false;
+    }
+
+    int pageIndex = -1;
+
+    for (int index = 0;
+         index < m_pages.size();
+         ++index) {
+        if (m_pages.at(index).id == pageId) {
+            pageIndex = index;
+            break;
+        }
+    }
+
+    if (pageIndex < 0)
+        return false;
+
+    if (isDuringEdit())
+        closeEditor();
+
+    const QString replacementPageId =
+        pageIndex + 1 < m_pages.size()
+            ? m_pages.at(pageIndex + 1).id
+            : m_pages.at(pageIndex - 1).id;
+
+    const bool deletingCurrentPage =
+        m_currentPageId == pageId;
+
+    /*
+     * Delete every real Mathom owned by the Page through the historical
+     * deletion path. This also removes file-backed Mathom contents and
+     * safely collapses legacy shared groups when needed.
+     */
+    unselectAll();
+
+    std::function<void(Note *)> selectPageMathoms =
+        [&](Note *first) {
+            for (Note *note = first;
+                 note;
+                 note = note->next()) {
+                if (note->content()) {
+                    if (note->pageId() == pageId)
+                        note->setSelected(true);
+                } else {
+                    selectPageMathoms(
+                        note->firstChild());
+                }
+            }
+        };
+
+    selectPageMathoms(firstNote());
+
+    Note *note = firstNote();
+
+    while (note) {
+        Note *next = note->next();
+
+        note->deleteSelectedNotes(
+            /*deleteFilesToo=*/true,
+            &m_notesToBeDeleted);
+
+        note = next;
+    }
+
+    if (!m_notesToBeDeleted.isEmpty())
+        doCleanUp();
+
+    /*
+     * Page-owned column layouts deliberately survive normal Mathom
+     * deletion. Remove the now-empty structural roots belonging to the
+     * deleted Page. Never remove a mixed legacy structure.
+     */
+    note = firstNote();
+
+    while (note) {
+        Note *next = note->next();
+
+        if (!note->content()
+            && note->pageId() == pageId
+            && pageIdsInNoteTree(note).isEmpty()) {
+            unplugNote(note);
+            delete note;
+        }
+
+        note = next;
+    }
+
+    m_pages.removeAt(pageIndex);
+
+    if (deletingCurrentPage)
+        m_currentPageId = replacementPageId;
+
+    refreshPageAppearance();
+
+    if (m_loaded) {
+        filterAgain(
+            /*andEnsureVisible=*/false);
+        relayoutNotes(
+            /*animate=*/false);
+    }
+
+    save();
+
+    Q_EMIT pagesChanged();
+
+    if (deletingCurrentPage)
+        Q_EMIT currentPageChanged(
+            m_currentPageId);
+
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("PAGE_DELETE"),
+        {{QStringLiteral("remaining_pages"),
+          m_pages.size()}});
+
+    return true;
+}
+
+bool BasketScene::detachPageForUndo(
+    const QString &pageId,
+    bool allowLastPage,
+    const QString &preferredCurrentPageId)
+{
+    if (pageId.isEmpty())
+        return false;
+
+    if (!allowLastPage
+        && m_pages.size() <= 1) {
+        return false;
+    }
+
+    int pageIndex = -1;
+
+    for (int index = 0;
+         index < m_pages.size();
+         ++index) {
+        if (m_pages.at(index).id == pageId) {
+            pageIndex = index;
+            break;
+        }
+    }
+
+    if (pageIndex < 0)
+        return false;
+
+    if (isDuringEdit())
+        closeEditor();
+
+    const QString oldCurrentPageId =
+        m_currentPageId;
+
+    m_pages.removeAt(pageIndex);
+
+    const auto containsPage =
+        [this](const QString &candidate) {
+            if (candidate.isEmpty())
+                return false;
+
+            for (const PageInfo &page :
+                 std::as_const(m_pages)) {
+                if (page.id == candidate)
+                    return true;
+            }
+
+            return false;
+        };
+
+    if (oldCurrentPageId == pageId
+        || !containsPage(oldCurrentPageId)) {
+
+        if (containsPage(
+                preferredCurrentPageId)) {
+            m_currentPageId =
+                preferredCurrentPageId;
+        } else if (!m_pages.isEmpty()) {
+            const int replacementIndex =
+                std::min(
+                    pageIndex,
+                    static_cast<int>(
+                        m_pages.size()) - 1);
+
+            m_currentPageId =
+                m_pages.at(
+                    replacementIndex)
+                    .id;
+        } else {
+            m_currentPageId.clear();
+        }
+    }
+
+    refreshPageAppearance();
+
+    if (m_loaded) {
+        filterAgain(
+            /*andEnsureVisible=*/false);
+        relayoutNotes(
+            /*animate=*/false);
+    }
+
+    save();
+
+    Q_EMIT pagesChanged();
+
+    if (m_currentPageId
+        != oldCurrentPageId) {
+        Q_EMIT currentPageChanged(
+            m_currentPageId);
+    }
+
+    return true;
+}
+
+bool BasketScene::restorePageForUndo(
+    const PageInfo &page,
+    int index,
+    const QString &preferredCurrentPageId)
+{
+    if (page.id.isEmpty())
+        return false;
+
+    for (const PageInfo &existing :
+         std::as_const(m_pages)) {
+        if (existing.id == page.id)
+            return false;
+    }
+
+    if (isDuringEdit())
+        closeEditor();
+
+    const QString oldCurrentPageId =
+        m_currentPageId;
+
+    const int insertionIndex =
+        std::clamp(
+            index,
+            0,
+            static_cast<int>(
+                m_pages.size()));
+
+    m_pages.insert(
+        insertionIndex,
+        page);
+
+    bool preferredExists = false;
+
+    for (const PageInfo &existing :
+         std::as_const(m_pages)) {
+        if (existing.id
+            == preferredCurrentPageId) {
+            preferredExists = true;
+            break;
+        }
+    }
+
+    if (preferredExists) {
+        m_currentPageId =
+            preferredCurrentPageId;
+    } else if (m_currentPageId.isEmpty()) {
+        m_currentPageId =
+            page.id;
+    }
+
+    refreshPageAppearance();
+
+    if (m_loaded) {
+        filterAgain(
+            /*andEnsureVisible=*/false);
+        relayoutNotes(
+            /*animate=*/false);
+    }
+
+    save();
+
+    Q_EMIT pagesChanged();
+
+    if (m_currentPageId
+        != oldCurrentPageId) {
+        Q_EMIT currentPageChanged(
+            m_currentPageId);
+    }
+
+    return true;
+}
+
 QString BasketScene::ensureTodayPage()
 {
     const QDate today = QDate::currentDate();
@@ -5731,23 +6019,47 @@ void BasketScene::discardSuspendedMathom(
         return;
 
     /*
-     * This happens when creation was undone and the user performs a new
-     * action instead of Redo. The detached Mathom then becomes genuinely
-     * obsolete.
+     * This happens when an Undoable deletion remains active and the
+     * command finally leaves history. A suspended root can now be an
+     * entire Page column/group, so collect every file-backed Mathom in
+     * the subtree before destroying it.
      */
-    QString contentFile;
+    QStringList contentFiles;
 
-    if (note->content()
-        && note->content()->useFile()) {
-        contentFile =
-            note->content()->fullPath();
-    }
+    std::function<void(Note *)> collectFiles =
+        [&](Note *candidate) {
+            if (!candidate)
+                return;
+
+            if (candidate->content()
+                && candidate
+                    ->content()
+                    ->useFile()) {
+                contentFiles.append(
+                    candidate
+                        ->content()
+                        ->fullPath());
+            }
+
+            for (Note *child =
+                     candidate->firstChild();
+                 child;
+                 child = child->next()) {
+                collectFiles(child);
+            }
+        };
+
+    collectFiles(note);
 
     delete note;
 
-    if (!contentFile.isEmpty())
-        Tools::deleteRecursively(
-            contentFile);
+    for (const QString &contentFile :
+         std::as_const(contentFiles)) {
+        if (!contentFile.isEmpty()) {
+            Tools::deleteRecursively(
+                contentFile);
+        }
+    }
 }
 
 void BasketScene::inactivityAutoSaveTimeout()
