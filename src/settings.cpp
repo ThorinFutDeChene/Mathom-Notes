@@ -96,7 +96,7 @@ bool Settings::s_versionSyncEnabled = false;
 // Updates
 bool Settings::s_allowDevelopmentUpdates = false;
 // Backups
-bool Settings::s_automaticBackupsEnabled = false;
+bool Settings::s_automaticBackupsEnabled = true;
 
 void Settings::loadConfig()
 {
@@ -198,7 +198,7 @@ void Settings::loadConfig()
     setAllowDevelopmentUpdates(config.readEntry("allowDevelopmentVersions", false));
 
     config = Global::config()->group(QStringLiteral("Backups"));
-    setAutomaticBackupsEnabled(config.readEntry("automaticEnabled", false));
+    setAutomaticBackupsEnabled(config.readEntry("automaticEnabled", true));
 }
 
 void Settings::saveConfig()
@@ -592,7 +592,7 @@ void BackupSettingsPage::save()
 
 void BackupSettingsPage::defaults()
 {
-    m_automaticBackups->setChecked(false);
+    m_automaticBackups->setChecked(true);
 }
 
 /** BasketsPage */
