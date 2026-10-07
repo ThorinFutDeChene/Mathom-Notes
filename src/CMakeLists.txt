@@ -179,6 +179,12 @@ target_link_libraries(mathom_config_secondary_languages LibBasket)
 install(TARGETS mathom_config_secondary_languages
     DESTINATION ${KDE_INSTALL_PLUGINDIR}/pim/kcms/mathom/)
 
+add_library(mathom_config_backups MODULE
+    kcm_mathom/mathom_config_backups.cpp)
+target_link_libraries(mathom_config_backups LibBasket)
+install(TARGETS mathom_config_backups
+    DESTINATION ${KDE_INSTALL_PLUGINDIR}/pim/kcms/mathom/)
+
 
 install(FILES fr.thorinux.mathom.desktop DESTINATION ${KDE_INSTALL_APPDIR})
 install(FILES fr.thorinux.mathom.metainfo.xml DESTINATION ${KDE_INSTALL_METAINFODIR})
