@@ -18,6 +18,7 @@ class KComboBox;
 
 class QString;
 class QCheckBox;
+class QLabel;
 class QPushButton;
 class QPoint;
 class QSize;
