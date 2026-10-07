@@ -30,6 +30,7 @@ private Q_SLOTS:
     void populateLastBackup();
 
 private:
+    QLabel *m_backupFolder = nullptr;
     QLabel *m_lastBackup = nullptr;
 };
 
