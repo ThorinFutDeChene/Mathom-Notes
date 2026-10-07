@@ -43,6 +43,8 @@ public:
     static void figureOutBinaryPath(const char *argv0, QApplication &app);
     static void setFolderAndRestart(const QString &folder, const QString &message);
     static QString newSafetyBackupPath();
+    static QString automaticBackupDirectory();
+    static void startAutomaticBackupIfDue();
 
 private:
     static QString binaryPath;
