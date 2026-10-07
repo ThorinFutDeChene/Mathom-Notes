@@ -2535,7 +2535,8 @@ bool BasketScene::detachPageForUndo(
             const int replacementIndex =
                 std::min(
                     pageIndex,
-                    m_pages.size() - 1);
+                    static_cast<int>(
+                        m_pages.size()) - 1);
 
             m_currentPageId =
                 m_pages.at(
@@ -2592,7 +2593,8 @@ bool BasketScene::restorePageForUndo(
         std::clamp(
             index,
             0,
-            m_pages.size());
+            static_cast<int>(
+                m_pages.size()));
 
     m_pages.insert(
         insertionIndex,
