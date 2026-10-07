@@ -163,6 +163,8 @@ public:
     void undo() override;
     void redo() override;
 
+    bool executeInitial();
+
     bool isValid() const
     {
         return m_valid;
@@ -191,6 +193,7 @@ private:
     bool m_initialized = false;
     bool m_forward = false;
     bool m_valid = true;
+    bool m_firstRedo = true;
 };
 
 
