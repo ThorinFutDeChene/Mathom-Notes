@@ -106,11 +106,12 @@ HTMLExporter::HTMLExporter(BasketScene *basket)
                         QStringLiteral("document-save")),
                     KStandardGuiItem::discard());
 
-            if (result == KMessageBox::Cancel)
+            if (result
+                != KMessageBox::PrimaryAction) {
                 return;
+            }
 
-            if (result == KMessageBox::Ok)
-                askAgain = false;
+            askAgain = false;
         } else {
             askAgain = false;
         }
