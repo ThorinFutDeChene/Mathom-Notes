@@ -1,0 +1,22 @@
+{
+    "KPlugin": {
+        "Description": "Automatic backups",
+        "Description[fr]": "Sauvegardes automatiques",
+        "Icon": "document-save",
+        "Name": "Backups",
+        "Name[fr]": "Sauvegardes",
+        "ServiceTypes": [
+            "KCModule"
+        ]
+    },
+    "X-KDE-CfgDlgHierarchy": "Basket",
+    "X-KDE-FactoryName": "mathom_config_backups",
+    "X-KDE-HasReadOnlyMode": "false",
+    "X-KDE-ModuleType": "Library",
+    "X-KDE-ParentApp": "basket",
+    "X-KDE-ParentComponents": [
+        "basket",
+        "kontact_basketplugin"
+    ],
+    "X-KDE-Weight": 18
+}
