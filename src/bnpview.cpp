@@ -3704,6 +3704,7 @@ void BNPView::enableActions()
     m_actPropBasket->setEnabled(!basket->isLocked());
     m_actDelBasket->setEnabled(!basket->isLocked());
     m_actExportToHtml->setEnabled(!basket->isLocked());
+    m_actExportCurrentPageToPdf->setEnabled(!basket->isLocked());
     m_actShowFilter->setEnabled(!basket->isLocked());
     m_actFilterAllBaskets->setEnabled(!basket->isLocked());
     m_actResetFilter->setEnabled(!basket->isLocked());
