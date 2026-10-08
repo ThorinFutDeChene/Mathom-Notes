@@ -109,7 +109,7 @@
    <Action name="options_configure" />
   </Menu>
   <Menu name="profile">
-    <text>&amp;Profil</text>
+    <text>&amp;Profile</text>
     <Action name="profile_dyslexia" />
     <Action name="profile_dysorthography" />
     <Action name="profile_dysgraphia" />

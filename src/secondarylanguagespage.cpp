@@ -44,9 +44,9 @@ SecondaryLanguagesPage::SecondaryLanguagesPage(
     auto *description =
         new QLabel(
             i18n(
-                "Ajoutez les langues secondaires que vous utilisez. "
-                "Chaque langue possède son propre déclencheur de saisie. "
-                "Le déclencheur proposé par défaut est « xx »."),
+                "Add the secondary languages you use. "
+                "Each language has its own input trigger. "
+                "The default suggested trigger is \"xx\"."),
             widget());
 
     description->setWordWrap(true);
@@ -87,7 +87,7 @@ SecondaryLanguagesPage::SecondaryLanguagesPage(
     auto *emptyTitle =
         new QLabel(
             i18n(
-                "Aucune langue secondaire configurée"),
+                "No secondary language configured"),
             m_emptyStateWidget);
 
     QFont emptyTitleFont =
@@ -106,8 +106,8 @@ SecondaryLanguagesPage::SecondaryLanguagesPage(
     auto *emptyDescription =
         new QLabel(
             i18n(
-                "Ajoutez une langue pour utiliser rapidement "
-                "ses caractères spécifiques pendant la prise de notes."),
+                "Add a language to quickly use "
+                "its specific characters while taking notes."),
             m_emptyStateWidget);
 
     emptyDescription->setWordWrap(true);
@@ -240,7 +240,7 @@ SecondaryLanguagesPage::SecondaryLanguagesPage(
         new QPushButton(
             QIcon::fromTheme(
                 QStringLiteral("list-add")),
-            i18n("Ajouter une langue"),
+            i18n("Add a language"),
             widget());
 
     m_addButton->setMinimumHeight(42);
@@ -249,7 +249,7 @@ SecondaryLanguagesPage::SecondaryLanguagesPage(
         QSize(22, 22));
 
     m_addButton->setToolTip(
-        i18n("Ajouter une langue secondaire"));
+        i18n("Add a secondary language"));
 
     addButtonLayout->addWidget(
         m_addButton);
@@ -350,7 +350,7 @@ void SecondaryLanguagesPage::chooseLanguage()
     QDialog dialog(widget());
 
     dialog.setWindowTitle(
-        i18n("Ajouter une langue"));
+        i18n("Add a language"));
 
     dialog.setMinimumSize(
         480,
@@ -372,7 +372,7 @@ void SecondaryLanguagesPage::chooseLanguage()
      */
     auto *title =
         new QLabel(
-            i18n("Ajouter une langue secondaire"),
+            i18n("Add a secondary language"),
             &dialog);
 
     QFont titleFont =
@@ -389,8 +389,8 @@ void SecondaryLanguagesPage::chooseLanguage()
     auto *description =
         new QLabel(
             i18n(
-                "Choisissez la langue dont vous souhaitez "
-                "utiliser rapidement les caractères spécifiques."),
+                "Choose the language whose specific characters "
+                "you want to use quickly."),
             &dialog);
 
     description->setWordWrap(true);
@@ -404,7 +404,7 @@ void SecondaryLanguagesPage::chooseLanguage()
         new QLineEdit(&dialog);
 
     search->setPlaceholderText(
-        i18n("Rechercher une langue…"));
+        i18n("Search for a language…"));
 
     search->setClearButtonEnabled(true);
 
@@ -441,7 +441,7 @@ void SecondaryLanguagesPage::chooseLanguage()
 
         item->setToolTip(
             i18n(
-                "%1 — déclencheur par défaut : %2",
+                "%1 — default trigger: %2",
                 profile.name,
                 profile.defaultTrigger));
     }
@@ -464,7 +464,7 @@ void SecondaryLanguagesPage::chooseLanguage()
             QDialogButtonBox::Ok);
 
     addButton->setText(
-        i18n("Ajouter"));
+        i18n("Add"));
 
     addButton->setIcon(
         QIcon::fromTheme(
@@ -681,7 +681,7 @@ void SecondaryLanguagesPage::addLanguage(
 
     auto *triggerLabel =
         new QLabel(
-            i18n("Déclencheur"),
+            i18n("Trigger"),
             rowWidget);
 
     auto *triggerEdit =
@@ -709,12 +709,12 @@ void SecondaryLanguagesPage::addLanguage(
 
     removeButton->setToolTip(
         i18n(
-            "Supprimer %1",
+            "Remove %1",
             profile.name));
 
     removeButton->setAccessibleName(
         i18n(
-            "Supprimer %1",
+            "Remove %1",
             profile.name));
 
     removeButton->setAutoRaise(true);
@@ -822,8 +822,8 @@ void SecondaryLanguagesPage::updateAddButton()
 
     m_addButton->setText(
         isEmpty
-        ? i18n("Ajouter une langue")
-        : i18n("Ajouter une autre langue"));
+        ? i18n("Add a language")
+        : i18n("Add another language"));
 
     if (m_emptyStateWidget)
         m_emptyStateWidget->setVisible(isEmpty);
@@ -905,9 +905,9 @@ void SecondaryLanguagesPage::updateConflictWarning()
 
             messages.append(
                 i18n(
-                    "%1 et %2 produisent des résultats différents "
-                    "avec « %3 ». Modifiez le déclencheur de l'une "
-                    "des deux langues.",
+                    "%1 and %2 produce different results "
+                    "with \"%3\". Change the trigger for one "
+                    "of the two languages.",
                     firstName,
                     secondName,
                     conflict.sequence));
@@ -916,9 +916,9 @@ void SecondaryLanguagesPage::updateConflictWarning()
 
             messages.append(
                 i18n(
-                    "Le déclencheur « %1 » de %2 entre en conflit "
-                    "avec « %3 » de %4. Modifiez l'un des deux "
-                    "déclencheurs.",
+                    "The \"%1\" trigger for %2 conflicts "
+                    "with \"%3\" for %4. Change one of the two "
+                    "triggers.",
                     conflict.firstTrigger,
                     firstName,
                     conflict.secondTrigger,
@@ -946,7 +946,7 @@ void SecondaryLanguagesPage::updateConflictWarning()
         if (conflicted) {
             row.widget->setToolTip(
                 i18n(
-                    "Cette langue possède un conflit de déclencheur."));
+                    "This language has a trigger conflict."));
         }
 
         /*
@@ -964,7 +964,7 @@ void SecondaryLanguagesPage::updateConflictWarning()
 
     m_conflictLabel->setText(
         QStringLiteral("<b>")
-        + i18n("Conflit de saisie")
+        + i18n("Input conflict")
         + QStringLiteral("</b><br>")
         + messages.join(
             QStringLiteral("<br>")));

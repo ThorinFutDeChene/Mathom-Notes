@@ -138,37 +138,37 @@ void MainWindow::setupActions()
 
     addAccessibilityProfileAction(
         QStringLiteral("profile_dyslexia"),
-        i18n("Dyslexie"),
+        i18n("Dyslexia"),
         QStringLiteral("dyslexia"));
 
     addAccessibilityProfileAction(
         QStringLiteral("profile_dysorthography"),
-        i18n("Dysorthographie"),
+        i18n("Dysorthography"),
         QStringLiteral("dysorthography"));
 
     addAccessibilityProfileAction(
         QStringLiteral("profile_dysgraphia"),
-        i18n("Dysgraphie"),
+        i18n("Dysgraphia"),
         QStringLiteral("dysgraphia"));
 
     addAccessibilityProfileAction(
         QStringLiteral("profile_dyspraxia"),
-        i18n("Dyspraxie / TDC"),
+        i18n("Dyspraxia / DCD"),
         QStringLiteral("dyspraxia"));
 
     addAccessibilityProfileAction(
         QStringLiteral("profile_dysphasia"),
-        i18n("Dysphasie / TDL"),
+        i18n("Dysphasia / DLD"),
         QStringLiteral("dysphasia"));
 
     addAccessibilityProfileAction(
         QStringLiteral("profile_dyscalculia"),
-        i18n("Dyscalculie"),
+        i18n("Dyscalculia"),
         QStringLiteral("dyscalculia"));
 
     addAccessibilityProfileAction(
         QStringLiteral("profile_adhd"),
-        i18n("TDAH"),
+        i18n("ADHD"),
         QStringLiteral("adhd"));
 
     QAction *customProfileAction =
@@ -178,7 +178,7 @@ void MainWindow::setupActions()
             &MainWindow::showCustomAccessibilityDialog);
 
     customProfileAction->setText(
-        i18n("Personnalisé..."));
+        i18n("Custom..."));
 
     QAction *aboutMathomAction =
         actionCollection()->addAction(
@@ -187,7 +187,7 @@ void MainWindow::setupActions()
             &MainWindow::showAboutMathomDialog);
 
     aboutMathomAction->setText(
-        i18n("À propos de Mathom Notes"));
+        i18n("About Mathom Notes"));
 
     aboutMathomAction->setIcon(
         MathomIcons::application());
@@ -262,7 +262,7 @@ void MainWindow::showCustomAccessibilityDialog()
     QDialog dialog(this);
 
     dialog.setWindowTitle(
-        i18n("Profil personnalisé"));
+        i18n("Custom profile"));
 
     auto *layout =
         new QVBoxLayout(&dialog);
@@ -270,8 +270,8 @@ void MainWindow::showCustomAccessibilityDialog()
     auto *description =
         new QLabel(
             i18n(
-                "Sélectionnez les aides à appliquer. "
-                "Les modules peuvent être combinés librement."),
+                "Select the aids to apply. "
+                "Modules can be combined freely."),
             &dialog);
 
     description->setWordWrap(true);
@@ -295,7 +295,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *typographyGroup =
         new QGroupBox(
-            i18n("Typographie"),
+            i18n("Typography"),
             &dialog);
 
     auto *typographyLayout =
@@ -304,7 +304,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *adaptedFont =
         new QCheckBox(
-            i18n("Police adaptée"),
+            i18n("Adapted font"),
             typographyGroup);
 
     adaptedFont->setChecked(
@@ -318,7 +318,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *largerText =
         new QCheckBox(
-            i18n("Texte agrandi"),
+            i18n("Larger text"),
             typographyGroup);
 
     largerText->setChecked(
@@ -332,7 +332,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *letterSpacing =
         new QCheckBox(
-            i18n("Espacement des lettres"),
+            i18n("Letter spacing"),
             typographyGroup);
 
     letterSpacing->setChecked(
@@ -346,7 +346,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *wordSpacing =
         new QCheckBox(
-            i18n("Espacement des mots"),
+            i18n("Word spacing"),
             typographyGroup);
 
     wordSpacing->setChecked(
@@ -360,7 +360,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *lineSpacing =
         new QCheckBox(
-            i18n("Interligne augmenté"),
+            i18n("Increased line spacing"),
             typographyGroup);
 
     lineSpacing->setChecked(
@@ -407,7 +407,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *readingGroup =
         new QGroupBox(
-            i18n("Aides à la lecture"),
+            i18n("Reading aids"),
             &dialog);
 
     auto *readingLayout =
@@ -420,7 +420,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *syllableColoring =
         new QCheckBox(
-            i18n("Coloration des syllabes"),
+            i18n("Syllable coloring"),
             readingGroup);
 
     syllableColoring->setChecked(
@@ -438,7 +438,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *phonemeColoring =
         new QCheckBox(
-            i18n("Coloration des phonèmes"),
+            i18n("Phoneme coloring"),
             readingGroup);
 
     phonemeColoring->setChecked(
@@ -448,8 +448,8 @@ void MainWindow::showCustomAccessibilityDialog()
 
     phonemeColoring->setToolTip(
         i18n(
-            "Repérage visuel des correspondances "
-            "graphèmes-sons courantes du français."));
+            "Visual highlighting of common "
+            "grapheme-sound correspondences in French."));
 
     readingLayout->addWidget(
         phonemeColoring);
@@ -461,7 +461,7 @@ void MainWindow::showCustomAccessibilityDialog()
 
     auto *graphemeHighlight =
         new QCheckBox(
-            i18n("Mise en évidence des graphèmes"),
+            i18n("Grapheme highlighting"),
             readingGroup);
 
     graphemeHighlight->setChecked(
@@ -471,8 +471,8 @@ void MainWindow::showCustomAccessibilityDialog()
 
     graphemeHighlight->setToolTip(
         i18n(
-            "Souligne les groupes de lettres formant "
-            "des unités de lecture courantes."));
+            "Underlines groups of letters that form "
+            "common reading units."));
 
     readingLayout->addWidget(
         graphemeHighlight);
@@ -862,7 +862,7 @@ void MainWindow::showAboutMathomDialog()
     QDialog dialog(this);
 
     dialog.setWindowTitle(
-        i18n("À propos de Mathom Notes"));
+        i18n("About Mathom Notes"));
 
     dialog.setWindowIcon(
         MathomIcons::application());
@@ -901,25 +901,25 @@ void MainWindow::showAboutMathomDialog()
     const QString aboutHtml =
         i18n(
             "<h2>Mathom Notes %1</h2>"
-            "<p>Mathom Notes est un logiciel libre de prise de notes "
-            "et d'organisation des connaissances.</p>"
-            "<p>Le projet est développé et maintenu par "
+            "<p>Mathom Notes is free software for note-taking "
+            "and knowledge organization.</p>"
+            "<p>The project is developed and maintained by "
             "<b>Thorinux Systems</b>.</p>"
-            "<p>Mathom Notes est basé sur le projet libre "
+            "<p>Mathom Notes is based on the free software project "
             "<b>BasKet Note Pads</b>.</p>"
-            "<p>Mathom Notes utilise <b>Qt 6</b> et "
-            "<b>KDE Frameworks 6</b> fournis par le système.</p>"
-            "<p><b>Site du projet :</b> "
+            "<p>Mathom Notes uses <b>Qt 6</b> and "
+            "<b>KDE Frameworks 6</b> provided by the system.</p>"
+            "<p><b>Project website:</b> "
             "<a href=\"https://github.com/ThorinFutDeChene/Mathom-Notes\">"
             "GitHub - Mathom Notes</a></p>"
-            "<p><b>Contact :</b> "
+            "<p><b>Contact:</b> "
             "<a href=\"mailto:contact@thorinux.fr\">"
             "contact@thorinux.fr</a></p>",
             version);
 
     tabs->addTab(
         makePage(aboutHtml),
-        i18n("À propos"));
+        i18n("About"));
 
 
     /*
@@ -927,28 +927,28 @@ void MainWindow::showAboutMathomDialog()
      */
     const QString collaboratorsHtml =
         i18n(
-            "<h2>Collaborateurs</h2>"
-            "<p>Mathom Notes est développé avec une volonté de "
-            "transparence sur les personnes et les outils ayant "
-            "participé au projet.</p>"
+            "<h2>Contributors</h2>"
+            "<p>Mathom Notes is developed with a commitment to "
+            "transparency regarding the people and tools involved "
+            "in the project.</p>"
 
             "<h3>Fabrice PEREYRON</h3>"
-            "<p>Conception du projet, développement, tests, "
-            "maintenance et direction de Mathom Notes.</p>"
+            "<p>Project design, development, testing, "
+            "maintenance and direction of Mathom Notes.</p>"
 
             "<h3>ChatGPT (OpenAI)</h3>"
-            "<p>Assistance au développement, analyse de code, "
-            "débogage, documentation, structuration technique "
-            "et aide à la conception.</p>"
+            "<p>Development assistance, code analysis, "
+            "debugging, documentation, technical structuring "
+            "and design assistance.</p>"
 
-            "<p><i>ChatGPT est utilisé comme outil d'assistance. "
-            "La conception, les choix fonctionnels, les validations "
-            "et la maintenance du projet restent sous la responsabilité "
-            "du développeur de Mathom Notes.</i></p>");
+            "<p><i>ChatGPT is used as an assistance tool. "
+            "The design, functional choices, validations "
+            "and maintenance of the project remain the responsibility "
+            "of the Mathom Notes developer.</i></p>");
 
     tabs->addTab(
         makePage(collaboratorsHtml),
-        i18n("Collaborateurs"));
+        i18n("Contributors"));
 
 
     /*
@@ -956,18 +956,18 @@ void MainWindow::showAboutMathomDialog()
      */
     const QString supportersHtml =
         i18n(
-            "<h2>Soutiens particuliers</h2>"
-            "<p>Cet espace remercie les personnes ayant soutenu "
-            "financièrement Mathom Notes à titre personnel.</p>"
-            "<p>Les noms ou pseudonymes des contributeurs ayant "
-            "choisi d'apparaître dans Mathom Notes seront affichés ici.</p>"
-            "<p>Le montant de leur contribution n'est pas publié.</p>"
-            "<p>Merci à toutes celles et ceux qui contribuent "
-            "au développement et à la pérennité du projet.</p>");
+            "<h2>Individual Supporters</h2>"
+            "<p>This section thanks the people who have financially supported "
+            "Mathom Notes as individuals.</p>"
+            "<p>The names or pseudonyms of contributors who have "
+            "chosen to appear in Mathom Notes will be displayed here.</p>"
+            "<p>The amount of their contribution is not published.</p>"
+            "<p>Thank you to everyone who contributes "
+            "to the development and sustainability of the project.</p>");
 
     tabs->addTab(
         makePage(supportersHtml),
-        i18n("Soutiens particuliers"));
+        i18n("Individual Supporters"));
 
 
     /*
@@ -975,17 +975,17 @@ void MainWindow::showAboutMathomDialog()
      */
     const QString partnersHtml =
         i18n(
-            "<h2>Partenaires financiers</h2>"
-            "<p>Cet espace est réservé aux entreprises, associations "
-            "et organismes apportant un soutien financier au projet "
-            "Mathom Notes.</p>"
-            "<p>Selon les modalités du partenariat, leur nom, "
-            "leur logo et un lien vers leur site pourront être "
-            "présentés ici.</p>");
+            "<h2>Financial Partners</h2>"
+            "<p>This section is reserved for companies, associations "
+            "and organizations providing financial support to the "
+            "Mathom Notes project.</p>"
+            "<p>Depending on the terms of the partnership, their name, "
+            "logo and a link to their website may be "
+            "displayed here.</p>");
 
     tabs->addTab(
         makePage(partnersHtml),
-        i18n("Partenaires financiers"));
+        i18n("Financial Partners"));
 
 
     /*
@@ -993,18 +993,18 @@ void MainWindow::showAboutMathomDialog()
      */
     const QString campaignHtml =
         i18n(
-            "<h2>Collecte Ulule</h2>"
-            "<p>Mathom Notes est destiné à rester un logiciel "
-            "libre et accessible gratuitement.</p>"
-            "<p>La campagne Ulule permet de financer son "
-            "développement, ses outils d'accessibilité, "
-            "sa documentation et sa diffusion.</p>"
-            "<p>Les informations définitives de la campagne, "
-            "son lien et son bilan seront ajoutés ici.</p>");
+            "<h2>Ulule Campaign</h2>"
+            "<p>Mathom Notes is intended to remain free software "
+            "available free of charge.</p>"
+            "<p>The Ulule campaign helps fund its "
+            "development, accessibility tools, "
+            "documentation and distribution.</p>"
+            "<p>The final campaign information, "
+            "its link and results will be added here.</p>");
 
     tabs->addTab(
         makePage(campaignHtml),
-        i18n("Collecte Ulule"));
+        i18n("Ulule Campaign"));
 
 
     /*
@@ -1012,19 +1012,19 @@ void MainWindow::showAboutMathomDialog()
      */
     const QString licenseHtml =
         i18n(
-            "<h2>Licence</h2>"
-            "<p><b>Mathom Notes</b> est distribué sous licence "
-            "<b>GNU GPL version 2 ou ultérieure</b>.</p>"
+            "<h2>License</h2>"
+            "<p><b>Mathom Notes</b> is distributed under the "
+            "<b>GNU GPL version 2 or later</b>.</p>"
             "<p>Copyright © 2026 Thorinux Systems.</p>"
-            "<p>Mathom Notes est un fork de "
+            "<p>Mathom Notes is a fork of "
             "<b>BasKet Note Pads</b>.</p>"
-            "<p>Les copyrights, licences et attributions du projet "
-            "d'origine sont conservés dans le code source et les "
-            "fichiers de licence du projet.</p>");
+            "<p>The copyrights, licenses and attributions of the original "
+            "project are preserved in the source code and "
+            "the project license files.</p>");
 
     tabs->addTab(
         makePage(licenseHtml),
-        i18n("Licence"));
+        i18n("License"));
 
 
     auto *buttons =

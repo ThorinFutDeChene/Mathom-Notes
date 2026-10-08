@@ -1424,9 +1424,10 @@ MathomDeleteCommand::MathomDeleteCommand(
     }
 
     setText(
-        m_positions.size() == 1
-            ? i18n("Delete Mathom")
-            : i18n("Delete Mathoms"));
+        i18np(
+            "Delete Mathom",
+            "Delete Mathoms",
+            m_positions.size()));
 }
 
 MathomDeleteCommand::~MathomDeleteCommand()

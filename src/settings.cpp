@@ -541,23 +541,23 @@ BackupSettingsPage::BackupSettingsPage(QObject *parent, const KPluginMetaData &d
 
     m_automaticBackups =
         new QCheckBox(
-            i18n("Activer les sauvegardes automatiques"),
+            i18n("Enable automatic backups"),
             this->widget());
 
     m_automaticBackups->setToolTip(
         i18n(
-            "Au lancement de Mathom, une sauvegarde est créée automatiquement "
-            "si la sauvegarde journalière, hebdomadaire ou mensuelle est due."));
+            "When Mathom starts, an automatic backup is created "
+            "if the daily, weekly, or monthly backup is due."));
 
     layout->addWidget(m_automaticBackups);
 
     auto *description =
         new QLabel(
             i18n(
-                "Mathom maintient trois points de sauvegarde indépendants : "
-                "une sauvegarde journalière à la première ouverture du jour, "
-                "une sauvegarde hebdomadaire à la première ouverture de la semaine "
-                "et une sauvegarde mensuelle à la première ouverture du mois."),
+                "Mathom maintains three independent backup points: "
+                "a daily backup on the first launch of the day, "
+                "a weekly backup on the first launch of the week, "
+                "and a monthly backup on the first launch of the month."),
             this->widget());
 
     description->setWordWrap(true);
@@ -590,7 +590,7 @@ void BackupSettingsPage::load()
 
     m_destination->setText(
         i18n(
-            "Emplacement des sauvegardes automatiques : <b>%1</b>",
+            "Automatic backup location: <b>%1</b>",
             Backup::automaticBackupDirectory()));
 
     setNeedsSave(false);
