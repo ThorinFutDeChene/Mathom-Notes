@@ -208,6 +208,19 @@ fi
 grep -q './usr/bin/mathom' "$CONTENTS_LIST"
 grep -q './usr/share/applications/fr.thorinux.mathom.desktop' "$CONTENTS_LIST"
 
+# Every shipped translation catalog must be installed in the native package.
+# Check the staging tree: it is the exact filesystem tree passed to dpkg-deb.
+LOCALE_ROOT="$DEBROOT/usr/share/locale"
+for catalog in "$ROOT"/po/*/basket.po; do
+    [ -f "$catalog" ] || continue
+    lang="$(basename "$(dirname "$catalog")")"
+    mo="$LOCALE_ROOT/$lang/LC_MESSAGES/basket.mo"
+    if [ ! -s "$mo" ]; then
+        echo "Erreur : traduction compilee manquante : $mo"
+        exit 1
+    fi
+done
+
 echo
 echo "=============================================="
 echo "Paquet natif construit avec succès :"

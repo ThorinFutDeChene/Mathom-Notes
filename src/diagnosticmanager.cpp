@@ -4,6 +4,7 @@
 
 #include "diagnosticmanager.h"
 
+#include <KLocalizedString>
 #include <QAbstractButton>
 #include <QApplication>
 #include <QCryptographicHash>
@@ -1403,17 +1404,17 @@ void DiagnosticManager::showPendingReportDialog(QWidget *parent)
     for (;;) {
         QMessageBox box(parent);
         box.setIcon(QMessageBox::Warning);
-        box.setWindowTitle(tr("Mathom - Rapport de diagnostic"));
-        box.setText(tr("Mathom ne s'est pas ferme normalement lors de la derniere utilisation."));
+        box.setWindowTitle(i18n("Mathom - Diagnostic Report"));
+        box.setText(i18n("Mathom did not close normally during the previous session."));
         box.setInformativeText(
-            tr("Un rapport technique a ete cree. Il ne contient pas le texte de tes notes.\n\n"
-               "Tu peux d'abord le consulter puis revenir ici pour le transmettre a Thorinux."));
+            i18n("A technical report was created. It does not contain the text of your notes.\n\n"
+                 "You can review it first, then return here to send it to Thorinux."));
 
         auto *viewButton =
-            box.addButton(tr("Voir le rapport"), QMessageBox::ActionRole);
+            box.addButton(i18n("View report"), QMessageBox::ActionRole);
         auto *emailButton =
-            box.addButton(tr("Preparer un e-mail a Thorinux"), QMessageBox::ActionRole);
-        box.addButton(tr("Fermer"), QMessageBox::RejectRole);
+            box.addButton(i18n("Prepare an email to Thorinux"), QMessageBox::ActionRole);
+        box.addButton(i18n("Close"), QMessageBox::RejectRole);
 
         box.exec();
 
