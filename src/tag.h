@@ -42,6 +42,14 @@ public:
     {
         m_name = name;
     }
+    void setAutomaticName(bool on)
+    {
+        m_automaticName = on;
+    }
+    bool automaticName() const
+    {
+        return m_automaticName;
+    }
     void setEmblem(const QString &emblem)
     {
         m_emblem = emblem;
@@ -99,10 +107,7 @@ public:
     {
         return m_id;
     }
-    QString name() const
-    {
-        return m_name;
-    }
+    QString name() const;
     QString emblem() const
     {
         return m_emblem;
@@ -168,6 +173,7 @@ private:
     /// PROPERTIES:
     QString m_id;
     QString m_name;
+    bool m_automaticName = false;
     QString m_emblem;
     bool m_bold;
     bool m_italic;
@@ -220,6 +226,14 @@ public:
     ~Tag();
     /// SET PROPERTIES:
     void setName(const QString &name);
+    void setAutomaticName(bool on)
+    {
+        m_automaticName = on;
+    }
+    bool automaticName() const
+    {
+        return m_automaticName;
+    }
     void setShortcut(const QKeySequence &shortcut)
     {
         m_action->setShortcut(shortcut);
@@ -239,10 +253,7 @@ public:
         state->setParentTag(nullptr);
     }
     /// GET PROPERTIES:
-    QString name() const
-    {
-        return m_name;
-    }
+    QString name() const;
     QKeySequence shortcut() const
     {
         return m_action->shortcut();
@@ -264,6 +275,7 @@ public:
 private:
     /// PROPERTIES:
     QString m_name;
+    bool m_automaticName = false;
     QAction *m_action;
     bool m_inheritedBySiblings;
     State::List m_states;

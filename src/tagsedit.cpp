@@ -996,7 +996,10 @@ void TagsEditDialog::loadTagFrom(Tag *tag)
 
 void TagsEditDialog::saveStateTo(State *state)
 {
-    state->setName(m_ui->stateName->text());
+    const QString newName = m_ui->stateName->text();
+    if (state->automaticName() && newName != state->name())
+        state->setAutomaticName(false);
+    state->setName(newName);
     state->setEmblem(m_ui->emblem->icon());
     state->setBackgroundColor(m_ui->backgroundColor->color());
     state->setBold(m_ui->bold->isChecked());
@@ -1023,7 +1026,10 @@ void TagsEditDialog::saveStateTo(State *state)
 
 void TagsEditDialog::saveTagTo(Tag *tag)
 {
-    tag->setName(m_ui->tagName->text());
+    const QString newName = m_ui->tagName->text();
+    if (tag->automaticName() && newName != tag->name())
+        tag->setAutomaticName(false);
+    tag->setName(newName);
 
     QKeySequence shortcut;
     if (m_ui->shortcut->shortcut().count() > 0)

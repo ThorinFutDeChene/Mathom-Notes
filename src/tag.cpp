@@ -20,6 +20,7 @@
 #include "bnpview.h"
 #include "common.h"
 #include "debugwindow.h"
+#include "defaulttagtranslation.h"
 #include "gitwrapper.h"
 #include "global.h"
 #include "mathomicons.h"
@@ -48,6 +49,15 @@ State::State(const QString &id, Tag *tag)
 }
 
 State::~State() = default;
+
+QString State::name() const
+{
+    if (m_automaticName) {
+        if (const auto *entry = DefaultTagTranslation::forStateId(m_id))
+            return DefaultTagTranslation::translated(entry->stateName);
+    }
+    return m_name;
+}
 
 State *State::nextState(bool cycle /*= true*/)
 {
@@ -191,6 +201,7 @@ void State::copyTo(State *other)
 {
     other->m_id = m_id;
     other->m_name = m_name;
+    other->m_automaticName = m_automaticName;
     other->m_emblem = m_emblem;
     other->m_bold = m_bold;
     other->m_italic = m_italic;
@@ -248,6 +259,17 @@ void Tag::setName(const QString &name)
     m_action->setText(QStringLiteral("TAG SHORTCUT: ") + name); // TODO: i18n  (for debug purpose only by now).
 }
 
+QString Tag::name() const
+{
+    if (m_automaticName) {
+        for (const State *state : m_states) {
+            if (const auto *entry = DefaultTagTranslation::forStateId(state->id()))
+                return DefaultTagTranslation::translated(entry->tagName);
+        }
+    }
+    return m_name;
+}
+
 State *Tag::stateById(const QString &id)
 {
     for (List::iterator it = all.begin(); it != all.end(); ++it)
@@ -296,6 +318,7 @@ QMap<QString, QString> Tag::loadTags(const QString &path /* = QString()*/ /*, bo
     }
 
     QDomElement docElem = document->documentElement();
+    const QString legacyLanguage = DefaultTagTranslation::legacyLanguage(docElem);
     if (!merge)
         nextStateUid = docElem.attribute(QStringLiteral("nextStateUid"), QString::number(nextStateUid)).toLong();
 
@@ -317,7 +340,12 @@ QMap<QString, QString> Tag::loadTags(const QString &path /* = QString()*/ /*, bo
                 QDomElement subElement = subNode.toElement();
                 if ((!subElement.isNull()) && subElement.tagName() == QStringLiteral("state")) {
                     auto *state = new State(subElement.attribute(QStringLiteral("id")), tag);
-                    state->setName(XMLWork::getElementText(subElement, QStringLiteral("name")));
+                    const QString savedStateName = XMLWork::getElementText(subElement, QStringLiteral("name"));
+                    state->setName(savedStateName);
+                    const auto *builtIn = DefaultTagTranslation::forStateId(state->id());
+                    state->setAutomaticName(DefaultTagTranslation::automaticName(
+                        subElement, savedStateName, builtIn ? builtIn->stateName : nullptr,
+                        legacyLanguage));
                     state->setEmblem(XMLWork::getElementText(subElement, QStringLiteral("emblem")));
                     QDomElement textElement = XMLWork::getElement(subElement, QStringLiteral("text"));
                     state->setBold(XMLWork::trueOrFalse(textElement.attribute(QStringLiteral("bold"), QStringLiteral("false"))));
@@ -343,10 +371,20 @@ QMap<QString, QString> Tag::loadTags(const QString &path /* = QString()*/ /*, bo
             }
             // If the Tag is Valid:
             if (tag->countStates() > 0) {
+                const auto *builtIn = DefaultTagTranslation::forTagElement(element);
+                tag->setAutomaticName(DefaultTagTranslation::automaticName(
+                    element, name, builtIn ? builtIn->tagName : nullptr,
+                    legacyLanguage));
                 // Rename Things if Needed:
                 State *firstState = tag->states().first();
-                if (tag->countStates() == 1 && firstState->name().isEmpty())
+                if (tag->countStates() == 1 && firstState->name().isEmpty()) {
                     firstState->setName(tag->name());
+                    // Old built-in single-state tags may have no state <name>.
+                    const QDomElement firstXmlState = element.firstChildElement(QStringLiteral("state"));
+                    if (tag->automaticName() &&
+                        !firstXmlState.hasAttribute(QStringLiteral("automaticName")))
+                        firstState->setAutomaticName(true);
+                }
                 if (tag->name().isEmpty())
                     tag->setName(firstState->name());
                 // Add or Merge the Tag:
@@ -487,6 +525,7 @@ void Tag::saveTagsTo(QList<Tag *> &list, const QString &fullPath)
         Tag *tag = *it;
         // Create tag node:
         QDomElement tagNode = document.createElement(QStringLiteral("tag"));
+        tagNode.setAttribute(QStringLiteral("automaticName"), tag->automaticName() ? QStringLiteral("true") : QStringLiteral("false"));
         root.appendChild(tagNode);
         // Save tag properties:
         XMLWork::addElement(document, tagNode, QStringLiteral("name"), tag->name());
@@ -500,6 +539,7 @@ void Tag::saveTagsTo(QList<Tag *> &list, const QString &fullPath)
             tagNode.appendChild(stateNode);
             // Save state properties:
             stateNode.setAttribute(QStringLiteral("id"), state->id());
+            stateNode.setAttribute(QStringLiteral("automaticName"), state->automaticName() ? QStringLiteral("true") : QStringLiteral("false"));
             XMLWork::addElement(document, stateNode, QStringLiteral("name"), state->name());
             XMLWork::addElement(document, stateNode, QStringLiteral("emblem"), state->emblem());
             QDomElement textNode = document.createElement(QStringLiteral("text"));
@@ -532,6 +572,7 @@ void Tag::saveTagsTo(QList<Tag *> &list, const QString &fullPath)
 void Tag::copyTo(Tag *other)
 {
     other->m_name = m_name;
+    other->m_automaticName = m_automaticName;
     other->m_action->setShortcut(m_action->shortcut());
     other->m_inheritedBySiblings = m_inheritedBySiblings;
 }
@@ -741,6 +782,10 @@ void Tag::createDefaultTagsSet(const QString &fullPath)
               "</basketTags>\n"
               "")
               .arg(i18n("Personal"), i18nc("The initial of 'Personal'", "P."), i18n("Funny")); // %1 %2 %3
+
+    // The built-in names follow the UI locale, while customized labels do not.
+    xml.replace(QStringLiteral("<tag>"), QStringLiteral("<tag automaticName=\"true\">"));
+    xml.replace(QStringLiteral("<state id=\""), QStringLiteral("<state automaticName=\"true\" id=\""));
 
     // Write to Disk:
     QFile file(fullPath);
