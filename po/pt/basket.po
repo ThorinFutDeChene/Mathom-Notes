@@ -1,3 +1,4 @@
+# Mathom Notes additions (pt): AI-assisted translation (2026-10-09); native-speaker review recommended.
 # translation of pt.po to Português
 #
 # Nuno J. Silva <nunojsg@gmail.com>, 2006, 2007.
@@ -35,7 +36,7 @@ msgstr ""
 #: rc.cpp:3
 #, kde-format
 msgid "Shelf Properties"
-msgstr ""
+msgstr "Propriedades da prateleira"
 
 #. i18n: file: src/basketproperties.ui:27
 #. i18n: ectx: property (toolTip), widget (KIconButton, icon)
@@ -56,7 +57,7 @@ msgstr "Nome"
 #: rc.cpp:12
 #, kde-format
 msgid "Tab"
-msgstr ""
+msgstr "Separador"
 
 #. i18n: file: src/basketproperties.ui:69
 #. i18n: ectx: property (title), widget (QGroupBox, shortcutGroup)
@@ -96,10 +97,10 @@ msgstr "Mu&dar para este cesto (atalho global)"
 #. i18n: file: src/passworddialog.ui:14
 #. i18n: ectx: property (windowTitle), widget (QDialog, PasswordDialog)
 #: rc.cpp:30
-#, fuzzy, kde-format
+#, kde-format
 msgctxt "@title:window"
 msgid "Password Protection"
-msgstr "Protecção com Senha"
+msgstr "Proteção por palavra-passe"
 
 #. i18n: file: src/passworddialog.ui:29
 #. i18n: ectx: property (text), widget (QRadioButton, noPasswordRadioButton)
@@ -368,7 +369,7 @@ msgstr "&Emblema:"
 #: rc.cpp:144
 #, kde-format
 msgid "&Mathom-House"
-msgstr ""
+msgstr "&Mathom-House"
 
 #. i18n: file: src/mathomui.rc:11
 #. i18n: ectx: Menu
@@ -418,7 +419,7 @@ msgstr "&Ir"
 #: rc.cpp:162
 #, kde-format
 msgid "&Mathom"
-msgstr ""
+msgstr "&Mathom"
 
 #. i18n: file: src/mathomui.rc:81
 #. i18n: ectx: Menu (tags)
@@ -446,7 +447,7 @@ msgstr "&Configuração"
 #: rc.cpp:174
 #, kde-format
 msgid "&Profile"
-msgstr ""
+msgstr "&Perfil"
 
 #. i18n: file: src/mathomui.rc:124
 #. i18n: ectx: Menu (help)
@@ -467,7 +468,7 @@ msgstr "Barra Principal"
 msgid ""
 "This option will enable you to type a cross reference link directly into a "
 "text mathom. Cross Reference links can have the following syntax:"
-msgstr ""
+msgstr "Esta opção permite escrever diretamente uma ligação de referência cruzada num mathom de texto. As ligações de referência cruzada podem ter as seguintes sintaxes:"
 
 #: src/tagsedit.cpp:331
 #, kde-format
@@ -482,7 +483,7 @@ msgstr "[[/item de topo/filho|título opcional]]"
 #: src/tagsedit.cpp:332
 #, kde-format
 msgid "Relative to the current location:"
-msgstr ""
+msgstr "Relativo à localização atual:"
 
 #: src/tagsedit.cpp:333
 #, kde-format
@@ -502,7 +503,7 @@ msgstr "[[./filha|título opcional]]"
 #: src/tagsedit.cpp:335
 #, kde-format
 msgid "Location matching is cAse inSEnsItive."
-msgstr ""
+msgstr "A correspondência entre localizações não diferencia maiúsculas de minúsculas."
 
 #: src/tagsedit.cpp:357 src/variouswidgets.cpp:454 src/kcolorcombo2.cpp:111
 #: src/kcolorcombo2.cpp:615
@@ -515,7 +516,7 @@ msgstr "(Por omissão)"
 msgid ""
 "When you copy and paste or drag and drop mathoms to a text editor, this text "
 "will be inserted as a textual equivalent of the tag."
-msgstr ""
+msgstr "Ao copiar e colar ou arrastar e largar mathoms para um editor de texto, este texto será inserido como equivalente textual da etiqueta."
 
 #: src/tagsedit.cpp:375 src/settings.cpp:670
 #, kde-format
@@ -523,14 +524,14 @@ msgid ""
 "For instance, a list of mathoms with the <b>To Do</b> and <b>Done</b> tags "
 "are exported as lines preceded by <b>[ ]</b> or <b>[x]</b>, representing an "
 "empty checkbox and a checked box."
-msgstr ""
+msgstr "Por exemplo, uma lista de mathoms com as etiquetas <b>A Fazer</b> e <b>Concluído</b> é exportada como linhas precedidas por <b>[ ]</b> ou <b>[x]</b>, representando uma caixa de seleção vazia ou assinalada."
 
 #: src/tagsedit.cpp:381
 #, kde-format
 msgid ""
 "When a mathom has several lines, you can choose to export the tag or the "
 "state on the first line or on every line of the mathom."
-msgstr ""
+msgstr "Quando um mathom tem várias linhas, pode escolher exportar a etiqueta ou o estado na primeira linha ou em todas as linhas do mathom."
 
 #: src/tagsedit.cpp:383
 #, kde-format
@@ -538,14 +539,14 @@ msgid ""
 "In the example above, the tag of the top mathom is only exported on the "
 "first line, while the tag of the bottom mathom is exported on every line of "
 "the mathom."
-msgstr ""
+msgstr "No exemplo acima, a etiqueta do mathom superior é exportada apenas na primeira linha, enquanto a do mathom inferior aparece em todas as linhas."
 
 #: src/tagsedit.cpp:770
 #, kde-format
 msgid ""
 "Deleting the tag will remove it from every mathom it is currently assigned "
 "to."
-msgstr ""
+msgstr "A eliminação da etiqueta a remove de todos os mathoms aos quais está atribuída."
 
 #: src/tagsedit.cpp:771
 #, kde-format
@@ -562,7 +563,7 @@ msgstr "Apagar a Marca"
 msgid ""
 "Deleting the state will remove the tag from every mathom the state is "
 "currently assigned to."
-msgstr ""
+msgstr "A eliminação do estado remove a etiqueta de todos os mathoms aos quais esse estado está atribuído."
 
 #: src/tagsedit.cpp:776
 #, kde-format
@@ -582,74 +583,74 @@ msgstr "Aparência"
 #: src/history.cpp:397
 #, kde-format
 msgid "Rename Page \"%1\" to \"%2\""
-msgstr ""
+msgstr "Renomear página \"%1\" para \"%2\""
 
 #: src/history.cpp:441
 #, kde-format
 msgid "Reorder Pages"
-msgstr ""
+msgstr "Reordenar páginas"
 
 #: src/history.cpp:491
 #, kde-format
 msgid "Create Page \"%1\""
-msgstr ""
+msgstr "Criar página \"%1\""
 
 #: src/history.cpp:639
 #, kde-format
 msgid "Delete Page \"%1\""
-msgstr ""
+msgstr "Eliminar página \"%1\""
 
 #: src/history.cpp:750
 #, kde-format
 msgid "Move Page \"%1\""
-msgstr ""
+msgstr "Mover página \"%1\""
 
 #: src/history.cpp:1175
 #, kde-format
 msgid "Convert Mathom-House \"%1\" to Shelf"
-msgstr ""
+msgstr "Converter Mathom-House \"%1\" em prateleira"
 
 #: src/history.cpp:1178
 #, kde-format
 msgid "Convert Shelf \"%1\" to Mathom-House"
-msgstr ""
+msgstr "Converter prateleira \"%1\" em Mathom-House"
 
 #: src/history.cpp:1247
 #, kde-format
 msgid "Edit Mathom"
-msgstr ""
+msgstr "Editar mathom"
 
 #: src/history.cpp:1428 src/basketscene.cpp:6540
 #, kde-format
 msgid "Delete Mathom"
 msgid_plural "Delete Mathoms"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Eliminar mathom"
+msgstr[1] "Eliminar mathoms"
 
 #: src/history.cpp:1558
 #, kde-format
 msgid "Create Shelf \"%1\""
-msgstr ""
+msgstr "Criar prateleira \"%1\""
 
 #: src/history.cpp:1561
 #, kde-format
 msgid "Create Mathom-House \"%1\""
-msgstr ""
+msgstr "Criar Mathom-House \"%1\""
 
 #: src/history.cpp:1696
 #, kde-format
 msgid "Remove Shelf \"%1\""
-msgstr ""
+msgstr "Remover prateleira \"%1\""
 
 #: src/history.cpp:1699
 #, kde-format
 msgid "Remove Mathom-House \"%1\""
-msgstr ""
+msgstr "Remover Mathom-House \"%1\""
 
 #: src/history.cpp:1815
 #, kde-format
 msgid "Modify properties of \"%1\""
-msgstr ""
+msgstr "Modificar propriedades de \"%1\""
 
 #: src/tag.cpp:90
 #, kde-format
@@ -904,7 +905,7 @@ msgid ""
 "depending on the content of the files you drop, go to the \"General\" page "
 "and uncheck \"Image or animation\" in the \"View Content of Added Files for "
 "the Following Types\" group.</p>"
-msgstr ""
+msgstr "<p>Isto é normal, pois existem vários tipos de mathoms.<br>Esta configuração aplica-se apenas a mathoms de ficheiros e de ligações locais.<br>As imagens apresentadas são mathoms de imagem, não mathoms de ficheiros.<br>Os mathoms de ficheiro são documentos genéricos, enquanto os mathoms de imagem são figuras nas quais pode desenhar.</p><p>Ao largar ficheiros em localizações, %1 identifica o seu tipo e mostra o respetivo conteúdo.<br>Por exemplo, ao largar ficheiros de imagem ou de texto, são criados mathoms de imagem ou de texto.<br>Os tipos de ficheiro que %2 não reconhece aparecem como mathoms de ficheiro genéricos, apenas com um ícone ou uma antevisão e o nome do ficheiro.</p><p>Se não quiser que a aplicação crie mathoms conforme o conteúdo dos ficheiros largados, aceda à página \"Geral\" e desmarque \"Imagem ou animação\" no grupo \"Ver o Conteúdo dos Ficheiros Adicionados para os Seguintes Tipos\".</p>"
 
 #: src/linklabel.cpp:677
 #, kde-format
@@ -980,67 +981,67 @@ msgstr "Indique por favor uma nova senha:"
 #: src/pagesidebar.cpp:46 src/htmlexporter.cpp:1150 src/htmlexporter.cpp:1153
 #, kde-format
 msgid "Pages"
-msgstr ""
+msgstr "Páginas"
 
 #: src/pagesidebar.cpp:58 src/pagesidebar.cpp:59 src/basketscene.cpp:2264
 #, kde-format
 msgid "New Page"
-msgstr ""
+msgstr "Nova página"
 
 #: src/pagesidebar.cpp:64 src/pagesidebar.cpp:65
 #, kde-format
 msgid "Delete Page"
-msgstr ""
+msgstr "Eliminar página"
 
 #: src/pagesidebar.cpp:71
 #, kde-format
 msgid "Sort"
-msgstr ""
+msgstr "Ordenar"
 
 #: src/pagesidebar.cpp:92
 #, kde-format
 msgid "Manual order"
-msgstr ""
+msgstr "Ordem manual"
 
 #: src/pagesidebar.cpp:94
 #, kde-format
 msgid "Date - oldest first"
-msgstr ""
+msgstr "Data — mais antigo primeiro"
 
 #: src/pagesidebar.cpp:95
 #, kde-format
 msgid "Date - newest first"
-msgstr ""
+msgstr "Data — mais recente primeiro"
 
 #: src/pagesidebar.cpp:96
 #, kde-format
 msgid "Name - A to Z"
-msgstr ""
+msgstr "Nome — de A a Z"
 
 #: src/pagesidebar.cpp:97
 #, kde-format
 msgid "Name - Z to A"
-msgstr ""
+msgstr "Nome — de Z a A"
 
 #: src/pagesidebar.cpp:144 src/bnpview.cpp:1808 src/bnpview.cpp:1817
 #, kde-format
 msgid "Convert to Shelf"
-msgstr ""
+msgstr "Converter em prateleira"
 
 #: src/pagesidebar.cpp:161
 #, kde-format
 msgid "Convert to Mathom-House"
-msgstr ""
+msgstr "Converter em Mathom-House"
 
 #: src/pagesidebar.cpp:227
 #, kde-format
 msgid "Delete Page?"
-msgstr ""
+msgstr "Eliminar página?"
 
 #: src/pagesidebar.cpp:229
 #, kde-format
 msgid "Delete the Page \"%1\" and all Mathoms it contains?"
-msgstr ""
+msgstr "Eliminar a página \"%1\" e todos os mathoms que ela contém?"
 
 #: src/notefactory.cpp:457
 #, kde-format
@@ -1049,7 +1050,7 @@ msgid ""
 "generic mathom, allowing you to drag or copy it to an application that "
 "understands it.</p><p>If you want support for this data, please contact the "
 "developer.</p>"
-msgstr ""
+msgstr "<p>%1 não reconhece os dados que largou.<br>No entanto, criou um mathom genérico que pode arrastar ou copiar para uma aplicação que os compreenda.</p><p>Se pretender suporte para estes dados, contacte o programador.</p>"
 
 #: src/notefactory.cpp:463
 #, kde-format
@@ -1089,7 +1090,7 @@ msgstr "Escolha o tamanho do ícone a importar como imagem:"
 #: src/notefactory.cpp:1054
 #, kde-format
 msgid "Load File Content into a Mathom"
-msgstr ""
+msgstr "Carregar o conteúdo de um ficheiro para um mathom"
 
 #: src/debugwindow.cpp:25
 #, kde-format
@@ -1099,44 +1100,44 @@ msgstr "Janela de Depuração"
 #: src/archive.cpp:58
 #, kde-format
 msgid "Save as Mathom-House Archive"
-msgstr ""
+msgstr "Guardar como arquivo de Mathom-House"
 
 #: src/archive.cpp:59
 #, kde-format
 msgid "Saving as Mathom-House archive. Please wait..."
-msgstr ""
+msgstr "A guardar como arquivo de Mathom-House. Aguarde..."
 
 #: src/archive.cpp:81
 #, kde-format
 msgid "Failed to create the temporary Mathom-House archive."
-msgstr ""
+msgstr "Não foi possível criar o arquivo temporário de Mathom-House."
 
 #: src/archive.cpp:82 src/archive.cpp:538 src/archive.cpp:541
 #: src/archive.cpp:544 src/archive.cpp:547 src/archive.cpp:554
 #: src/archive.cpp:563
 #, kde-format
 msgid "Mathom-House Archive Error"
-msgstr ""
+msgstr "Erro no arquivo de Mathom-House"
 
 #: src/archive.cpp:216
 #, kde-format
 msgid "Save All Mathom-Houses"
-msgstr ""
+msgstr "Guardar todas as Mathom-Houses"
 
 #: src/archive.cpp:217
 #, kde-format
 msgid "Saving all Mathom-Houses. Please wait..."
-msgstr ""
+msgstr "A guardar todas as Mathom-Houses. Aguarde..."
 
 #: src/archive.cpp:244
 #, kde-format
 msgid "Failed to create the temporary Mathom archive."
-msgstr ""
+msgstr "Não foi possível criar o arquivo temporário de Mathom."
 
 #: src/archive.cpp:245
 #, kde-format
 msgid "Mathom Archive Error"
-msgstr ""
+msgstr "Erro no arquivo de Mathom"
 
 #: src/archive.cpp:538 devtools/weaver/weaver.cpp:304
 #, kde-format
@@ -1146,7 +1147,7 @@ msgstr "Não foi possível abrir um recurso de ficheiros."
 #: src/archive.cpp:541
 #, kde-format
 msgid "This file is not a Mathom-House archive."
-msgstr ""
+msgstr "Este ficheiro não é um arquivo de Mathom-House."
 
 #: src/archive.cpp:544 devtools/weaver/weaver.cpp:310
 #, kde-format
@@ -1175,19 +1176,19 @@ msgid ""
 "be missing because they are of a type only available in new versions. When "
 "saving the file back, consider to save it to another file, to preserve the "
 "original one."
-msgstr ""
+msgstr "Este ficheiro foi criado com uma versão recente de %1. É possível abri-lo, mas nem toda a informação estará disponível. Por exemplo, poderão faltar mathoms de tipos que só existem em versões mais recentes. Ao guardar, considere utilizar outro nome para preservar o ficheiro original."
 
 #: src/archive.cpp:1154
 #, kde-format
 msgid "Mathom-House Name Conflict"
-msgstr ""
+msgstr "Conflito de nomes de Mathom-House"
 
 #: src/archive.cpp:1156
 #, kde-format
 msgid ""
 "A Mathom-House named \"%1\" already exists.\n"
 "Rename the imported Mathom-House or keep the suggested name:"
-msgstr ""
+msgstr "Já existe uma Mathom-House chamada \"%1\".\nRenomeie a Mathom-House importada ou mantenha o nome sugerido:"
 
 #: src/bnpview.cpp:193 src/bnpview.cpp:2315
 #, kde-format
@@ -1197,31 +1198,31 @@ msgstr "Geral"
 #: src/bnpview.cpp:265
 #, kde-format
 msgid "Paste clipboard contents in current location"
-msgstr ""
+msgstr "Colar o conteúdo da área de transferência na localização atual"
 
 #: src/bnpview.cpp:267
 #, kde-format
 msgid ""
 "Allows you to paste clipboard contents in the current location without "
 "having to open the main window."
-msgstr ""
+msgstr "Permite colar o conteúdo da área de transferência na localização atual sem abrir a janela principal."
 
 #: src/bnpview.cpp:272
 #, kde-format
 msgid "Paste selection in current location"
-msgstr ""
+msgstr "Colar a seleção na localização atual"
 
 #: src/bnpview.cpp:274
 #, kde-format
 msgid ""
 "Allows you to paste clipboard selection in the current location without "
 "having to open the main window."
-msgstr ""
+msgstr "Colar a seleção na localização atual"
 
 #: src/bnpview.cpp:279
 #, kde-format
 msgid "Create a new Mathom-House"
-msgstr ""
+msgstr "Criar uma nova Mathom-House"
 
 #: src/bnpview.cpp:281
 #, kde-format
@@ -1229,55 +1230,55 @@ msgid ""
 "Allows you to create a new Mathom-House without having to open the main "
 "window (you then can use the other global shortcuts to add a mathom, paste "
 "clipboard or paste selection in this new Mathom-House)."
-msgstr ""
+msgstr "Permite criar uma nova Mathom-House sem abrir a janela principal (poderá depois utilizar outros atalhos globais para adicionar um mathom, colar o conteúdo da área de transferência ou a seleção na nova Mathom-House)."
 
 #: src/bnpview.cpp:286
 #, kde-format
 msgid "Insert text mathom"
-msgstr ""
+msgstr "Inserir mathom de texto"
 
 #: src/bnpview.cpp:288
 #, kde-format
 msgid ""
 "Add a text mathom to the current location without having to open the main "
 "window."
-msgstr ""
+msgstr "Adicionar um mathom de texto à localização atual sem abrir a janela principal."
 
 #: src/bnpview.cpp:293 src/settings.cpp:706
 #, kde-format
 msgid "Insert image mathom"
-msgstr ""
+msgstr "Inserir mathom de imagem"
 
 #: src/bnpview.cpp:295
 #, kde-format
 msgid ""
 "Add an image mathom to the current location without having to open the main "
 "window."
-msgstr ""
+msgstr "Adicionar um mathom de imagem à localização atual sem abrir a janela principal."
 
 #: src/bnpview.cpp:299 src/settings.cpp:707
 #, kde-format
 msgid "Insert link mathom"
-msgstr ""
+msgstr "Inserir mathom de ligação"
 
 #: src/bnpview.cpp:301
 #, kde-format
 msgid ""
 "Add a link mathom to the current location without having to open the main "
 "window."
-msgstr ""
+msgstr "Adicionar um mathom de ligação à localização atual sem abrir a janela principal."
 
 #: src/bnpview.cpp:305 src/settings.cpp:710
 #, kde-format
 msgid "Insert color mathom"
-msgstr ""
+msgstr "Inserir mathom de cor"
 
 #: src/bnpview.cpp:307
 #, kde-format
 msgid ""
 "Add a color mathom to the current location without having to open the main "
 "window."
-msgstr ""
+msgstr "Adicionar um mathom de cor à localização atual sem abrir a janela principal."
 
 #: src/bnpview.cpp:311
 #, kde-format
@@ -1289,7 +1290,7 @@ msgstr "Escolher a cor a partir do ecrã"
 msgid ""
 "Add a color mathom picked from one pixel on screen to the current location "
 "without having to open the main window."
-msgstr ""
+msgstr "Adicionar à localização atual um mathom com a cor obtida a partir de um píxel do ecrã, sem abrir a janela principal."
 
 #: src/bnpview.cpp:318 src/settings.cpp:711
 #, kde-format
@@ -1301,12 +1302,12 @@ msgstr "Capturar uma zona do ecrã"
 msgid ""
 "Grab a screen zone as an image mathom in the current location without having "
 "to open the main window."
-msgstr ""
+msgstr "Capturar uma área do ecrã como mathom de imagem na localização atual, sem abrir a janela principal."
 
 #: src/bnpview.cpp:329
 #, kde-format
 msgid "Mathom-Houses"
-msgstr ""
+msgstr "Mathom-Houses"
 
 #: src/bnpview.cpp:516
 #, kde-format
@@ -1316,37 +1317,37 @@ msgid ""
 "locations. You can create shelves inside Mathom-Houses and other shelves to "
 "form a hierarchy. You can browse between locations by clicking them, or "
 "reorganize them using drag and drop."
-msgstr ""
+msgstr "<h2>Árvore da organização</h2>Esta é a lista das suas Mathom-Houses e prateleiras. Pode organizar os mathoms colocando-os em localizações diferentes. É possível criar prateleiras dentro de Mathom-Houses e de outras prateleiras para formar uma hierarquia. Clique nas localizações para navegar entre elas ou reorganize-as arrastando e largando."
 
 #: src/bnpview.cpp:531
 #, kde-format
 msgid "Current &Mathom-House..."
-msgstr ""
+msgstr "Mathom-House &atual..."
 
 #: src/bnpview.cpp:537
 #, kde-format
 msgid "&All Mathom-Houses..."
-msgstr ""
+msgstr "&Todas as Mathom-Houses..."
 
 #: src/bnpview.cpp:543
 #, kde-format
 msgid "&Mathom / BasKet Archive..."
-msgstr ""
+msgstr "Arquivo de &Mathom / BasKet..."
 
 #: src/bnpview.cpp:549
 #, kde-format
 msgid "&HTML Web Site..."
-msgstr ""
+msgstr "Sítio Web &HTML..."
 
 #: src/bnpview.cpp:558
 #, kde-format
 msgid "Current &Page as PDF..."
-msgstr ""
+msgstr "&Página atual como PDF..."
 
 #: src/bnpview.cpp:562
 #, kde-format
 msgid "Exports the current Page to a PDF document"
-msgstr ""
+msgstr "Exporta a página atual para um documento PDF"
 
 #: src/bnpview.cpp:566
 #, kde-format
@@ -1371,7 +1372,7 @@ msgstr "Apa&gar"
 #: src/bnpview.cpp:591
 #, kde-format
 msgid "Selects all mathoms"
-msgstr ""
+msgstr "Seleciona todos os mathoms"
 
 #: src/bnpview.cpp:594
 #, kde-format
@@ -1381,7 +1382,7 @@ msgstr "Deseleccio&nar Tudo"
 #: src/bnpview.cpp:596
 #, kde-format
 msgid "Unselects all selected mathoms"
-msgstr ""
+msgstr "Desmarca todos os mathoms selecionados"
 
 #: src/bnpview.cpp:599
 #, kde-format
@@ -1391,7 +1392,7 @@ msgstr "&Inverter a Selecção"
 #: src/bnpview.cpp:603
 #, kde-format
 msgid "Inverts the current selection of mathoms"
-msgstr ""
+msgstr "Inverte a seleção atual de mathoms"
 
 #: src/bnpview.cpp:606
 #, kde-format
@@ -1472,7 +1473,7 @@ msgstr "&Imagem"
 #: src/bnpview.cpp:692
 #, kde-format
 msgid "&Spreadsheet"
-msgstr ""
+msgstr "&Folha de cálculo"
 
 #: src/bnpview.cpp:697
 #, kde-format
@@ -1512,17 +1513,17 @@ msgstr "Capturar uma &Zona do Ecrã"
 #: src/bnpview.cpp:781
 #, kde-format
 msgid "&New Mathom-House..."
-msgstr ""
+msgstr "&Nova Mathom-House..."
 
 #: src/bnpview.cpp:787
 #, kde-format
 msgid "New &Shelf..."
-msgstr ""
+msgstr "Nova &prateleira..."
 
 #: src/bnpview.cpp:793
 #, kde-format
 msgid "New at the Same &Level..."
-msgstr ""
+msgstr "Novo no mesmo &nível..."
 
 #: src/bnpview.cpp:796
 #, kde-format
@@ -1557,7 +1558,7 @@ msgstr "Ordenação Descendente dos Irmãos"
 #: src/bnpview.cpp:832 src/bnpview.cpp:3758 src/bnpview.cpp:4104
 #, kde-format
 msgid "&Remove Mathom-House"
-msgstr ""
+msgstr "&Remover Mathom-House"
 
 #: src/bnpview.cpp:839
 #, kde-format
@@ -1569,7 +1570,7 @@ msgstr "&Senha..."
 #, kde-format
 msgctxt "Lock Location"
 msgid "&Lock"
-msgstr ""
+msgstr "&Bloquear"
 
 #: src/bnpview.cpp:858
 #, kde-format
@@ -1589,185 +1590,185 @@ msgstr "&Reiniciar o Filtro"
 #: src/bnpview.cpp:886 src/bnpview.cpp:4108
 #, kde-format
 msgid "&Fold Mathom-House"
-msgstr ""
+msgstr "&Recolher Mathom-House"
 
 #: src/bnpview.cpp:892 src/bnpview.cpp:4112
 #, kde-format
 msgid "&Expand Mathom-House"
-msgstr ""
+msgstr "&Expandir Mathom-House"
 
 #: src/bnpview.cpp:944
 #, kde-format
 msgid "&Welcome Mathom-Houses"
-msgstr ""
+msgstr "Mathom-Houses de &boas-vindas"
 
 #: src/bnpview.cpp:947
 #, kde-format
 msgid "Check for &Updates..."
-msgstr ""
+msgstr "Verificar &atualizações..."
 
 #: src/bnpview.cpp:1007
 #, kde-format
 msgid "Convert to"
-msgstr ""
+msgstr "Converter em"
 
 #: src/bnpview.cpp:1012 src/basketscene.cpp:1290 src/basketscene.cpp:2215
 #, kde-format
 msgid "Page"
-msgstr ""
+msgstr "Página"
 
 #: src/bnpview.cpp:1025
 #, kde-format
 msgid "Mathom-House"
-msgstr ""
+msgstr "Mathom-House"
 
 #: src/bnpview.cpp:1038
 #, kde-format
 msgid "Shelf..."
-msgstr ""
+msgstr "Prateleira..."
 
 #: src/bnpview.cpp:1322
 #, kde-format
 msgid "Plain Text Mathoms Conversion"
-msgstr ""
+msgstr "Conversão de mathoms de texto simples"
 
 #: src/bnpview.cpp:1323
 #, kde-format
 msgid "Converting plain text mathoms to rich text ones..."
-msgstr ""
+msgstr "Convertendo mathoms de texto simples em texto formatado..."
 
 #: src/bnpview.cpp:1807
 #, kde-format
 msgid ""
 "A Mathom-House can become a Shelf only when another Mathom-House or Shelf is "
 "available to contain it."
-msgstr ""
+msgstr "Uma Mathom-House só pode se tornar uma prateleira se houver outra Mathom-House ou prateleira disponível para contê-la."
 
 #: src/bnpview.cpp:1818
 #, kde-format
 msgid "Place the new Shelf in:"
-msgstr ""
+msgstr "Colocar a nova prateleira em:"
 
 #: src/bnpview.cpp:1899
 #, kde-format
 msgid ""
 "This Shelf contains one or more sub-Shelves. It cannot be converted to a "
 "Page because that would orphan part of the hierarchy."
-msgstr ""
+msgstr "Esta prateleira contém uma ou mais subprateleiras. Ela não pode ser convertida em página, pois isso deixaria parte da hierarquia sem vínculo."
 
 #: src/bnpview.cpp:1900 src/bnpview.cpp:1922 src/bnpview.cpp:1931
 #: src/bnpview.cpp:1941 src/bnpview.cpp:1981
 #, kde-format
 msgid "Convert Shelf to Page"
-msgstr ""
+msgstr "Converter prateleira em página"
 
 #: src/bnpview.cpp:1921
 #, kde-format
 msgid "Unlock both locations before converting the Shelf to a Page."
-msgstr ""
+msgstr "Desbloqueie ambas as localizações antes de converter a prateleira em página."
 
 #: src/bnpview.cpp:1930
 #, kde-format
 msgid ""
 "This Shelf contains more than one Page. A Shelf can become a Page only when "
 "it is empty or contains exactly one Page."
-msgstr ""
+msgstr "Esta prateleira contém mais de uma página. Uma prateleira só pode se tornar uma página quando está vazia ou contém exatamente uma página."
 
 #: src/bnpview.cpp:1940
 #, kde-format
 msgid ""
 "This Shelf contains Mathoms that are not attached to a single Page. The "
 "conversion has been refused to prevent data loss."
-msgstr ""
+msgstr "Esta prateleira contém mathoms que não estão vinculados a uma única página. A conversão foi recusada para evitar perda de dados."
 
 #: src/bnpview.cpp:1950 src/bnpview.cpp:2008
 #, kde-format
 msgid "Convert Shelf \"%1\" to Page"
-msgstr ""
+msgstr "Converter prateleira \"%1\" em página"
 
 #: src/bnpview.cpp:1980
 #, kde-format
 msgid ""
 "Moving a Page between encrypted locations is not enabled yet. No data has "
 "been changed."
-msgstr ""
+msgstr "Ainda não é possível mover uma página entre localizações cifradas. Nenhum dado foi alterado."
 
 #: src/bnpview.cpp:2051
 #, kde-format
 msgid "Unlock this location before converting the Page to a Shelf."
-msgstr ""
+msgstr "Desbloqueie esta localização antes de converter a página em prateleira."
 
 #: src/bnpview.cpp:2052 src/bnpview.cpp:2061
 #, kde-format
 msgid "Convert Page to Shelf"
-msgstr ""
+msgstr "Converter página em prateleira"
 
 #: src/bnpview.cpp:2060 src/bnpview.cpp:2156
 #, kde-format
 msgid ""
 "Moving a Page out of an encrypted location is not enabled yet. No data has "
 "been changed."
-msgstr ""
+msgstr "Ainda não é possível mover uma página para fora de uma localização cifrada. Nenhum dado foi alterado."
 
 #: src/bnpview.cpp:2119
 #, kde-format
 msgid "Convert Page \"%1\" to Shelf"
-msgstr ""
+msgstr "Converter página \"%1\" em prateleira"
 
 #: src/bnpview.cpp:2147
 #, kde-format
 msgid "Unlock this location before converting the Page to a Mathom-House."
-msgstr ""
+msgstr "Desbloqueie esta localização antes de converter a página em Mathom-House."
 
 #: src/bnpview.cpp:2148 src/bnpview.cpp:2157
 #, kde-format
 msgid "Convert Page to Mathom-House"
-msgstr ""
+msgstr "Converter página em Mathom-House"
 
 #: src/bnpview.cpp:2215
 #, kde-format
 msgid "Convert Page \"%1\" to Mathom-House"
-msgstr ""
+msgstr "Converter página \"%1\" em Mathom-House"
 
 #: src/bnpview.cpp:2678
 #, kde-format
 msgid "Hide the organization tree"
-msgstr ""
+msgstr "Ocultar árvore de organização"
 
 #: src/bnpview.cpp:2686
 #, kde-format
 msgid "Show the organization tree"
-msgstr ""
+msgstr "Mostrar árvore de organização"
 
 #: src/bnpview.cpp:2742
 #, kde-format
 msgid "Hide pages"
-msgstr ""
+msgstr "Ocultar páginas"
 
 #: src/bnpview.cpp:2745
 #, kde-format
 msgid "Show pages"
-msgstr ""
+msgstr "Mostrar páginas"
 
 #: src/bnpview.cpp:2938
 #, kde-format
 msgid "The current Mathom-House is locked and cannot be exported to PDF."
-msgstr ""
+msgstr "A Mathom-House atual está bloqueada e não pode ser exportada para PDF."
 
 #: src/bnpview.cpp:2961
 #, kde-format
 msgid "The current Page has no valid printable area."
-msgstr ""
+msgstr "A página atual não tem uma área de impressão válida."
 
 #: src/bnpview.cpp:3009
 #, kde-format
 msgid "PDF Documents (*.pdf);;All Files (*)"
-msgstr ""
+msgstr "Documentos PDF (*.pdf);;Todos os ficheiros (*)"
 
 #: src/bnpview.cpp:3016
 #, kde-format
 msgid "Export Current Page to PDF"
-msgstr ""
+msgstr "Exportar página atual para PDF"
 
 #: src/bnpview.cpp:3040 src/bnpview.cpp:3931 src/bnpview.cpp:4022
 #: src/htmlexporter.cpp:99
@@ -1790,22 +1791,22 @@ msgstr "S&obrepor"
 #: src/bnpview.cpp:3096
 #, kde-format
 msgid "Mathom could not create the PDF file."
-msgstr ""
+msgstr "O Mathom não conseguiu criar o ficheiro PDF."
 
 #: src/bnpview.cpp:3178
 #, kde-format
 msgid "Mathom could not render the current Page to PDF."
-msgstr ""
+msgstr "O Mathom não conseguiu gerar a página atual em PDF."
 
 #: src/bnpview.cpp:3195
 #, kde-format
 msgid "Mathom could not finish writing the PDF file."
-msgstr ""
+msgstr "O Mathom não conseguiu concluir a gravação do ficheiro PDF."
 
 #: src/bnpview.cpp:3204
 #, kde-format
 msgid "Current Page exported to PDF."
-msgstr ""
+msgstr "Página atual exportada para PDF."
 
 #: src/bnpview.cpp:3430
 #, kde-format
@@ -1820,14 +1821,14 @@ msgstr "A carregar..."
 #: src/bnpview.cpp:3434
 #, kde-format
 msgid "No mathoms"
-msgstr ""
+msgstr "Nenhum mathom"
 
 #: src/bnpview.cpp:3436
 #, kde-format
 msgid "%1 mathom"
 msgid_plural "%1 mathoms"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "%1 mathom"
+msgstr[1] "%1 mathoms"
 
 #: src/bnpview.cpp:3437
 #, kde-format
@@ -1857,12 +1858,12 @@ msgstr[1] "%1 ocorrências"
 #, kde-format
 msgctxt "e.g. '18 mathoms, 10 matches, 5 selected'"
 msgid "%1, %2, %3"
-msgstr ""
+msgstr "%1, %2, %3"
 
 #: src/bnpview.cpp:3574
 #, kde-format
 msgid "The plain text mathoms have been converted to rich text."
-msgstr ""
+msgstr "Os mathoms de texto simples foram convertidos em texto formatado."
 
 #: src/bnpview.cpp:3574 src/bnpview.cpp:3576
 #, kde-format
@@ -1872,7 +1873,7 @@ msgstr "Conversão Terminada"
 #: src/bnpview.cpp:3576
 #, kde-format
 msgid "There are no plain text mathoms to convert."
-msgstr ""
+msgstr "Não há mathoms de texto simples para converter."
 
 #: src/bnpview.cpp:3593
 #, kde-format
@@ -1884,7 +1885,7 @@ msgid ""
 "to the folder <a href='file://%3'>%4</a>.</p><p>As last resort, if you are "
 "sure the application is correctly installed but you had a preview version of "
 "it, try to remove the file %5mathomui.rc</p>"
-msgstr ""
+msgstr "<p><b>O ficheiro mathomui.rc parece não existir ou ser demasiado antigo.<br>O %1 não pode funcionar sem ele e será encerrado.</b></p><p>Verifique a instalação do %2.</p><p>Se não tiver permissões de administrador para instalar a aplicação em todo o sistema, pode copiar o ficheiro mathomui.rc do pacote de instalação para a pasta <a href='file://%3'>%4</a>.</p><p>Como último recurso, se tiver a certeza de que a aplicação está corretamente instalada, mas já utilizou uma versão de antevisão, tente remover o ficheiro %5mathomui.rc</p>"
 
 #: src/bnpview.cpp:3607
 #, kde-format
@@ -1894,93 +1895,93 @@ msgstr "Recurso não Encontrado"
 #: src/bnpview.cpp:3636
 #, kde-format
 msgid "Cannot add mathom."
-msgstr ""
+msgstr "Não foi possível adicionar o mathom."
 
 #: src/bnpview.cpp:3753
 #, kde-format
 msgid ""
 "<qt>Do you really want to remove the shelf <b>%1</b> and its contents?</qt>"
-msgstr ""
+msgstr "<qt>Deseja realmente remover a prateleira <b>%1</b> e todo o seu conteúdo?</qt>"
 
 #: src/bnpview.cpp:3755
 #, kde-format
 msgid ""
 "<qt>Do you really want to remove the Mathom-House <b>%1</b> and its contents?"
 "</qt>"
-msgstr ""
+msgstr "<qt>Deseja realmente remover a Mathom-House <b>%1</b> e todo o seu conteúdo?</qt>"
 
 #: src/bnpview.cpp:3757
 #, kde-format
 msgid "Remove Shelf"
-msgstr ""
+msgstr "Remover prateleira"
 
 #: src/bnpview.cpp:3757
 #, kde-format
 msgid "Remove Mathom-House"
-msgstr ""
+msgstr "Remover Mathom-House"
 
 #: src/bnpview.cpp:3758 src/bnpview.cpp:4103
 #, kde-format
 msgid "&Remove Shelf"
-msgstr ""
+msgstr "&Remover prateleira"
 
 #: src/bnpview.cpp:3769
 #, kde-format
 msgid ""
 "<qt><b>%1</b> contains the following shelves.<br>Do you want to remove them "
 "too?</qt>"
-msgstr ""
+msgstr "<qt><b>%1</b> contém as seguintes prateleiras.<br>Deseja removê-las também?</qt>"
 
 #: src/bnpview.cpp:3772
 #, kde-format
 msgid "Remove Shelves"
-msgstr ""
+msgstr "Remover prateleiras"
 
 #: src/bnpview.cpp:3773
 #, kde-format
 msgid "&Remove Shelves"
-msgstr ""
+msgstr "&Remover prateleiras"
 
 #: src/bnpview.cpp:3906 src/bnpview.cpp:3997
 #, kde-format
 msgid "Mathom Archives (*.mathom);;All Files (*)"
-msgstr ""
+msgstr "Arquivos Mathom (*.mathom);;Todos os ficheiros (*)"
 
 #: src/bnpview.cpp:3912
 #, kde-format
 msgid "Export Current Mathom-House"
-msgstr ""
+msgstr "Exportar Mathom-House atual"
 
 #: src/bnpview.cpp:3993
 #, kde-format
 msgid "All_Mathom-Houses"
-msgstr ""
+msgstr "Todas_as_Mathom-Houses"
 
 #: src/bnpview.cpp:4003
 #, kde-format
 msgid "Export All Mathom-Houses"
-msgstr ""
+msgstr "Exportar todas as Mathom-Houses"
 
 #: src/bnpview.cpp:4079
 #, kde-format
 msgid ""
 "Mathom Archives (*.mathom);;Legacy BasKet Archives (*.baskets);;All Files (*)"
-msgstr ""
+msgstr "Arquivos Mathom (*.mathom);;Arquivos antigos do BasKet (*.baskets);;Todos os ficheiros (*)"
 
 #: src/bnpview.cpp:4084
 #, kde-format
 msgid "Import Mathom-House Archive"
-msgstr ""
+msgstr "Importar arquivo de Mathom-House"
 
 #: src/bnpview.cpp:4107
 #, kde-format
 msgid "&Fold Shelf"
-msgstr ""
+msgstr "&Recolher prateleira"
 
 #: src/bnpview.cpp:4111
 #, kde-format
 msgid "&Expand Shelf"
-msgstr ""
+msgstr "&Expandir prateleira"
 
 #: src/bnpview.cpp:4460
 #, kde-format
@@ -2016,7 +2017,7 @@ msgstr "Salvaguardar & Repor"
 #: src/backup.cpp:2170
 #, kde-format
 msgid "Backup"
-msgstr ""
+msgstr "Cópia de segurança"
 
 #: src/backup.cpp:2200
 #, kde-format
@@ -2026,12 +2027,12 @@ msgstr "&Criar uma Cópia de Segurança..."
 #: src/backup.cpp:2205
 #, kde-format
 msgid "&Restore..."
-msgstr ""
+msgstr "&Repor..."
 
 #: src/backup.cpp:2284
 #, kde-format
 msgid "Backup destination: <b>%1</b>"
-msgstr ""
+msgstr "Destino da cópia de segurança: <b>%1</b>"
 
 #: src/backup.cpp:2294
 #, kde-format
@@ -2047,60 +2048,60 @@ msgstr "Última cópia de segurança: %1"
 #, kde-format
 msgctxt "Backup filename (without extension), %1 is the date"
 msgid "Mathom_Backup_%1"
-msgstr ""
+msgstr "Mathom_Backup_%1"
 
 #: src/backup.cpp:2342 src/backup.cpp:2391
 #, kde-format
 msgid "Create Full Mathom Backup"
-msgstr ""
+msgstr "Criar uma cópia de segurança completa do Mathom"
 
 #: src/backup.cpp:2346
 #, kde-format
 msgid "Mathom backup (*.mathom-backup);;All Files (*)"
-msgstr ""
+msgstr "Cópia de segurança do Mathom (*.mathom-backup);;Todos os ficheiros (*)"
 
 #: src/backup.cpp:2394
 #, kde-format
 msgid "Creating and validating the full Mathom backup. Please wait..."
-msgstr ""
+msgstr "A criar e validar a cópia de segurança completa do Mathom. Aguarde..."
 
 #: src/backup.cpp:2424
 #, kde-format
 msgid "The full Mathom backup could not be created or validated.<br><br>%1"
-msgstr ""
+msgstr "Não foi possível criar ou validar a cópia de segurança completa do Mathom.<br><br>%1"
 
 #: src/backup.cpp:2427
 #, kde-format
 msgid "Backup Error"
-msgstr ""
+msgstr "Erro na cópia de segurança"
 
 #: src/backup.cpp:2455
 #, kde-format
 msgid ""
 "The full Mathom backup has been created and its integrity has been verified."
-msgstr ""
+msgstr "A cópia de segurança completa do Mathom foi criada e a sua integridade foi verificada."
 
 #: src/backup.cpp:2457
 #, kde-format
 msgid "Backup Complete"
-msgstr ""
+msgstr "Cópia de segurança concluída"
 
 #: src/backup.cpp:2485
 #, kde-format
 msgid "Open Mathom Backup"
-msgstr ""
+msgstr "Abrir cópia de segurança do Mathom"
 
 #: src/backup.cpp:2488
 #, kde-format
 msgid ""
 "Mathom backup (*.mathom-backup);;Legacy Mathom/BasKet backup (*.tar.gz);;All "
 "Files (*)"
-msgstr ""
+msgstr "Cópia de segurança do Mathom (*.mathom-backup);;Cópia de segurança antiga do Mathom/BasKet (*.tar.gz);;Todos os ficheiros (*)"
 
 #: src/backup.cpp:2519
 #, kde-format
 msgid "Mathom could not create a temporary restore area."
-msgstr ""
+msgstr "O Mathom não conseguiu criar uma área temporária para a reposição."
 
 #: src/backup.cpp:2521 src/backup.cpp:2570 src/backup.cpp:2759
 #, kde-format
@@ -2110,19 +2111,19 @@ msgstr "Erro de Reposição"
 #: src/backup.cpp:2528
 #, kde-format
 msgid "Validate Mathom Backup"
-msgstr ""
+msgstr "Validar cópia de segurança do Mathom"
 
 #: src/backup.cpp:2531
 #, kde-format
 msgid "Extracting and checking the backup before changing any current data..."
-msgstr ""
+msgstr "A extrair e verificar a cópia de segurança antes de alterar os dados atuais..."
 
 #: src/backup.cpp:2567
 #, kde-format
 msgid ""
 "This file is not a valid Mathom backup, or its integrity check failed. No "
 "current Mathom data has been changed.<br><br>%1"
-msgstr ""
+msgstr "Este ficheiro não contém uma cópia de segurança válida do Mathom ou a verificação da integridade falhou. Nenhum dado atual do Mathom foi alterado.<br><br>%1"
 
 #: src/backup.cpp:2581
 #, kde-format
@@ -2130,17 +2131,17 @@ msgid ""
 "This is a legacy Mathom/BasKet backup. It contains Mathom data but not the "
 "complete Mathom configuration.<br><br>Mathom will preserve your current "
 "configuration and restore only the legacy data."
-msgstr ""
+msgstr "Esta é uma cópia de segurança antiga do Mathom/BasKet. Contém dados do Mathom, mas não a configuração completa.<br><br>O Mathom manterá a configuração atual e irá repor apenas os dados antigos."
 
 #: src/backup.cpp:2584
 #, kde-format
 msgid "Restore Legacy Backup?"
-msgstr ""
+msgstr "Repor cópia de segurança antiga?"
 
 #: src/backup.cpp:2586 src/backup.cpp:2629
 #, kde-format
 msgid "&Restore"
-msgstr ""
+msgstr "&Repor"
 
 #: src/backup.cpp:2613
 #, kde-format
@@ -2150,46 +2151,46 @@ msgid ""
 "%4<br><b>Integrity:</b> verified<br><br>Restoring will replace the current "
 "Mathom data and Mathom configuration. A separate full safety backup of the "
 "current state will be created first."
-msgstr ""
+msgstr "A cópia de segurança passou na verificação de integridade.<br><br><b>Criada em:</b> %1<br><b>Versão do Mathom:</b> %2<br><b>Ficheiros:</b> %3<br><b>Dados armazenados:</b> %4<br><b>Integridade:</b> verificada<br><br>A reposição substituirá os dados e a configuração atuais do Mathom. Antes disso, será criada uma cópia de segurança completa do estado atual."
 
 #: src/backup.cpp:2627
 #, kde-format
 msgid "Restore Full Backup?"
-msgstr ""
+msgstr "Repor cópia de segurança completa?"
 
 #: src/backup.cpp:2659
 #, kde-format
 msgid "Create Safety Backup"
-msgstr ""
+msgstr "Criar cópia de segurança de proteção"
 
 #: src/backup.cpp:2662
 #, kde-format
 msgid ""
 "Creating and validating a safety backup of the current Mathom state before "
 "restoration..."
-msgstr ""
+msgstr "A criar e validar uma cópia de segurança do estado atual do Mathom antes da reposição..."
 
 #: src/backup.cpp:2698
 #, kde-format
 msgid ""
 "Mathom refused to start the restoration because the safety backup of the "
 "current state could not be created and validated.<br><br>%1"
-msgstr ""
+msgstr "O Mathom recusou iniciar a reposição porque não foi possível criar e validar a cópia de segurança do estado atual.<br><br>%1"
 
 #: src/backup.cpp:2701
 #, kde-format
 msgid "Restore Aborted"
-msgstr ""
+msgstr "Reposição cancelada"
 
 #: src/backup.cpp:2709
 #, kde-format
 msgid "Restore Mathom Backup"
-msgstr ""
+msgstr "Repor cópia de segurança do Mathom"
 
 #: src/backup.cpp:2712
 #, kde-format
 msgid "Applying the validated backup. Please wait..."
-msgstr ""
+msgstr "A aplicar a cópia de segurança validada. Aguarde..."
 
 #: src/backup.cpp:2754
 #, kde-format
@@ -2197,7 +2198,7 @@ msgid ""
 "The restoration could not be completed. Mathom rolled back the active data "
 "when possible.<br><br>The full safety backup created before the operation is "
 "still available at:<br><b>%1</b><br><br>%2"
-msgstr ""
+msgstr "Não foi possível concluir a reposição. O Mathom repôs os dados ativos anteriores sempre que possível.<br><br>A cópia de segurança completa criada antes da operação continua disponível em:<br><b>%1</b><br><br>%2"
 
 #: src/backup.cpp:2792
 #, kde-format
@@ -2205,19 +2206,19 @@ msgid ""
 "The backup has been restored successfully.<br><br>A full safety backup of "
 "the state that existed immediately before restoration has been kept at:"
 "<br><b>%1</b>"
-msgstr ""
+msgstr "A cópia de segurança foi reposta com sucesso.<br><br>Foi mantida uma cópia de segurança completa do estado imediatamente anterior à reposição em:<br><b>%1</b>"
 
 #: src/backup.cpp:2796
 #, kde-format
 msgid "Restore Complete"
-msgstr ""
+msgstr "Reposição concluída"
 
 #: src/backup.cpp:2801
 #, kde-format
 msgid ""
 "Your Mathom backup has been successfully restored to <b>%1</b>. %2 is going "
 "to be restarted to load the restored state."
-msgstr ""
+msgstr "A sua cópia de segurança do Mathom foi reposta com sucesso em <b>%1</b>. O %2 será reiniciado para carregar o estado reposto."
 
 #: src/backup.cpp:2842
 #, kde-format
@@ -2228,7 +2229,7 @@ msgstr "Reiniciar"
 #, kde-format
 msgctxt "Safety backup filename before restoring Mathom data"
 msgid "Mathom_Before_Restoration_%1"
-msgstr ""
+msgstr "Mathom_Before_Restoration_%1"
 
 #: src/variouswidgets.cpp:51
 #, kde-format
@@ -2239,17 +2240,17 @@ msgstr "..."
 #, kde-format
 msgctxt "'<name> (<generic name>)' of application, e.g. 'KWrite (Text Editor)'"
 msgid "%1 (%2)"
-msgstr ""
+msgstr "%1 (%2)"
 
 #: src/variouswidgets.cpp:178
 #, kde-format
 msgid "Choose an Application Launcher ..."
-msgstr ""
+msgstr "Escolher um lançador de aplicações..."
 
 #: src/variouswidgets.cpp:179
 #, kde-format
 msgid "Use KDE Plasma Application Launchers to open Mathom content"
-msgstr ""
+msgstr "Usar os lançadores de aplicações do KDE Plasma para abrir conteúdo do Mathom"
 
 #: src/variouswidgets.cpp:199 src/variouswidgets.cpp:200
 #: src/variouswidgets.cpp:201 src/variouswidgets.cpp:202
@@ -2278,7 +2279,7 @@ msgstr "%1 por %2 pixels"
 #: src/newbasketdialog.cpp:39 src/newbasketdialog.cpp:110
 #, kde-format
 msgid "New Mathom-House"
-msgstr ""
+msgstr "Nova Mathom-House"
 
 #: src/newbasketdialog.cpp:75
 #, kde-format
@@ -2288,12 +2289,12 @@ msgstr "C&riar em:"
 #: src/newbasketdialog.cpp:78
 #, kde-format
 msgid "(Mathom-Houses)"
-msgstr ""
+msgstr "(Mathom-Houses)"
 
 #: src/newbasketdialog.cpp:111
 #, kde-format
 msgid "New Shelf"
-msgstr ""
+msgstr "Nova prateleira"
 
 #: src/basketstatusbar.cpp:106
 #, kde-format
@@ -2310,112 +2311,112 @@ msgstr ""
 #: src/basketstatusbar.cpp:160
 #, kde-format
 msgid "<p>This location is <b>locked</b>.<br>Click to unlock it.</p>"
-msgstr ""
+msgstr "<p>Esta localização está <b>bloqueada</b>.<br>Clique para desbloqueá-la.</p>"
 
 #: src/basketstatusbar.cpp:163
 #, kde-format
 msgid "<p>This location is <b>unlocked</b>.<br>Click to lock it.</p>"
-msgstr ""
+msgstr "<p>Esta localização está <b>desbloqueada</b>.<br>Clique para bloqueá-la.</p>"
 
 #: src/secondarylanguagespage.cpp:47
 #, kde-format
 msgid ""
 "Add the secondary languages you use. Each language has its own input "
 "trigger. The default suggested trigger is \"xx\"."
-msgstr ""
+msgstr "Adicione os idiomas secundários que utiliza. Cada idioma tem a sua própria sequência de ativação. A sequência sugerida por predefinição é \"xx\"."
 
 #: src/secondarylanguagespage.cpp:90
 #, kde-format
 msgid "No secondary language configured"
-msgstr ""
+msgstr "Nenhum idioma secundário configurado"
 
 #: src/secondarylanguagespage.cpp:109
 #, kde-format
 msgid ""
 "Add a language to quickly use its specific characters while taking notes."
-msgstr ""
+msgstr "Adicione um idioma para utilizar rapidamente os seus caracteres específicos enquanto toma notas."
 
 #: src/secondarylanguagespage.cpp:243 src/secondarylanguagespage.cpp:353
 #: src/secondarylanguagespage.cpp:825
 #, kde-format
 msgid "Add a language"
-msgstr ""
+msgstr "Adicionar um idioma"
 
 #: src/secondarylanguagespage.cpp:252 src/secondarylanguagespage.cpp:375
 #, kde-format
 msgid "Add a secondary language"
-msgstr ""
+msgstr "Adicionar um idioma secundário"
 
 #: src/secondarylanguagespage.cpp:392
 #, kde-format
 msgid "Choose the language whose specific characters you want to use quickly."
-msgstr ""
+msgstr "Escolha o idioma cujos caracteres específicos pretende utilizar rapidamente."
 
 #: src/secondarylanguagespage.cpp:407
 #, kde-format
 msgid "Search for a language…"
-msgstr ""
+msgstr "Pesquisar um idioma…"
 
 #: src/secondarylanguagespage.cpp:444
 #, kde-format
 msgid "%1 — default trigger: %2"
-msgstr ""
+msgstr "%1 — sequência predefinida: %2"
 
 #: src/secondarylanguagespage.cpp:467
 #, kde-format
 msgid "Add"
-msgstr ""
+msgstr "Adicionar"
 
 #: src/secondarylanguagespage.cpp:684
 #, kde-format
 msgid "Trigger"
-msgstr ""
+msgstr "Sequência de ativação"
 
 #: src/secondarylanguagespage.cpp:712 src/secondarylanguagespage.cpp:717
 #, kde-format
 msgid "Remove %1"
-msgstr ""
+msgstr "Remover %1"
 
 #: src/secondarylanguagespage.cpp:826
 #, kde-format
 msgid "Add another language"
-msgstr ""
+msgstr "Adicionar outro idioma"
 
 #: src/secondarylanguagespage.cpp:908
 #, kde-format
 msgid ""
 "%1 and %2 produce different results with \"%3\". Change the trigger for one "
 "of the two languages."
-msgstr ""
+msgstr "%1 e %2 produzem resultados diferentes com \"%3\". Altere a sequência de ativação de um dos dois idiomas."
 
 #: src/secondarylanguagespage.cpp:919
 #, kde-format
 msgid ""
 "The \"%1\" trigger for %2 conflicts with \"%3\" for %4. Change one of the "
 "two triggers."
-msgstr ""
+msgstr "A sequência de ativação \"%1\" de %2 entra em conflito com \"%3\" de %4. Altere uma das sequências."
 
 #: src/secondarylanguagespage.cpp:949
 #, kde-format
 msgid "This language has a trigger conflict."
-msgstr ""
+msgstr "Este idioma tem um conflito entre sequências de ativação."
 
 #: src/secondarylanguagespage.cpp:967
 #, kde-format
 msgid "Input conflict"
-msgstr ""
+msgstr "Conflito de entrada"
 
 #: src/noteedit.cpp:672
 #, kde-format
 msgid ""
 "Images cannot be edited here at the moment.\n"
 "Do you want to open it with an application that understand it?"
-msgstr ""
+msgstr "As imagens não podem ser editadas aqui no momento.\nDeseja abri-las com uma aplicação compatível?"
 
 #: src/noteedit.cpp:674
 #, kde-format
 msgid "Edit Image Mathom"
-msgstr ""
+msgstr "Editar mathom de imagem"
 
 #: src/noteedit.cpp:699
 #, kde-format
@@ -2429,12 +2430,12 @@ msgstr ""
 #: src/noteedit.cpp:701
 #, kde-format
 msgid "Edit Animation Mathom"
-msgstr ""
+msgstr "Editar mathom de animação"
 
 #: src/noteedit.cpp:790
 #, kde-format
 msgid "Edit Color Mathom"
-msgstr ""
+msgstr "Editar mathom de cor"
 
 #: src/noteedit.cpp:806
 #, kde-format
@@ -2442,87 +2443,87 @@ msgid ""
 "The type of this mathom is unknown and cannot be edited here.\n"
 "You however can drag or copy the mathom into an application that understands "
 "it."
-msgstr ""
+msgstr "O tipo deste mathom é desconhecido e não pode ser editado aqui.\nNo entanto, pode arrastá-lo ou copiá-lo para uma aplicação compatível."
 
 #: src/noteedit.cpp:808
 #, kde-format
 msgid "Edit Unknown Mathom"
-msgstr ""
+msgstr "Editar mathom desconhecido"
 
 #: src/noteedit.cpp:880
 #, kde-format
 msgid "+ Row"
-msgstr ""
+msgstr "+ Linha"
 
 #: src/noteedit.cpp:881
 #, kde-format
 msgid "- Row"
-msgstr ""
+msgstr "- Linha"
 
 #: src/noteedit.cpp:882
 #, kde-format
 msgid "+ Column"
-msgstr ""
+msgstr "+ Coluna"
 
 #: src/noteedit.cpp:883
 #, kde-format
 msgid "- Column"
-msgstr ""
+msgstr "- Coluna"
 
 #: src/noteedit.cpp:896
 #, kde-format
 msgid "Function..."
-msgstr ""
+msgstr "Função..."
 
 #: src/noteedit.cpp:897
 #, kde-format
 msgid "Sum"
-msgstr ""
+msgstr "Soma"
 
 #: src/noteedit.cpp:898
 #, kde-format
 msgid "Average"
-msgstr ""
+msgstr "Média"
 
 #: src/noteedit.cpp:899
 #, kde-format
 msgid "Minimum"
-msgstr ""
+msgstr "Mínimo"
 
 #: src/noteedit.cpp:900
 #, kde-format
 msgid "Maximum"
-msgstr ""
+msgstr "Máximo"
 
 #: src/noteedit.cpp:901
 #, kde-format
 msgid "Count"
-msgstr ""
+msgstr "Contagem"
 
 #: src/noteedit.cpp:903
 #, kde-format
 msgid "Value or formula, for example =A1+B1"
-msgstr ""
+msgstr "Valor ou fórmula, por exemplo =A1+B1"
 
 #: src/noteedit.cpp:904
 #, kde-format
 msgid "Apply"
-msgstr ""
+msgstr "Aplicar"
 
 #: src/noteedit.cpp:907
 #, kde-format
 msgid "Convert the selected text to superscript"
-msgstr ""
+msgstr "Converter o texto selecionado em sobrescrito"
 
 #: src/noteedit.cpp:908
 #, kde-format
 msgid "Convert the selected text to subscript"
-msgstr ""
+msgstr "Converter o texto selecionado em subscrito"
 
 #: src/noteedit.cpp:1149
 #, kde-format
 msgid "Edit Link Mathom"
-msgstr ""
+msgstr "Editar mathom de ligação"
 
 #: src/noteedit.cpp:1167 src/noteedit.cpp:1331
 #, kde-format
@@ -2552,7 +2553,7 @@ msgstr "Editar a Referência Cruzada"
 #: src/noteedit.cpp:1421
 #, kde-format
 msgid "Edit Launcher Mathom"
-msgstr ""
+msgstr "Editar mathom de lançador"
 
 #: src/noteedit.cpp:1433
 #, kde-format
@@ -2587,7 +2588,7 @@ msgstr "Cor"
 #: src/noteedit.cpp:1613
 #, kde-format
 msgid "Remove Highlight"
-msgstr ""
+msgstr "Remover destaque"
 
 #: src/noteedit.cpp:1642
 #, kde-format
@@ -2632,31 +2633,31 @@ msgstr "Refazer"
 #: src/basketscene.cpp:320
 #, kde-format
 msgid "The new mathom does not match the filter and is hidden."
-msgstr ""
+msgstr "O novo mathom não corresponde ao filtro e está oculto."
 
 #: src/basketscene.cpp:322
 #, kde-format
 msgid "A new mathom does not match the filter and is hidden."
-msgstr ""
+msgstr "Um novo mathom não corresponde ao filtro e está oculto."
 
 #: src/basketscene.cpp:324
 #, kde-format
 msgid "Some new mathoms do not match the filter and are hidden."
-msgstr ""
+msgstr "Alguns mathoms novos não correspondem ao filtro e estão ocultos."
 
 #: src/basketscene.cpp:326
 #, kde-format
 msgid "The new mathoms do not match the filter and are hidden."
-msgstr ""
+msgstr "Os novos mathoms não correspondem ao filtro e estão ocultos."
 
 #: src/basketscene.cpp:3437
-#, fuzzy, kde-format
+#, kde-format
 msgctxt "Verb (for the 'insert' menu)"
 msgid "Group"
 msgstr "Agrupar"
 
 #: src/basketscene.cpp:3439
-#, fuzzy, kde-format
+#, kde-format
 msgctxt "Verb (for the 'insert' menu)"
 msgid "Insert"
 msgstr "Inserir"
@@ -2664,7 +2665,7 @@ msgstr "Inserir"
 #: src/basketscene.cpp:3445
 #, kde-format
 msgid "Page Properties..."
-msgstr ""
+msgstr "Propriedades da página..."
 
 #: src/basketscene.cpp:4382
 #, kde-format
@@ -2680,7 +2681,7 @@ msgstr ""
 msgid ""
 "Insert mathom here\n"
 "Right click for more options"
-msgstr ""
+msgstr "Inserir mathom aqui\nClique com o botão direito para ver mais opções"
 
 #: src/basketscene.cpp:4869
 #, kde-format
@@ -2695,12 +2696,12 @@ msgstr "Dimensionar este grupo"
 #: src/basketscene.cpp:4869
 #, kde-format
 msgid "Resize this mathom"
-msgstr ""
+msgstr "Redimensionar este mathom"
 
 #: src/basketscene.cpp:4872
 #, kde-format
 msgid "Select or move this mathom"
-msgstr ""
+msgstr "Selecionar ou mover este mathom"
 
 #: src/basketscene.cpp:4875
 #, kde-format
@@ -2710,7 +2711,7 @@ msgstr "Seleccionar ou mover este grupo"
 #: src/basketscene.cpp:4878
 #, kde-format
 msgid "Assign or remove tags from this mathom"
-msgstr ""
+msgstr "Atribuir ou remover etiquetas deste mathom"
 
 #: src/basketscene.cpp:4886
 #, kde-format
@@ -2737,14 +2738,14 @@ msgstr "Fechar este grupo"
 msgid ""
 "Group mathom with the one below\n"
 "Right click for more options"
-msgstr ""
+msgstr "Agrupar o mathom com o de baixo\nClique com o botão direito para ver mais opções"
 
 #: src/basketscene.cpp:4909
 #, kde-format
 msgid ""
 "Group mathom with the one above\n"
 "Right click for more options"
-msgstr ""
+msgstr "Agrupar o mathom com o de cima\nClique com o botão direito para ver mais opções"
 
 #: src/basketscene.cpp:4927
 #, kde-format
@@ -2780,7 +2781,7 @@ msgstr "Desbloq&uear"
 #: src/basketscene.cpp:5128
 #, kde-format
 msgid "Password-protected location."
-msgstr ""
+msgstr "Localização protegida por palavra-passe."
 
 #: src/basketscene.cpp:5130
 #, kde-format
@@ -2797,7 +2798,7 @@ msgstr "Não existe suporte para encriptação<br/>nesta versão do %1."
 msgid ""
 "To keep protected locations unlocked, change the automatic<br>locking "
 "duration in the application settings."
-msgstr ""
+msgstr "Para manter as localizações protegidas desbloqueadas, altere o tempo de bloqueio<br>automático nas configurações da aplicação."
 
 #: src/basketscene.cpp:5339 src/basketscene.cpp:5381
 #, kde-format
@@ -2823,34 +2824,34 @@ msgstr "Marcas"
 #, kde-format
 msgid "<qt>Do you really want to delete this mathom?</qt>"
 msgid_plural "<qt>Do you really want to delete these <b>%1</b> mathoms?</qt>"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "<qt>Deseja realmente eliminar este mathom?</qt>"
+msgstr[1] "<qt>Deseja realmente eliminar estes <b>%1</b> mathoms?</qt>"
 
 #: src/basketscene.cpp:6710
 #, kde-format
 msgid "Copied mathom to clipboard."
 msgid_plural "Copied mathoms to clipboard."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Mathom copiado para a área de transferência."
+msgstr[1] "Mathoms copiados para a área de transferência."
 
 #: src/basketscene.cpp:6713
 #, kde-format
 msgid "Cut mathom to clipboard."
 msgid_plural "Cut mathoms to clipboard."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Mathom recortado para a área de transferência."
+msgstr[1] "Mathoms recortados para a área de transferência."
 
 #: src/basketscene.cpp:6716
 #, kde-format
 msgid "Copied mathom to selection."
 msgid_plural "Copied mathoms to selection."
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Mathom copiado para a seleção."
+msgstr[1] "Mathoms copiados para a seleção."
 
 #: src/basketscene.cpp:6780 src/basketscene.cpp:6868
 #, kde-format
 msgid "Unable to open this mathom."
-msgstr ""
+msgstr "Não foi possível abrir este mathom."
 
 #: src/basketscene.cpp:6831
 #, kde-format
@@ -2865,22 +2866,22 @@ msgstr "Gravar para um Ficheiro"
 #: src/basketfactory.cpp:66
 #, kde-format
 msgid "Sorry, but the folder creation for this new location has failed."
-msgstr ""
+msgstr "Não foi possível criar a pasta desta nova localização."
 
 #: src/basketfactory.cpp:67 src/basketfactory.cpp:119
 #, kde-format
 msgid "Location Creation Failed"
-msgstr ""
+msgstr "Falha ao criar a localização"
 
 #: src/basketfactory.cpp:118
 #, kde-format
 msgid "Sorry, but the creation of this new location has failed."
-msgstr ""
+msgstr "Não foi possível criar esta nova localização."
 
 #: src/pagepropertiesdialog.cpp:34
 #, kde-format
 msgid "Page Properties"
-msgstr ""
+msgstr "Propriedades da página"
 
 #: src/pagepropertiesdialog.cpp:59
 #, kde-format
@@ -2890,17 +2891,17 @@ msgstr "(Nenhum)"
 #: src/pagepropertiesdialog.cpp:129
 #, kde-format
 msgid "Background image:"
-msgstr ""
+msgstr "Imagem de fundo:"
 
 #: src/pagepropertiesdialog.cpp:133
 #, kde-format
 msgid "Background color:"
-msgstr ""
+msgstr "Cor de fundo:"
 
 #: src/pagepropertiesdialog.cpp:137
 #, kde-format
 msgid "Text color:"
-msgstr ""
+msgstr "Cor do texto:"
 
 #: src/pagepropertiesdialog.cpp:145
 #, kde-format
@@ -2910,7 +2911,7 @@ msgstr "Disposição"
 #: src/pagepropertiesdialog.cpp:154
 #, kde-format
 msgid "Columns:"
-msgstr ""
+msgstr "Colunas:"
 
 #: src/pagepropertiesdialog.cpp:171
 #, kde-format
@@ -2920,12 +2921,12 @@ msgstr "Livre"
 #: src/spreadsheetcontent.cpp:717
 #, kde-format
 msgid "Mathom Spreadsheet (*.mcalc)"
-msgstr ""
+msgstr "Folha de cálculo do Mathom (*.mcalc)"
 
 #: src/spreadsheetcontent.cpp:797
 #, kde-format
 msgid "Edit this spreadsheet"
-msgstr ""
+msgstr "Editar esta folha de cálculo"
 
 #: src/aboutdata.cpp:17
 #, kde-format
@@ -2944,24 +2945,24 @@ msgstr ""
 msgid ""
 "Copyright © 2026 Thorinux Systems; based on BasKet Note Pads. Original "
 "copyrights © 2003–2007 Sébastien Laoût and © 2013–2019 Gleb Baryshev"
-msgstr ""
+msgstr "Copyright © 2026 Thorinux Systems; baseado no BasKet Note Pads. Direitos de autor originais © 2003–2007 Sébastien Laoût e © 2013–2019 Gleb Baryshev"
 
 #: src/aboutdata.cpp:35
 #, kde-format
 msgid "For questions or help with Mathom Notes: contact@thorinux.fr"
-msgstr ""
+msgstr "Para questões ou ajuda sobre o Mathom Notes: contact@thorinux.fr"
 
 #: src/aboutdata.cpp:36
 #, kde-format
 msgid ""
 "For questions or help with Mathom Notes: <a "
 "href=\"mailto:contact@thorinux.fr\">contact@thorinux.fr</a>"
-msgstr ""
+msgstr "Para questões ou ajuda sobre o Mathom Notes: <a href=\"mailto:contact@thorinux.fr\">contact@thorinux.fr</a>"
 
 #: src/aboutdata.cpp:39
 #, kde-format
 msgid "Mathom Notes maintainer and user support"
-msgstr ""
+msgstr "Responsável pela manutenção e pelo apoio aos utilizadores do Mathom Notes"
 
 #: src/softwareimporters.cpp:47
 #, kde-format
@@ -2971,22 +2972,22 @@ msgstr "Importar a Hierarquia"
 #: src/softwareimporters.cpp:57
 #, kde-format
 msgid "How to Import the Mathoms?"
-msgstr ""
+msgstr "Como importar os mathoms?"
 
 #: src/softwareimporters.cpp:61
 #, kde-format
 msgid "&Keep original hierarchy (all mathoms in separate Mathom-Houses)"
-msgstr ""
+msgstr "&Manter a hierarquia original (todos os mathoms em Mathom-Houses separadas)"
 
 #: src/softwareimporters.cpp:62
 #, kde-format
 msgid "&First-level mathoms in separate Mathom-Houses"
-msgstr ""
+msgstr "&Mathoms do primeiro nível em Mathom-Houses separadas"
 
 #: src/softwareimporters.cpp:63
 #, kde-format
 msgid "&All mathoms in one Mathom-House"
-msgstr ""
+msgstr "&Todos os mathoms numa única Mathom-House"
 
 #: src/softwareimporters.cpp:107
 #, kde-format
@@ -3001,22 +3002,22 @@ msgstr "Formato do Ficheiro de Texto"
 #: src/softwareimporters.cpp:116
 #, kde-format
 msgid "Mathoms separated by an &empty line"
-msgstr ""
+msgstr "Mathoms separados por uma linha em &branco"
 
 #: src/softwareimporters.cpp:117
 #, kde-format
 msgid "One &mathom per line"
-msgstr ""
+msgstr "Um &mathom por linha"
 
 #: src/softwareimporters.cpp:118
 #, kde-format
 msgid "Mathoms begin with a &dash (-)"
-msgstr ""
+msgstr "Mathoms começam com um &traço (-)"
 
 #: src/softwareimporters.cpp:119
 #, kde-format
 msgid "Mathoms begin with a &star (*)"
-msgstr ""
+msgstr "Mathoms começam com um &asterisco (*)"
 
 #: src/softwareimporters.cpp:120
 #, kde-format
@@ -3026,7 +3027,7 @@ msgstr "&Usar outro separador de notas:"
 #: src/softwareimporters.cpp:136
 #, kde-format
 msgid "&All in one mathom"
-msgstr ""
+msgstr "&Todos num único mathom"
 
 #: src/softwareimporters.cpp:215
 #, kde-format
@@ -3042,7 +3043,7 @@ msgstr "Mostrar a janela de depuração"
 #: src/main.cpp:89
 #, kde-format
 msgid "Custom folder to load and save Mathom data."
-msgstr ""
+msgstr "Pasta personalizada para carregar e guardar os dados do Mathom."
 
 #: src/main.cpp:90
 #, kde-format
@@ -3060,7 +3061,7 @@ msgstr ""
 #: src/main.cpp:94
 #, kde-format
 msgid "Open a Mathom-House archive or template."
-msgstr ""
+msgstr "Abrir um arquivo de Mathom-House ou modelo."
 
 #: src/notecontent.cpp:99
 #, kde-format
@@ -3115,7 +3116,7 @@ msgstr "Lançamento"
 #: src/notecontent.cpp:121
 #, kde-format
 msgid "Spreadsheet"
-msgstr ""
+msgstr "Folha de cálculo"
 
 #: src/notecontent.cpp:123 src/notecontent.cpp:125
 #, kde-format
@@ -3435,12 +3436,12 @@ msgstr "Ligação para %1"
 #: src/notecontent.cpp:2104
 #, kde-format
 msgid "Link has no location to open."
-msgstr ""
+msgstr "A ligação não possui uma localização para abrir."
 
 #: src/notecontent.cpp:2108
 #, kde-format
 msgid "Opening location..."
-msgstr ""
+msgstr "A abrir a localização..."
 
 #: src/notecontent.cpp:2208
 #, kde-format
@@ -3522,12 +3523,12 @@ msgstr "Não"
 #: src/settings_versionsync.cpp:81
 #, kde-format
 msgid "Do you really want to remove old versions for all locations?"
-msgstr ""
+msgstr "Deseja realmente remover as versões antigas de todas as localizações?"
 
 #: src/settings_versionsync.cpp:82
 #, kde-format
 msgid "Remove Old Versions"
-msgstr ""
+msgstr "Remover versões antigas"
 
 #: src/settings_versionsync.cpp:83
 #, kde-format
@@ -3535,14 +3536,14 @@ msgid "Version Sync"
 msgstr "Sincronização de Versões"
 
 #: src/settings_versionsync.cpp:96
-#, fuzzy, kde-format
+#, kde-format
 msgid "This will free %1"
-msgstr "Isto irá libertar %1 MB"
+msgstr "Isto irá libertar %1"
 
 #: src/htmlexporter.cpp:71
 #, kde-format
 msgid "HTML Documents (*.html *.htm);;All Files (*)"
-msgstr ""
+msgstr "Documentos HTML (*.html *.htm);;Todos os ficheiros (*)"
 
 #: src/htmlexporter.cpp:77 src/htmlexporter.cpp:120
 #, kde-format
@@ -3552,7 +3553,7 @@ msgstr "Exportar para HTML"
 #: src/htmlexporter.cpp:122
 #, kde-format
 msgid "Exporting the Mathom-House to HTML. Please wait..."
-msgstr ""
+msgstr "A exportar a Mathom-House para HTML. Aguarde..."
 
 #: src/htmlexporter.cpp:179 src/htmlexporter.cpp:615 src/htmlexporter.cpp:652
 #, kde-format
@@ -3576,7 +3577,7 @@ msgstr "imagens"
 #, kde-format
 msgctxt "HTML export folder (Mathom-Houses)"
 msgid "mathom-houses"
-msgstr ""
+msgstr "mathom-houses"
 
 #: src/htmlexporter.cpp:639 src/htmlexporter.cpp:661 src/htmlexporter.cpp:668
 #, kde-format
@@ -3589,7 +3590,7 @@ msgstr "dados"
 msgid ""
 "Made with <a href=\"%1\">%2</a> %3, a tool to organize mathoms and keep "
 "information at hand."
-msgstr ""
+msgstr "Criado com <a href=\"%1\">%2</a> %3, uma ferramenta para organizar mathoms e manter as informações sempre à mão."
 
 #: src/common.cpp:58
 #, kde-format
@@ -3599,12 +3600,12 @@ msgstr "Por favor introduza a senha para a seguinte chave privada:"
 #: src/common.cpp:60
 #, kde-format
 msgid "Please enter the password for <b>%1</b>:"
-msgstr ""
+msgstr "Introduza a palavra-passe de <b>%1</b>:"
 
 #: src/common.cpp:96
 #, kde-format
 msgid "Please assign a password to <b>%1</b>:"
-msgstr ""
+msgstr "Defina uma palavra-passe para <b>%1</b>:"
 
 #: src/common.cpp:146
 #, kde-format
@@ -3619,137 +3620,137 @@ msgstr "Minimizar"
 #: src/mainwindow.cpp:100
 #, kde-format
 msgid "Update Settings..."
-msgstr ""
+msgstr "Configurações das atualizações..."
 
 #: src/mainwindow.cpp:141
 #, kde-format
 msgid "Dyslexia"
-msgstr ""
+msgstr "Dislexia"
 
 #: src/mainwindow.cpp:146
 #, kde-format
 msgid "Dysorthography"
-msgstr ""
+msgstr "Disortografia"
 
 #: src/mainwindow.cpp:151
 #, kde-format
 msgid "Dysgraphia"
-msgstr ""
+msgstr "Disgrafia"
 
 #: src/mainwindow.cpp:156
 #, kde-format
 msgid "Dyspraxia / DCD"
-msgstr ""
+msgstr "Dispraxia / PDC"
 
 #: src/mainwindow.cpp:161
 #, kde-format
 msgid "Dysphasia / DLD"
-msgstr ""
+msgstr "Disfasia / PDL"
 
 #: src/mainwindow.cpp:166
 #, kde-format
 msgid "Dyscalculia"
-msgstr ""
+msgstr "Discalculia"
 
 #: src/mainwindow.cpp:171
 #, kde-format
 msgid "ADHD"
-msgstr ""
+msgstr "TDAH"
 
 #: src/mainwindow.cpp:181
 #, kde-format
 msgid "Custom..."
-msgstr ""
+msgstr "Personalizado..."
 
 #: src/mainwindow.cpp:190 src/mainwindow.cpp:865
 #, kde-format
 msgid "About Mathom Notes"
-msgstr ""
+msgstr "Sobre o Mathom Notes"
 
 #: src/mainwindow.cpp:200
 #, kde-format
 msgid "Open Diagnostics Folder"
-msgstr ""
+msgstr "Abrir a pasta de diagnósticos"
 
 #: src/mainwindow.cpp:205 src/mainwindow.cpp:1056
 #, kde-format
 msgid "About Thorinux Systems"
-msgstr ""
+msgstr "Sobre a Thorinux Systems"
 
 #: src/mainwindow.cpp:265
 #, kde-format
 msgid "Custom profile"
-msgstr ""
+msgstr "Perfil personalizado"
 
 #: src/mainwindow.cpp:273
 #, kde-format
 msgid "Select the aids to apply. Modules can be combined freely."
-msgstr ""
+msgstr "Selecione as ajudas a aplicar. Os módulos podem ser combinados livremente."
 
 #: src/mainwindow.cpp:298
 #, kde-format
 msgid "Typography"
-msgstr ""
+msgstr "Tipografia"
 
 #: src/mainwindow.cpp:307
 #, kde-format
 msgid "Adapted font"
-msgstr ""
+msgstr "Tipo de letra adaptado"
 
 #: src/mainwindow.cpp:321
 #, kde-format
 msgid "Larger text"
-msgstr ""
+msgstr "Texto maior"
 
 #: src/mainwindow.cpp:335
 #, kde-format
 msgid "Letter spacing"
-msgstr ""
+msgstr "Espaçamento entre letras"
 
 #: src/mainwindow.cpp:349
 #, kde-format
 msgid "Word spacing"
-msgstr ""
+msgstr "Espaçamento entre palavras"
 
 #: src/mainwindow.cpp:363
 #, kde-format
 msgid "Increased line spacing"
-msgstr ""
+msgstr "Espaçamento entre linhas aumentado"
 
 #: src/mainwindow.cpp:410
 #, kde-format
 msgid "Reading aids"
-msgstr ""
+msgstr "Ajudas à leitura"
 
 #: src/mainwindow.cpp:423
 #, kde-format
 msgid "Syllable coloring"
-msgstr ""
+msgstr "Coloração de sílabas"
 
 #: src/mainwindow.cpp:441
 #, kde-format
 msgid "Phoneme coloring"
-msgstr ""
+msgstr "Coloração de fonemas"
 
 #: src/mainwindow.cpp:451
 #, kde-format
 msgid "Visual highlighting of common grapheme-sound correspondences in French."
-msgstr ""
+msgstr "Destaque visual de correspondências frequentes entre grafemas e sons em francês."
 
 #: src/mainwindow.cpp:464
 #, kde-format
 msgid "Grapheme highlighting"
-msgstr ""
+msgstr "Destaque de grafemas"
 
 #: src/mainwindow.cpp:474
 #, kde-format
 msgid "Underlines groups of letters that form common reading units."
-msgstr ""
+msgstr "Sublinha grupos de letras que formam unidades de leitura comuns."
 
 #: src/mainwindow.cpp:823
 #, kde-format
 msgid "Mathom Update Settings"
-msgstr ""
+msgstr "Configurações das atualizações do Mathom"
 
 #: src/mainwindow.cpp:828
 #, kde-format
@@ -3757,17 +3758,17 @@ msgid ""
 "By default, Mathom installs only stable releases. Enable the option below to "
 "also receive development versions when they are newer than the latest stable "
 "release."
-msgstr ""
+msgstr "Por predefinição, o Mathom instala apenas versões estáveis. Ative a opção abaixo para também receber versões de desenvolvimento quando forem mais recentes do que a última versão estável."
 
 #: src/mainwindow.cpp:836
 #, kde-format
 msgid "Allow development versions of Mathom"
-msgstr ""
+msgstr "Permitir versões de desenvolvimento do Mathom"
 
 #: src/mainwindow.cpp:841
 #, kde-format
 msgid "Development versions are intended for testing and may contain bugs."
-msgstr ""
+msgstr "As versões de desenvolvimento destinam-se a testes e podem conter erros."
 
 #: src/mainwindow.cpp:903
 #, kde-format
@@ -3780,12 +3781,12 @@ msgid ""
 "b> <a href=\"https://github.com/ThorinFutDeChene/Mathom-Notes\">GitHub - "
 "Mathom Notes</a></p><p><b>Contact:</b> <a "
 "href=\"mailto:contact@thorinux.fr\">contact@thorinux.fr</a></p>"
-msgstr ""
+msgstr "<h2>Mathom Notes %1</h2><p>O Mathom Notes é software livre para tomar notas e organizar conhecimentos.</p><p>O projeto é desenvolvido e mantido pela <b>Thorinux Systems</b>.</p><p>O Mathom Notes baseia-se no projeto de software livre <b>BasKet Note Pads</b>.</p><p>O Mathom Notes utiliza <b>Qt 6</b> e <b>KDE Frameworks 6</b> fornecidos pelo sistema.</p><p><b>Sítio Web do projeto:</b> <a href=\"https://github.com/ThorinFutDeChene/Mathom-Notes\">GitHub - Mathom Notes</a></p><p><b>Contacto:</b> <a href=\"mailto:contact@thorinux.fr\">contact@thorinux.fr</a></p>"
 
 #: src/mainwindow.cpp:922 src/mainwindow.cpp:1079
 #, kde-format
 msgid "About"
-msgstr ""
+msgstr "Sobre"
 
 #: src/mainwindow.cpp:930
 #, kde-format
@@ -3799,12 +3800,12 @@ msgid ""
 "assistance tool. The design, functional choices, validations and maintenance "
 "of the project remain the responsibility of the Mathom Notes developer.</i></"
 "p>"
-msgstr ""
+msgstr "<h2>Colaboradores</h2><p>O Mathom Notes é desenvolvido com o compromisso de manter a transparência quanto às pessoas e ferramentas envolvidas no projeto.</p><h3>Fabrice PEREYRON</h3><p>Conceção, desenvolvimento, testes, manutenção e direção do projeto Mathom Notes.</p><h3>ChatGPT (OpenAI)</h3><p>Assistência ao desenvolvimento, análise de código, depuração, documentação, estruturação técnica e apoio à conceção.</p><p><i>O ChatGPT é utilizado como ferramenta de apoio. A conceção, as decisões funcionais, as validações e a manutenção do projeto continuam a ser da responsabilidade do programador do Mathom Notes.</i></p>"
 
 #: src/mainwindow.cpp:951
 #, kde-format
 msgid "Contributors"
-msgstr ""
+msgstr "Colaboradores"
 
 #: src/mainwindow.cpp:959
 #, kde-format
@@ -3815,12 +3816,12 @@ msgid ""
 "displayed here.</p><p>The amount of their contribution is not published.</"
 "p><p>Thank you to everyone who contributes to the development and "
 "sustainability of the project.</p>"
-msgstr ""
+msgstr "<h2>Apoiantes individuais</h2><p>Esta secção agradece às pessoas que apoiaram financeiramente o Mathom Notes a título individual.</p><p>Serão aqui apresentados os nomes ou pseudónimos dos participantes que escolheram aparecer no Mathom Notes.</p><p>O valor das contribuições não será divulgado.</p><p>Obrigado a todos os que contribuem para o desenvolvimento e a continuidade do projeto.</p>"
 
 #: src/mainwindow.cpp:970
 #, kde-format
 msgid "Individual Supporters"
-msgstr ""
+msgstr "Apoiantes individuais"
 
 #: src/mainwindow.cpp:978
 #, kde-format
@@ -3829,12 +3830,12 @@ msgid ""
 "associations and organizations providing financial support to the Mathom "
 "Notes project.</p><p>Depending on the terms of the partnership, their name, "
 "logo and a link to their website may be displayed here.</p>"
-msgstr ""
+msgstr "<h2>Parceiros financeiros</h2><p>Esta secção destina-se às empresas, associações e organizações que apoiam financeiramente o projeto Mathom Notes.</p><p>Consoante os termos da parceria, poderão ser apresentados o nome, o logótipo e uma ligação para o sítio Web de cada parceiro.</p>"
 
 #: src/mainwindow.cpp:988
 #, kde-format
 msgid "Financial Partners"
-msgstr ""
+msgstr "Parceiros financeiros"
 
 #: src/mainwindow.cpp:996
 #, kde-format
@@ -3843,12 +3844,12 @@ msgid ""
 "available free of charge.</p><p>The Ulule campaign helps fund its "
 "development, accessibility tools, documentation and distribution.</p><p>The "
 "final campaign information, its link and results will be added here.</p>"
-msgstr ""
+msgstr "<h2>Campanha Ulule</h2><p>O Mathom Notes deverá continuar a ser software livre e gratuito.</p><p>A campanha na Ulule ajuda a financiar o desenvolvimento, as ferramentas de acessibilidade, a documentação e a distribuição.</p><p>As informações finais sobre a campanha, a ligação e os resultados serão adicionados aqui.</p>"
 
 #: src/mainwindow.cpp:1007
 #, kde-format
 msgid "Ulule Campaign"
-msgstr ""
+msgstr "Campanha Ulule"
 
 #: src/mainwindow.cpp:1015
 #, kde-format
@@ -3858,12 +3859,12 @@ msgid ""
 "p><p>Mathom Notes is a fork of <b>BasKet Note Pads</b>.</p><p>The "
 "copyrights, licenses and attributions of the original project are preserved "
 "in the source code and the project license files.</p>"
-msgstr ""
+msgstr "<h2>Licença</h2><p>O <b>Mathom Notes</b> é distribuído nos termos da <b>GNU GPL versão 2 ou posterior</b>.</p><p>Copyright © 2026 Thorinux Systems.</p><p>O Mathom Notes é uma derivação do <b>BasKet Note Pads</b>.</p><p>Os direitos de autor, as licenças e os créditos do projeto original são mantidos no código-fonte e nos ficheiros de licença do projeto.</p>"
 
 #: src/mainwindow.cpp:1027
 #, kde-format
 msgid "License"
-msgstr ""
+msgstr "Licença"
 
 #: src/mainwindow.cpp:1072
 #, kde-format
@@ -3875,7 +3876,7 @@ msgid ""
 "and preserves the attribution and licences of the original project.</"
 "p><p>For questions or help: <a "
 "href=\"mailto:contact@thorinux.fr\">contact@thorinux.fr</a></p>"
-msgstr ""
+msgstr "<h3>Thorinux Systems</h3><p>A Thorinux Systems desenvolve e mantém projetos de software livre e de código aberto.</p><p><b>Thorinux</b> é uma marca registada. O Mathom é um projeto da marca Thorinux, desenvolvido e mantido pela Thorinux Systems.</p><p>O Mathom baseia-se no BasKet Note Pads e mantém os créditos e as licenças do projeto original.</p><p>Para questões ou ajuda: <a href=\"mailto:contact@thorinux.fr\">contact@thorinux.fr</a></p>"
 
 #: src/mainwindow.cpp:1083
 #, kde-format
@@ -3885,12 +3886,12 @@ msgid ""
 "found from Help → Open Diagnostics Folder.</p><p>For a bug report, a feature "
 "request or any other feedback, contact <a "
 "href=\"mailto:contact@thorinux.fr\">contact@thorinux.fr</a>.</p>"
-msgstr ""
+msgstr "<h3>Comunicação de erros ou sugestões</h3><p>O Mathom dispõe de um sistema próprio de diagnóstico para problemas técnicos. Quando ocorre um problema, o relatório de diagnóstico pode ser encontrado em Ajuda → Abrir a pasta de diagnósticos.</p><p>Para comunicar um erro, sugerir uma funcionalidade ou enviar qualquer outro comentário, contacte-nos através de <a href=\"mailto:contact@thorinux.fr\">contact@thorinux.fr</a>.</p>"
 
 #: src/mainwindow.cpp:1089
 #, kde-format
 msgid "Bug reports or wishes"
-msgstr ""
+msgstr "Comunicação de erros ou sugestões"
 
 #: src/mainwindow.cpp:1093
 #, kde-format
@@ -3899,12 +3900,12 @@ msgid ""
 "software.</p><p>Ways to financially support the project will be added later. "
 "For now, using Mathom, testing development versions and reporting useful "
 "feedback already helps the project.</p>"
-msgstr ""
+msgstr "<h3>Apoie o Mathom</h3><p>O Mathom deverá continuar a ser software livre e de código aberto.</p><p>Serão adicionadas mais tarde formas de apoiar financeiramente o projeto. Por enquanto, utilizar o Mathom, testar versões de desenvolvimento e comunicar problemas ou sugestões úteis já é uma forma de ajudar.</p>"
 
 #: src/mainwindow.cpp:1098
 #, kde-format
 msgid "Support Mathom"
-msgstr ""
+msgstr "Apoiar o Mathom"
 
 #: src/mainwindow.cpp:1202
 #, kde-format
@@ -3934,7 +3935,7 @@ msgstr "M&arca: "
 #: src/filter.cpp:55
 #, kde-format
 msgid "Filter All Locations"
-msgstr ""
+msgstr "Filtrar todas as localizações"
 
 #: src/filter.cpp:131
 #, kde-format
@@ -3949,12 +3950,12 @@ msgstr "(Com marcas)"
 #: src/diagnosticmanager.cpp:1407
 #, kde-format
 msgid "Mathom - Diagnostic Report"
-msgstr ""
+msgstr "Mathom — Relatório de diagnóstico"
 
 #: src/diagnosticmanager.cpp:1408
 #, kde-format
 msgid "Mathom did not close normally during the previous session."
-msgstr ""
+msgstr "O Mathom não foi encerrado normalmente na sessão anterior."
 
 #: src/diagnosticmanager.cpp:1410
 #, kde-format
@@ -3962,22 +3963,22 @@ msgid ""
 "A technical report was created. It does not contain the text of your notes.\n"
 "\n"
 "You can review it first, then return here to send it to Thorinux."
-msgstr ""
+msgstr "Foi criado um relatório técnico. Não contém o texto das suas notas.\n\nPode analisá-lo antes de voltar aqui para o enviar à Thorinux."
 
 #: src/diagnosticmanager.cpp:1414
 #, kde-format
 msgid "View report"
-msgstr ""
+msgstr "Ver relatório"
 
 #: src/diagnosticmanager.cpp:1416
 #, kde-format
 msgid "Prepare an email to Thorinux"
-msgstr ""
+msgstr "Preparar uma mensagem de correio eletrónico para a Thorinux"
 
 #: src/diagnosticmanager.cpp:1417
 #, kde-format
 msgid "Close"
-msgstr ""
+msgstr "Fechar"
 
 #: src/settings.cpp:485
 #, kde-format
@@ -3992,7 +3993,7 @@ msgstr "À direita"
 #: src/settings.cpp:488
 #, kde-format
 msgid "&Organization tree position:"
-msgstr ""
+msgstr "&Posição da árvore de organização:"
 
 #: src/settings.cpp:493 src/settings.cpp:838
 #, kde-format
@@ -4012,31 +4013,31 @@ msgstr "Posição da barra de &filtragem:"
 #: src/settings.cpp:500
 #, kde-format
 msgid "Allow &development versions of Mathom"
-msgstr ""
+msgstr "&Permitir versões de desenvolvimento do Mathom"
 
 #: src/settings.cpp:502
 #, kde-format
 msgid ""
 "Development versions are proposed only when they are newer than the latest "
 "stable release."
-msgstr ""
+msgstr "As versões de desenvolvimento só são oferecidas quando são mais recentes que a última versão estável."
 
 #: src/settings.cpp:503
 #, kde-format
 msgid "&Updates:"
-msgstr ""
+msgstr "&Atualizações:"
 
 #: src/settings.cpp:544
 #, kde-format
 msgid "Enable automatic backups"
-msgstr ""
+msgstr "Ativar cópias de segurança automáticas"
 
 #: src/settings.cpp:549
 #, kde-format
 msgid ""
 "When Mathom starts, an automatic backup is created if the daily, weekly, or "
 "monthly backup is due."
-msgstr ""
+msgstr "Ao iniciar o Mathom, é criada uma cópia de segurança automática se estiver prevista uma cópia diária, semanal ou mensal."
 
 #: src/settings.cpp:557
 #, kde-format
@@ -4044,22 +4045,22 @@ msgid ""
 "Mathom maintains three independent backup points: a daily backup on the "
 "first launch of the day, a weekly backup on the first launch of the week, "
 "and a monthly backup on the first launch of the month."
-msgstr ""
+msgstr "O Mathom mantém três pontos de cópia de segurança independentes: um diário no primeiro arranque do dia, um semanal no primeiro arranque da semana e um mensal no primeiro arranque do mês."
 
 #: src/settings.cpp:593
 #, kde-format
 msgid "Automatic backup location: <b>%1</b>"
-msgstr ""
+msgstr "Local das cópias de segurança automáticas: <b>%1</b>"
 
 #: src/settings.cpp:629
 #, kde-format
 msgid "&Show tooltips in Mathom-Houses and shelves"
-msgstr ""
+msgstr "&Mostrar informações nas Mathom-Houses e prateleiras"
 
 #: src/settings.cpp:633
 #, kde-format
 msgid "&Big mathoms"
-msgstr ""
+msgstr "Mathoms &grandes"
 
 #: src/settings.cpp:639
 #, kde-format
@@ -4075,7 +4076,7 @@ msgstr ""
 #: src/settings.cpp:648
 #, kde-format
 msgid "Ask confirmation before &deleting mathoms"
-msgstr ""
+msgstr "Pedir confirmação antes de &eliminar mathoms"
 
 #: src/settings.cpp:652
 #, kde-format
@@ -4085,7 +4086,7 @@ msgstr "Manter a formatação do texto ao colar"
 #: src/settings.cpp:656
 #, kde-format
 msgid "Automatically detect tags from mathom's content"
-msgstr ""
+msgstr "Detectar automaticamente etiquetas a partir do conteúdo do mathom"
 
 #: src/settings.cpp:663
 #, kde-format
@@ -4102,7 +4103,7 @@ msgstr "Quando é que isto se aplica?"
 msgid ""
 "It does apply when you copy and paste, or drag and drop mathoms to a text "
 "editor."
-msgstr ""
+msgstr "Isto aplica-se quando copia e cola ou arrasta e larga mathoms para um editor de texto."
 
 #: src/settings.cpp:669
 #, kde-format
@@ -4115,12 +4116,12 @@ msgstr ""
 #: src/settings.cpp:682
 #, kde-format
 msgid "&Group a new mathom when clicking on the right of the insertion line"
-msgstr ""
+msgstr "&Agrupar um novo mathom ao clicar à direita da linha de inserção"
 
 #: src/settings.cpp:684
 #, kde-format
 msgid "How to group a new mathom?"
-msgstr ""
+msgstr "Como agrupar um novo mathom?"
 
 #: src/settings.cpp:685
 #, kde-format
@@ -4128,7 +4129,7 @@ msgid ""
 "<p>When this option is enabled, the insertion-line not only allows you to "
 "insert mathoms at the cursor position, but also allows you to group a new "
 "mathom with the one under the cursor:</p>"
-msgstr ""
+msgstr "<p>Quando esta opção está ativada, a linha de inserção permite não só inserir mathoms na posição do cursor, mas também agrupar um novo mathom com aquele que está sob o cursor:</p>"
 
 #: src/settings.cpp:688
 #, kde-format
@@ -4137,7 +4138,7 @@ msgid ""
 "<br>Click on the <b>left</b> of the insertion-line middle-mark to <b>insert</"
 "b> a mathom.<br>Click on the <b>right</b> to <b>group</b> a mathom, with the "
 "one <b>below or above</b>, depending on where your mouse is.</p>"
-msgstr ""
+msgstr "<p>Coloque o rato entre os mathoms, onde pretende adicionar um novo.<br>Clique à <b>esquerda</b> da marca central da linha de inserção para <b>inserir</b> um mathom.<br>Clique à <b>direita</b> para <b>agrupar</b> um mathom com o que está <b>abaixo ou acima</b>, consoante a posição do rato.</p>"
 
 #: src/settings.cpp:704
 #, kde-format
@@ -4152,12 +4153,12 @@ msgstr "Colar o conteúdo da área de transferência"
 #: src/settings.cpp:708
 #, kde-format
 msgid "Insert cross-reference mathom"
-msgstr ""
+msgstr "Inserir mathom de referência cruzada"
 
 #: src/settings.cpp:709
 #, kde-format
 msgid "Insert launcher mathom"
-msgstr ""
+msgstr "Inserir mathom de lançador"
 
 #: src/settings.cpp:712
 #, kde-format
@@ -4167,7 +4168,7 @@ msgstr "Inserir uma cor do ecrã"
 #: src/settings.cpp:713
 #, kde-format
 msgid "Load mathom from file"
-msgstr ""
+msgstr "Carregar mathom de um ficheiro"
 
 #: src/settings.cpp:714
 #, kde-format
@@ -4197,7 +4198,7 @@ msgstr "Protecção com Senha"
 #: src/settings.cpp:738
 #, kde-format
 msgid "A&utomatically lock protected locations when closed for"
-msgstr ""
+msgstr "&Bloquear automaticamente as localizações protegidas após estarem fechadas durante"
 
 #: src/settings.cpp:742
 #, kde-format
@@ -4207,17 +4208,17 @@ msgstr " minutos"
 #: src/settings.cpp:753
 #, kde-format
 msgid "Use GnuPG agent for &private/public key protected locations"
-msgstr ""
+msgstr "Usar o agente GnuPG em localizações protegidas por chaves &privadas/públicas"
 
 #: src/settings.cpp:835
 #, kde-format
 msgid "&Place of new mathoms:"
-msgstr ""
+msgstr "&Local de novos mathoms:"
 
 #: src/settings.cpp:840
 #, kde-format
 msgid "At current mathom"
-msgstr ""
+msgstr "No mathom atual"
 
 #: src/settings.cpp:859
 #, kde-format
@@ -4287,7 +4288,7 @@ msgstr "Lançar o %1"
 #: src/settings.cpp:965
 #, kde-format
 msgid "Another location"
-msgstr ""
+msgstr "Outra localização"
 
 #: src/settings.cpp:967
 #, kde-format
@@ -4322,7 +4323,7 @@ msgstr "Referências &Cruzadas"
 #: src/settings.cpp:1013
 #, kde-format
 msgid "General Launch Associations"
-msgstr ""
+msgstr "Associações gerais de lançamento"
 
 #: src/settings.cpp:1016
 #, kde-format
@@ -4341,10 +4342,10 @@ msgid ""
 "open HTTP links with Falkon's \"Your-Extensive-Hobby\" profile</p><p>For "
 "more fine-grained configuration (like opening pdf documents preferably with "
 "Falkon), read the second button tooltip.</p>"
-msgstr ""
+msgstr "<p>Nos ambientes de trabalho modernos, as configurações dos lançadores informam o sistema sobre como executar uma aplicação. Estes ficheiros são essenciais para integrar as aplicações no ambiente de trabalho, apresentá-las, procurá-las e iniciá-las com configurações específicas.</p><p>Eis como iniciar o navegador Falkon com um perfil específico.</p><ul><li>Abra o Editor de Menus do KDE e escreva \"Falkon\" no filtro de pesquisa;</li><li>Selecione o lançador \"Falkon\" do ambiente de trabalho, clique com o botão direito, copie e cole;</li><li>Edite os campos das propriedades \"Geral\", como \"Nome\", \"Descrição\" ou \"Comentário\";</li><li>Edite o campo \"Argumentos da linha de comandos\" para algo como \"--profile 'Your-Extensive-Hobby' %%u\".</li></ul><p>Quando selecionar o novo lançador como lançador de mathoms de ligação do Mathom, o Mathom abrirá as ligações HTTP com o perfil \"Your-Extensive-Hobby\" do Falkon.</p><p>Para uma configuração mais detalhada (por exemplo, abrir documentos PDF preferencialmente com o Falkon), consulte a dica do segundo botão.</p>"
 
 #: src/settings.cpp:1030
-#, fuzzy, kde-format
+#, kde-format
 msgid ""
 "<p>When opening Web links, they are opened in different applications, "
 "depending on the content of the link (a Web page, an image, a PDF "
@@ -4360,22 +4361,7 @@ msgid ""
 "in your Web browser (eg. Mozilla Firefox or Epiphany or...).</p><p>For more "
 "fine-grained configuration (like opening only Web pages in your Web "
 "browser), read the third button tooltip.</p>"
-msgstr ""
-"<p>Ao abrir ligações para a Web, elas são abertas em aplicações diferentes, "
-"dependendo do conteúdo da ligação (uma página Web, uma imagem, um documento "
-"PDF,...), tal como se fossem ficheiros armazenados no seu computador.</"
-"p><p>Eis como fazer se quiser abrir todos os endereços Web no seu navegador "
-"Web. Isto é útil se não estiver a usar o Plasma (se estiver a usar, por "
-"exemplo, GNOME, XFCE, ...).</p><ul><li>Abra a Configuração do Sistema do KDE "
-"(se não estiver disponível, experimente escrever \"systemsettings\" num "
-"terminal de linha de comandos);</li><li>Vá a \"Aplicações\" e depois à "
-"secção \"Aplicações Predefinidas\";</li><li>Escolha o \"Navegador Web\", "
-"escolha \"com o seguinte comando:\" e introduza o nome do seu navegador Web "
-"(algo como \"firefox\" ou \"epiphany\").</li></ul><p>Agora, quando carregar "
-"em <i>qualquer</i> ligação que comece por \"https://...\", ela será aberta "
-"no seu navegador Web (p.ex., Mozilla Firefox ou Epiphany ou...).</p><p>Para "
-"uma configuração mais pormenorizada (por exemplo, abrir apenas as páginas "
-"Web no seu navegador Web), leia a segunda ligação de ajuda.</p>"
+msgstr "<p>Ao abrir ligações para a Web, elas são abertas em aplicações diferentes, dependendo do conteúdo da ligação (uma página Web, uma imagem, um documento PDF,...), tal como se fossem ficheiros armazenados no seu computador.</p><p>Eis como fazer se quiser abrir todos os endereços Web no seu navegador Web. Isto é útil se não estiver a usar o Plasma (se estiver a usar, por exemplo, GNOME, XFCE, ...).</p><ul><li>Abra a Configuração do Sistema do KDE (se não estiver disponível, experimente escrever \"systemsettings\" num terminal de linha de comandos);</li><li>Vá a \"Aplicações\" e depois à secção \"Aplicações Predefinidas\";</li><li>Escolha o \"Navegador Web\", escolha \"com o seguinte comando:\" e introduza o nome do seu navegador Web (algo como \"firefox\" ou \"epiphany\").</li></ul><p>Agora, quando carregar em <i>qualquer</i> ligação que comece por \"https://...\", ela será aberta no seu navegador Web (p.ex., Mozilla Firefox ou Epiphany ou...).</p><p>Para uma configuração mais pormenorizada (por exemplo, abrir apenas as páginas Web no seu navegador Web), leia a dica do terceiro botão.</p>"
 
 #: src/settings.cpp:1044
 #, kde-format
@@ -4412,72 +4398,72 @@ msgstr ""
 #: src/settings.cpp:1063
 #, kde-format
 msgid "Launch KDE Menu Editor"
-msgstr ""
+msgstr "Iniciar o Editor de Menus do KDE"
 
 #: src/settings.cpp:1072
-#, fuzzy, kde-format
+#, kde-format
 msgid "Default Applications"
-msgstr "Executar esta aplicação"
+msgstr "Aplicações predefinidas"
 
 #: src/settings.cpp:1081
 #, kde-format
 msgid "File Associations"
-msgstr ""
+msgstr "Associações de ficheiros"
 
 #: src/settings.cpp:1092
 #, kde-format
 msgid "Specific Mathom Associations"
-msgstr ""
+msgstr "Associações específicas de mathoms"
 
 #: src/settings.cpp:1094
 #, kde-format
 msgid "Open &text mathoms with a custom application:"
-msgstr ""
+msgstr "Abrir mathoms de &texto com uma aplicação personalizada:"
 
 #: src/settings.cpp:1095
 #, kde-format
 msgid "Open text mathoms with:"
-msgstr ""
+msgstr "Abrir mathoms de texto com:"
 
 #: src/settings.cpp:1102
 #, kde-format
 msgid "Open &image mathoms with a custom application:"
-msgstr ""
+msgstr "Abrir mathoms de &imagem com uma aplicação personalizada:"
 
 #: src/settings.cpp:1103
 #, kde-format
 msgid "Open image mathoms with:"
-msgstr ""
+msgstr "Abrir mathoms de imagem com:"
 
 #: src/settings.cpp:1110
 #, kde-format
 msgid "Open a&nimation mathoms with a custom application:"
-msgstr ""
+msgstr "Abrir mathoms de a&nimação com uma aplicação personalizada:"
 
 #: src/settings.cpp:1111
 #, kde-format
 msgid "Open animation mathoms with:"
-msgstr ""
+msgstr "Abrir mathoms de animação com:"
 
 #: src/settings.cpp:1118
 #, kde-format
 msgid "Open so&und mathoms with a custom application:"
-msgstr ""
+msgstr "Abrir mathoms de s&om com uma aplicação personalizada:"
 
 #: src/settings.cpp:1119
 #, kde-format
 msgid "Open sound mathoms with:"
-msgstr ""
+msgstr "Abrir mathoms de som com:"
 
 #: src/settings.cpp:1126
 #, kde-format
 msgid "Open HTTP link mathoms with a custom application:"
-msgstr ""
+msgstr "Abrir mathoms de ligações HTTP com uma aplicação personalizada:"
 
 #: src/settings.cpp:1127
 #, kde-format
 msgid "Open HTTP link mathoms with:"
-msgstr ""
+msgstr "Abrir mathoms de ligações HTTP com:"
 
 #: src/settings.cpp:1135
 #, kde-format
@@ -4485,7 +4471,7 @@ msgid ""
 "<p>If checked, the application defined below will be used when opening that "
 "type of mathom.</p><p>Otherwise, the application you've configured in "
 "Konqueror will be used.</p>"
-msgstr ""
+msgstr "<p>Se esta opção estiver assinalada, a aplicação indicada abaixo será usada para abrir esse tipo de mathom.</p><p>Caso contrário, será utilizada a aplicação configurada no Konqueror.</p>"
 
 #: src/settings.cpp:1145
 #, kde-format
@@ -4499,7 +4485,7 @@ msgstr ""
 #: src/updatechecker.cpp:189
 #, kde-format
 msgid "The update download address is invalid."
-msgstr ""
+msgstr "O endereço para transferir a atualização é inválido."
 
 #: src/updatechecker.cpp:190 src/updatechecker.cpp:202
 #: src/updatechecker.cpp:221 src/updatechecker.cpp:239
@@ -4513,63 +4499,63 @@ msgstr ""
 #: src/updatechecker.cpp:812
 #, kde-format
 msgid "Mathom Update"
-msgstr ""
+msgstr "Atualização do Mathom"
 
 #: src/updatechecker.cpp:200
 #, kde-format
 msgid "The update has no valid SHA-256 integrity information."
-msgstr ""
+msgstr "A atualização não possui informações válidas de integridade SHA-256."
 
 #: src/updatechecker.cpp:219
 #, kde-format
 msgid "Unable to create the temporary update directory."
-msgstr ""
+msgstr "Não foi possível criar a pasta temporária de atualização."
 
 #: src/updatechecker.cpp:237
 #, kde-format
 msgid "Unable to create the temporary update file."
-msgstr ""
+msgstr "Não foi possível criar o ficheiro temporário de atualização."
 
 #: src/updatechecker.cpp:247
 #, kde-format
 msgid "Downloading Mathom update..."
-msgstr ""
+msgstr "A transferir a atualização do Mathom..."
 
 #: src/updatechecker.cpp:248
 #, kde-format
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 #: src/updatechecker.cpp:337
 #, kde-format
 msgid "Unable to download the Mathom update: %1"
-msgstr ""
+msgstr "Não foi possível transferir a atualização do Mathom: %1"
 
 #: src/updatechecker.cpp:356
 #, kde-format
 msgid ""
 "The downloaded update failed the SHA-256 integrity check. It will not be "
 "installed."
-msgstr ""
+msgstr "O ficheiro de atualização transferido falhou na verificação de integridade SHA-256. Ele não será instalado."
 
 #: src/updatechecker.cpp:371
 #, kde-format
 msgid ""
 "The downloaded file is not the expected Mathom Debian package. It will not "
 "be installed."
-msgstr ""
+msgstr "O ficheiro transferido não é o pacote Debian esperado do Mathom. Ele não será instalado."
 
 #: src/updatechecker.cpp:408
 #, kde-format
 msgid "Installing Mathom %1..."
-msgstr ""
+msgstr "A instalar o Mathom %1..."
 
 #: src/updatechecker.cpp:444
 #, kde-format
 msgid ""
 "Mathom %1 could not be installed. The existing installation has not been "
 "replaced."
-msgstr ""
+msgstr "Não foi possível instalar o Mathom %1. A instalação existente não foi substituída."
 
 #: src/updatechecker.cpp:462
 #, kde-format
@@ -4577,72 +4563,72 @@ msgid ""
 "Mathom %1 has been installed successfully.\n"
 "\n"
 "Restart Mathom now?"
-msgstr ""
+msgstr "O Mathom %1 foi instalado com sucesso.\n\nReiniciar o Mathom agora?"
 
 #: src/updatechecker.cpp:512
 #, kde-format
 msgid "Unable to start the privileged Mathom installer."
-msgstr ""
+msgstr "Não foi possível iniciar o instalador do Mathom com privilégios elevados."
 
 #: src/updatechecker.cpp:530
 #, kde-format
 msgid "Unable to determine the installed Mathom Debian package version."
-msgstr ""
+msgstr "Não foi possível determinar a versão instalada do pacote Debian do Mathom."
 
 #: src/updatechecker.cpp:578
 #, kde-format
 msgid "Unable to contact the Mathom update server: %1"
-msgstr ""
+msgstr "Não foi possível entrar em contacto com o servidor de atualizações do Mathom: %1"
 
 #: src/updatechecker.cpp:605 src/updatechecker.cpp:627
 #, kde-format
 msgid "The update server returned invalid data."
-msgstr ""
+msgstr "O servidor de atualizações devolveu dados inválidos."
 
 #: src/updatechecker.cpp:764
 #, kde-format
 msgid "No valid Mathom Debian package was found in the available releases."
-msgstr ""
+msgstr "Nenhum pacote Debian válido do Mathom foi encontrado nas versões disponíveis."
 
 #: src/updatechecker.cpp:774
 #, kde-format
 msgid "Installed version: %1"
-msgstr ""
+msgstr "Versão instalada: %1"
 
 #: src/updatechecker.cpp:778
 #, kde-format
 msgid "Available version: %1"
-msgstr ""
+msgstr "Versão disponível: %1"
 
 #: src/updatechecker.cpp:783
 #, kde-format
 msgid "Update channel: development"
-msgstr ""
+msgstr "Canal de atualização: desenvolvimento"
 
 #: src/updatechecker.cpp:786
 #, kde-format
 msgid "Update channel: stable"
-msgstr ""
+msgstr "Canal de atualização: estável"
 
 #: src/updatechecker.cpp:795
 #, kde-format
 msgid "Mathom is up to date."
-msgstr ""
+msgstr "O Mathom está atualizado."
 
 #: src/updatechecker.cpp:806
 #, kde-format
 msgid "A Mathom development update is available."
-msgstr ""
+msgstr "Uma atualização de desenvolvimento do Mathom está disponível."
 
 #: src/updatechecker.cpp:807
 #, kde-format
 msgid "A Mathom update is available."
-msgstr ""
+msgstr "Uma atualização do Mathom está disponível."
 
 #: src/updatechecker.cpp:818
 #, kde-format
 msgid "Download and install it now?"
-msgstr ""
+msgstr "Transferir e instalar agora?"
 
 #: src/basketlistview.cpp:644
 #, kde-format
@@ -4678,12 +4664,12 @@ msgstr "(Por omissão)"
 #: src/basketproperties.cpp:54
 #, kde-format
 msgid "Tab color:"
-msgstr ""
+msgstr "Cor do separador:"
 
 #: src/basketproperties.cpp:57
 #, kde-format
 msgid "Automatic"
-msgstr ""
+msgstr "Automático"
 
 #: src/basketproperties.cpp:103
 #, kde-format
@@ -4701,7 +4687,7 @@ msgid ""
 "without opening the main window. It is useful in addition to the "
 "configurable global shortcuts, eg. to paste the clipboard or the selection "
 "into the current location from anywhere.</p>"
-msgstr ""
+msgstr "<p><strong>Memorize facilmente os seus atalhos</strong>:<br>Com a primeira opção, atribuir à localização atual um atalho da forma <strong>Alt+Letra</strong> irá sublinhar essa letra na árvore de organização.<br>Por exemplo, se atribuir o atalho <i>Alt+T</i> a uma localização chamada <i>Truques</i>, esta será apresentada como <i><u>T</u>ruques</i> na árvore. Assim, é mais fácil visualizar e memorizar os atalhos.</p><p><strong>Locais e globais</strong>:<br>A primeira opção permite mostrar a localização enquanto a janela principal estiver ativa. Os atalhos globais funcionam em qualquer lugar, mesmo com a janela oculta.</p><p><strong>Mostrar e alternar</strong>:<br>A última opção torna esta localização na atual sem abrir a janela principal. Isto é útil com os atalhos globais configuráveis, por exemplo, para colar o conteúdo da área de transferência ou a seleção na localização atual a partir de qualquer lugar.</p>"
 
 #: devtools/weaver/weaver.cpp:44
 #, kde-format
