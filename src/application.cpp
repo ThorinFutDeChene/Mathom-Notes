@@ -137,6 +137,7 @@ Application::Application(int &argc, char **argv)
     : QApplication(argc, argv)
     , m_mainWindow(nullptr)
 {
+    // TODO(i18n-niveau-1): terminer, relire et tester les 26 catalogues restants lors d une prochaine mise a jour (12/38 deja testes).
     KLocalizedString::setApplicationDomain("basket");
     // Use the bundled Mathom logo directly. This avoids picking up an
     // older system-installed Basket/Mathom icon from the host icon theme.
