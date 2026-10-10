@@ -21,6 +21,8 @@
 #include <QVBoxLayout>
 
 #include <KLocalizedString>
+#include <KActionCategory>
+#include <KActionCollection>
 
 #include "basketscene.h"
 #include "bnpview.h"
@@ -139,39 +141,11 @@ PageSidebar::PageSidebar(QWidget *parent)
 
             QMenu menu(this);
 
-            QAction *toShelf =
-                menu.addAction(
-                    i18n("Convert to Shelf"));
+            if (m_toShelfAction)
+                menu.addAction(m_toShelfAction);
 
-            connect(
-                toShelf,
-                &QAction::triggered,
-                this,
-                [this, pageId]() {
-                    if (Global::bnpView) {
-                        Global::bnpView
-                            ->convertPageToShelf(
-                                m_basket,
-                                pageId);
-                    }
-                });
-
-            QAction *toHouse =
-                menu.addAction(
-                    i18n("Convert to Mathom-House"));
-
-            connect(
-                toHouse,
-                &QAction::triggered,
-                this,
-                [this, pageId]() {
-                    if (Global::bnpView) {
-                        Global::bnpView
-                            ->convertPageToMathomHouse(
-                                m_basket,
-                                pageId);
-                    }
-                });
+            if (m_toHouseAction)
+                menu.addAction(m_toHouseAction);
 
             menu.exec(
                 m_list->viewport()
@@ -345,6 +319,126 @@ PageSidebar::PageSidebar(QWidget *parent)
                         newOrder);
                 }
             });
+}
+
+
+void PageSidebar::registerShortcutActions(
+    KActionCollection *collection,
+    QWidget *scope)
+{
+    auto *category = new KActionCategory(
+        i18n("Pages"), collection);
+
+    // Les raccourcis agissent dans la fenetre Mathom.
+    const auto registerScoped = [scope](QAction *action) {
+        action->setShortcutContext(
+            Qt::WidgetWithChildrenShortcut);
+        scope->addAction(action);
+    };
+
+    // Creer une Page : utilise le bouton existant.
+    auto *createAction = category->addAction(
+        QStringLiteral("page_create"),
+        this,
+        [this]() {
+            m_addButton->click();
+        });
+
+    createAction->setText(i18n("Create Page"));
+    registerScoped(createAction);
+
+    // Supprimer une Page : conserve les protections
+    // et la confirmation deja existantes.
+    auto *deleteAction = category->addAction(
+        QStringLiteral("page_delete"),
+        this,
+        [this]() {
+            m_removeButton->click();
+        });
+
+    deleteAction->setText(i18n("Delete Page"));
+    registerScoped(deleteAction);
+
+    // Reutiliser les cinq actions de tri deja creees
+    // par le menu du bouton Trier.
+    for (QAction *action : m_sortButton->menu()->actions()) {
+        if (action->isSeparator())
+            continue;
+
+        QString id;
+
+        switch (static_cast<SortMode>(
+            action->data().toInt())) {
+        case SortMode::Manual:
+            id = QStringLiteral("page_sort_manual");
+            break;
+        case SortMode::DateAscending:
+            id = QStringLiteral("page_sort_date_asc");
+            break;
+        case SortMode::DateDescending:
+            id = QStringLiteral("page_sort_date_desc");
+            break;
+        case SortMode::NameAscending:
+            id = QStringLiteral("page_sort_name_asc");
+            break;
+        case SortMode::NameDescending:
+            id = QStringLiteral("page_sort_name_desc");
+            break;
+        }
+
+        if (id.isEmpty())
+            continue;
+
+        category->addAction(id, action);
+        registerScoped(action);
+    }
+
+    // Les conversions utilisent la Page selectionnee.
+    const auto convertPage = [this](bool toShelf) {
+        if (!m_basket || !Global::bnpView)
+            return;
+
+        QListWidgetItem *item = m_list->currentItem();
+
+        if (!item)
+            return;
+
+        const QString pageId =
+            item->data(PageIdRole).toString();
+
+        if (pageId.isEmpty())
+            return;
+
+        if (toShelf) {
+            Global::bnpView->convertPageToShelf(
+                m_basket, pageId);
+        } else {
+            Global::bnpView->convertPageToMathomHouse(
+                m_basket, pageId);
+        }
+    };
+
+    m_toShelfAction = category->addAction(
+        QStringLiteral("page_convert_shelf"),
+        this,
+        [convertPage]() {
+            convertPage(true);
+        });
+
+    m_toShelfAction->setText(
+        i18n("Convert to Shelf"));
+    registerScoped(m_toShelfAction);
+
+    m_toHouseAction = category->addAction(
+        QStringLiteral("page_convert_house"),
+        this,
+        [convertPage]() {
+            convertPage(false);
+        });
+
+    m_toHouseAction->setText(
+        i18n("Convert to Mathom-House"));
+    registerScoped(m_toHouseAction);
 }
 
 void PageSidebar::setBasket(BasketScene *basket)

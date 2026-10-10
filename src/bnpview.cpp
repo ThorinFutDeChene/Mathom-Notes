@@ -38,6 +38,7 @@
 
 #include <KAboutData>
 #include <KActionCollection>
+#include <KActionCategory>
 #include <KActionMenu>
 #include <KConfigGroup>
 #include <KGlobalAccel>
@@ -902,6 +903,41 @@ void BNPView::setupActions()
     m_actExpandBasket = a;
 
     InlineEditors::instance()->initToolBars(actionCollection());
+
+    // Commandes configurables de l'interface.
+    auto *interfaceCategory = new KActionCategory(
+        i18n("Interface"), ac);
+
+    QAction *toggleTree = interfaceCategory->addAction(
+        QStringLiteral("view_toggle_tree"),
+        this,
+        &BNPView::toggleTreeVisibility);
+
+    toggleTree->setText(
+        i18n("Show or Hide Organization Tree"));
+
+    toggleTree->setShortcutContext(
+        Qt::WidgetWithChildrenShortcut);
+
+    addAction(toggleTree);
+
+    QAction *togglePages = interfaceCategory->addAction(
+        QStringLiteral("view_toggle_pages"),
+        this,
+        &BNPView::togglePagesVisibility);
+
+    togglePages->setText(
+        i18n("Show or Hide Pages Panel"));
+
+    togglePages->setShortcutContext(
+        Qt::WidgetWithChildrenShortcut);
+
+    addAction(togglePages);
+
+    // Les actions des Pages rejoignent la meme
+    // collection principale de commandes KDE.
+    m_pageSidebar->registerShortcutActions(ac, this);
+
 
     // The two buttons historically belonged to the rich-text editor.
     // They are now the application's global Undo / Redo controls.

@@ -13,6 +13,8 @@ class BasketScene;
 class QListWidget;
 class QListWidgetItem;
 class QToolButton;
+class QAction;
+class KActionCollection;
 
 class PageSidebar final : public QWidget
 {
@@ -30,6 +32,9 @@ public:
     explicit PageSidebar(QWidget *parent = nullptr);
 
     void setBasket(BasketScene *basket);
+    void registerShortcutActions(
+        KActionCollection *collection,
+        QWidget *scope);
 
 private:
     void rebuild();
@@ -42,6 +47,8 @@ private:
     QToolButton *m_addButton = nullptr;
     QToolButton *m_removeButton = nullptr;
     QToolButton *m_sortButton = nullptr;
+    QAction *m_toShelfAction = nullptr;
+    QAction *m_toHouseAction = nullptr;
     SortMode m_sortMode = SortMode::Manual;
     bool m_rebuilding = false;
 };
