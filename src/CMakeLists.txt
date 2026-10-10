@@ -25,6 +25,7 @@ set(libbasket_SRCS
     gitwrapper.cpp gitwrapper.h
     htmlexporter.cpp htmlexporter.h
     history.cpp history.h
+    persistenthistory.cpp persistenthistory.h
     kcolorcombo2.cpp kcolorcombo2.h
     kgpgme.cpp kgpgme.h
     linklabel.cpp linklabel.h

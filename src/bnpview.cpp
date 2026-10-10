@@ -21,6 +21,7 @@
 #include <QList>
 #include <QListWidget>
 #include <QMenu>
+#include <QMessageBox>
 #include <QPageLayout>
 #include <QPageSize>
 #include <QPainter>
@@ -78,6 +79,7 @@
 #include "mathomicons.h"
 #include "mathomnavigationbar.h"
 #include "history.h"
+#include "persistenthistory.h"
 #include "htmlexporter.h"
 #include "newbasketdialog.h"
 #include "notedrag.h"
@@ -165,6 +167,9 @@ BNPView::~BNPView()
 
     Settings::saveConfig();
 
+    // Save commands before QUndoStack destroys suspended Mathoms/files.
+    PersistentHistory::save(this);
+
     Global::bnpView = nullptr;
 
     delete m_statusbar;
@@ -212,6 +217,11 @@ void BNPView::lateInit()
     }
 
     updateNavigationBar();
+
+    // After loading the real document tree, reconstruct recoverable
+    // previous-session commands in the application's QUndoStack.
+    if (PersistentHistory::restore(this) < 0)
+        postStatusbarMessage(i18n("Previous-session history was not restored: document integrity has changed."));
 
     // Automatic backups are checked only after the Mathom data have
     // been loaded successfully. The backup itself runs transparently
@@ -3780,8 +3790,22 @@ void BNPView::setFiltering(bool filtering)
 
 void BNPView::undo()
 {
-    if (m_undoStack && m_undoStack->canUndo())
-        m_undoStack->undo();
+    if (!m_undoStack || !m_undoStack->canUndo())
+        return;
+
+    const QUndoCommand *command = m_undoStack->command(m_undoStack->index() - 1);
+    if (PersistentHistory::isRecovered(command)
+        && !m_previousSessionUndoConfirmed) {
+        const auto response = QMessageBox::question(
+            this, i18n("Previous Session"),
+            i18n("This operation belongs to a previous session. "
+                 "Do you want to undo it?"),
+            QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+        if (response != QMessageBox::Yes)
+            return;
+        m_previousSessionUndoConfirmed = true;
+    }
+    m_undoStack->undo();
 }
 
 void BNPView::redo()
@@ -3800,7 +3824,8 @@ void BNPView::showModificationHistory()
 
     auto *layout = new QVBoxLayout(&dialog);
     auto *description = new QLabel(
-        i18n("History of the current session (up to 100 operations). "
+        i18n("History: 100 operations per session; "
+             "up to 20 recoverable operations per document for 24 hours. "
              "This list is for consultation only."),
         &dialog);
     description->setWordWrap(true);
@@ -3821,8 +3846,10 @@ void BNPView::showModificationHistory()
             const QString name = command
                 ? command->text()
                 : i18n("Unnamed operation");
+            const QString origin = PersistentHistory::isRecovered(command)
+                ? i18n("previous session") : i18n("current session");
             entries->addItem(
-                i18n("%1. %2 [%3]", index + 1, name, state));
+                i18n("%1. %2 [%3, %4]", index + 1, name, state, origin));
         }
     }
 

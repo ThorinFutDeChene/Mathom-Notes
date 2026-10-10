@@ -1264,6 +1264,10 @@ MathomTextEditCommand::~MathomTextEditCommand()
 
 void MathomTextEditCommand::undo()
 {
+    if (m_skipRestoredUndo) {
+        m_skipRestoredUndo = false;
+        return; // Restore QUndoStack's cursor without changing persisted data.
+    }
     if (!m_basket || !m_note)
         return;
 
@@ -1379,7 +1383,8 @@ bool MathomTextEditCommand::mergeWith(
     if (!other)
         return false;
 
-    if (m_note != other->m_note
+    if (m_restoredOrigin || other->m_restoredOrigin
+        || m_note != other->m_note
         || m_richText != other->m_richText) {
         return false;
     }
@@ -1451,6 +1456,10 @@ MathomDeleteCommand::~MathomDeleteCommand()
 
 void MathomDeleteCommand::undo()
 {
+    if (m_skipRestoredUndo) {
+        m_skipRestoredUndo = false;
+        return; // Cursor restoration only.
+    }
     if (!m_basket || !m_deleted)
         return;
 
@@ -1491,6 +1500,10 @@ void MathomDeleteCommand::undo()
 
 void MathomDeleteCommand::redo()
 {
+    if (m_firstRedo) {
+        m_firstRedo = false;
+        return; // The restored document already contains this state.
+    }
     if (!m_basket)
         return;
 

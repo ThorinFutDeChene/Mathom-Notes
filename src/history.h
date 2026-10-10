@@ -18,6 +18,7 @@ class BasketScene;
 class BasketListViewItem;
 class BNPView;
 class Note;
+class PersistentHistory;
 
 struct PageHistoryState
 {
@@ -118,6 +119,9 @@ private:
 
     bool m_firstRedo = true;
     qint64 m_timestampMs = 0;
+    bool m_skipRestoredUndo = false;
+    bool m_restoredOrigin = false;
+    friend class PersistentHistory;
 };
 
 
@@ -296,6 +300,10 @@ private:
     QPointer<BasketScene> m_basket;
     QList<DeletedMathomPosition> m_positions;
     bool m_deleted = false;
+    bool m_firstRedo = false; // true only when hydrating from disk
+    bool m_skipRestoredUndo = false;
+    bool m_restoredOrigin = false;
+    friend class PersistentHistory;
 };
 
 

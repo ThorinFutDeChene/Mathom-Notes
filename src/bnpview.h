@@ -415,6 +415,7 @@ private:
     BasketStatusBar *m_statusbar;
 
     QUndoStack *m_undoStack;
+    bool m_previousSessionUndoConfirmed = false;
     KMainWindow *m_HiddenMainWindow;
 };
 
