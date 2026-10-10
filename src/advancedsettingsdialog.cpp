@@ -1,28 +1,85 @@
 #include "advancedsettingsdialog.h"
 
+#include <KActionCollection>
 #include <KLocalizedString>
 #include <KPageWidgetItem>
 #include <KPluginMetaData>
+#include <KShortcutsDialog>
+#include <KShortcutsEditor>
 
-#include <QFont>
 #include <QIcon>
 #include <QLabel>
+#include <QPushButton>
 #include <QVBoxLayout>
 #include <QWidget>
 
-AdvancedSettingsDialog::AdvancedSettingsDialog(QWidget *parent)
+AdvancedSettingsDialog::AdvancedSettingsDialog(
+    KActionCollection *actions,
+    QWidget *parent)
     : KCMultiDialog(parent)
 {
-    setWindowTitle(i18n("Advanced Settings - Mathom Notes"));
+    setWindowTitle(
+        i18n("Advanced Settings - Mathom Notes"));
+
     setMinimumSize(680, 460);
     setFaceType(KPageDialog::List);
 
     /*
-     * Seuls les modules explicitement classes comme
-     * "advanced" apparaissent dans cette fenetre.
+     * Raccourcis clavier :
+     * conserver l'outil KDE complet et sa gestion
+     * native de l'enregistrement et de l'annulation.
      */
-    int advancedModules = 0;
+    auto *page = new QWidget;
+    auto *layout = new QVBoxLayout(page);
 
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(16);
+
+    auto *description = new QLabel(
+        i18n(
+            "Customize the keyboard shortcuts used "
+            "to execute Mathom Notes commands.\n\n"
+            "Secondary language input shortcuts are "
+            "configured separately in the standard settings."),
+        page);
+
+    description->setWordWrap(true);
+    layout->addWidget(description);
+
+    auto *button = new QPushButton(
+        i18n("Configure Keyboard Shortcuts..."),
+        page);
+
+    button->setIcon(
+        QIcon::fromTheme(
+            QStringLiteral("configure-shortcuts")));
+
+    layout->addWidget(button, 0, Qt::AlignLeft);
+    layout->addStretch();
+
+    connect(
+        button,
+        &QPushButton::clicked,
+        this,
+        [this, actions]() {
+            KShortcutsDialog::showDialog(
+                actions,
+                KShortcutsEditor::LetterShortcutsAllowed,
+                this);
+        });
+
+    auto *item = addPage(
+        page,
+        i18n("Keyboard Shortcuts"));
+
+    item->setIcon(
+        QIcon::fromTheme(
+            QStringLiteral("preferences-desktop-keyboard")));
+
+    /*
+     * Les autres modules avances seront migres
+     * progressivement apres validation.
+     */
     const auto plugins = KPluginMetaData::findPlugins(
         QStringLiteral("pim/kcms/mathom"));
 
@@ -31,48 +88,7 @@ AdvancedSettingsDialog::AdvancedSettingsDialog(QWidget *parent)
             .value(QStringLiteral("X-Mathom-SettingsSection"))
             .toString();
 
-        if (section != QStringLiteral("advanced"))
-            continue;
-
-        addModule(metadata);
-        ++advancedModules;
+        if (section == QStringLiteral("advanced"))
+            addModule(metadata);
     }
-
-    /*
-     * Premiere etape : aucun reglage n'a encore ete migre.
-     */
-    if (advancedModules != 0)
-        return;
-
-    auto *page = new QWidget;
-    auto *layout = new QVBoxLayout(page);
-
-    layout->setContentsMargins(24, 24, 24, 24);
-    layout->setSpacing(16);
-
-    auto *title = new QLabel(
-        i18n("Advanced Settings"),
-        page);
-
-    QFont titleFont = title->font();
-    titleFont.setBold(true);
-    title->setFont(titleFont);
-
-    layout->addWidget(title);
-
-    auto *description = new QLabel(
-        i18n(
-            "This window will progressively receive the "
-            "advanced configuration modules of Mathom Notes.\n\n"
-            "No settings have been moved yet."),
-        page);
-
-    description->setWordWrap(true);
-    layout->addWidget(description);
-    layout->addStretch();
-
-    auto *item = addPage(page, i18n("Introduction"));
-    item->setIcon(
-        QIcon::fromTheme(
-            QStringLiteral("preferences-system")));
 }

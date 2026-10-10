@@ -2,8 +2,12 @@
 
 #include <KCMultiDialog>
 
+class KActionCollection;
+
 class AdvancedSettingsDialog final : public KCMultiDialog
 {
 public:
-    explicit AdvancedSettingsDialog(QWidget *parent = nullptr);
+    explicit AdvancedSettingsDialog(
+        KActionCollection *actions,
+        QWidget *parent = nullptr);
 };

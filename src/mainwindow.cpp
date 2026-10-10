@@ -269,7 +269,7 @@ void MainWindow::showSettingsDialog()
 
 void MainWindow::showAdvancedSettingsDialog()
 {
-    AdvancedSettingsDialog dialog(this);
+    AdvancedSettingsDialog dialog(actionCollection(), this);
     dialog.exec();
 }
 
