@@ -401,6 +401,11 @@ SettingsDialog::SettingsDialog(QWidget *parent)
     const QList<KPluginMetaData> availablePlugins = KPluginMetaData::findPlugins(QStringLiteral("pim/kcms/mathom"));
     qCInfo(BASKET_LOG) << "SettingsDialog" << availablePlugins.size();
     for (const KPluginMetaData &metaData : availablePlugins) {
+        if (metaData.rawData()
+                .value(QStringLiteral("X-Mathom-SettingsSection"))
+                .toString() == QStringLiteral("advanced")) {
+            continue;
+        }
         qCInfo(BASKET_LOG) << "SettingsDialog" << metaData.pluginId() << metaData.fileName() << metaData.name();
         addModule(metaData);
     }

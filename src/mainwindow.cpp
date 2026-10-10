@@ -5,6 +5,7 @@
  */
 
 #include "mainwindow.h"
+#include "advancedsettingsdialog.h"
 #include "accessibilitysettings.h"
 
 #include <QAction>
@@ -94,6 +95,15 @@ void MainWindow::setupActions()
     (void)KStandardAction::configureToolbars(this, &MainWindow::configureToolbars, actionCollection());
 
     actAppConfig = KStandardAction::preferences(this, &MainWindow::showSettingsDialog, actionCollection());
+
+    QAction *advancedSettingsAction =
+        actionCollection()->addAction(
+            QStringLiteral("options_configure_advanced"),
+            this,
+            &MainWindow::showAdvancedSettingsDialog);
+    advancedSettingsAction->setText(i18n("Advanced Settings..."));
+    advancedSettingsAction->setIcon(
+        QIcon::fromTheme(QStringLiteral("preferences-system")));
 
     QAction *updateSettingsAction =
         actionCollection()->addAction(QStringLiteral("options_update_settings"), this, &MainWindow::showUpdateSettingsDialog);
@@ -255,6 +265,12 @@ void MainWindow::showSettingsDialog()
     }
 
     m_settings->show();
+}
+
+void MainWindow::showAdvancedSettingsDialog()
+{
+    AdvancedSettingsDialog dialog(this);
+    dialog.exec();
 }
 
 void MainWindow::showCustomAccessibilityDialog()

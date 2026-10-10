@@ -132,6 +132,7 @@ endif ()
 set(basket_SRCS
     main.cpp
     mainwindow.cpp mainwindow.h
+    advancedsettingsdialog.cpp advancedsettingsdialog.h
     application.cpp application.h
     basket.qrc
 )

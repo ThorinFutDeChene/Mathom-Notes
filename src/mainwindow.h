@@ -34,6 +34,7 @@ public Q_SLOTS:
     void showShortcutsSettingsDialog();
     void configureToolbars() override;
     void showSettingsDialog();
+    void showAdvancedSettingsDialog();
     void showCustomAccessibilityDialog();
     void showUpdateSettingsDialog();
     void showAboutMathomDialog();
