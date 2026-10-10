@@ -15,7 +15,11 @@
 #include <QImage>
 #include <QInputDialog>
 #include <QKeyEvent>
+#include <QDialog>
+#include <QDialogButtonBox>
+#include <QLabel>
 #include <QList>
+#include <QListWidget>
 #include <QMenu>
 #include <QPageLayout>
 #include <QPageSize>
@@ -135,6 +139,9 @@ BNPView::BNPView(QWidget *parent, KXMLGUIClient *aGUIClient, KActionCollection *
 
     // Application-wide modification history (Undo / Redo).
     m_undoStack = new QUndoStack(this);
+    // Preserve the 100 most recent top-level operations of this session.
+    // Macros are counted as a single operation by QUndoStack.
+    m_undoStack->setUndoLimit(100);
 
     initialize();
     QTimer::singleShot(0, this, &BNPView::lateInit);
@@ -980,6 +987,14 @@ void BNPView::setupActions()
 
     m_actUndo->setEnabled(m_undoStack->canUndo());
     m_actRedo->setEnabled(m_undoStack->canRedo());
+
+    // History is consulted here, not edited or replayed by clicking rows.
+    a = ac->addAction(
+        QStringLiteral("history_show"),
+        this,
+        &BNPView::showModificationHistory);
+    a->setText(i18n("Modification History..."));
+    a->setIcon(QIcon::fromTheme(QStringLiteral("view-history")));
 
     /** Help : ****************************************************************/
 
@@ -3773,6 +3788,54 @@ void BNPView::redo()
 {
     if (m_undoStack && m_undoStack->canRedo())
         m_undoStack->redo();
+}
+
+void BNPView::showModificationHistory()
+{
+    if (!m_undoStack)
+        return;
+
+    QDialog dialog(this);
+    dialog.setWindowTitle(i18n("Modification History"));
+
+    auto *layout = new QVBoxLayout(&dialog);
+    auto *description = new QLabel(
+        i18n("History of the current session (up to 100 operations). "
+             "This list is for consultation only."),
+        &dialog);
+    description->setWordWrap(true);
+    layout->addWidget(description);
+
+    auto *entries = new QListWidget(&dialog);
+    entries->setSelectionMode(QAbstractItemView::NoSelection);
+
+    if (m_undoStack->count() == 0) {
+        entries->addItem(i18n("No changes have been recorded yet."));
+    } else {
+        const int activeIndex = m_undoStack->index();
+        for (int index = 0; index < m_undoStack->count(); ++index) {
+            const QString state = index < activeIndex
+                ? i18n("Applied")
+                : i18n("Undone");
+            const QUndoCommand *command = m_undoStack->command(index);
+            const QString name = command
+                ? command->text()
+                : i18n("Unnamed operation");
+            entries->addItem(
+                i18n("%1. %2 [%3]", index + 1, name, state));
+        }
+    }
+
+    layout->addWidget(entries);
+
+    auto *buttons = new QDialogButtonBox(
+        QDialogButtonBox::Close, &dialog);
+    connect(buttons, &QDialogButtonBox::rejected,
+            &dialog, &QDialog::reject);
+    layout->addWidget(buttons);
+
+    dialog.resize(680, 460);
+    dialog.exec();
 }
 
 void BNPView::propBasket()

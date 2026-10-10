@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE kpartgui SYSTEM "kpartgui.dtd">
-<gui name="basket" version="9">
+<gui name="basket" version="10">
  <MenuBar noMerge="1" >
   <Menu name="basket" >
    <text>&amp;Mathom-House</text>
@@ -42,6 +42,7 @@
    <text>&amp;Edit</text>
    <Action name="richtext_undo" />
    <Action name="richtext_redo" />
+   <Action name="history_show" />
    <Separator/>
    <Action name="edit_cut" />
    <Action name="edit_copy" />

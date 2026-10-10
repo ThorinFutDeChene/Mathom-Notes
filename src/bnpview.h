@@ -184,6 +184,7 @@ public Q_SLOTS:
     /** Edit */
     void undo();
     void redo();
+    void showModificationHistory();
     void globalPasteInCurrentBasket();
     void pasteInCurrentBasket();
     void pasteSelInCurrentBasket();
