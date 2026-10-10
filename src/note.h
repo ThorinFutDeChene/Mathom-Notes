@@ -454,6 +454,10 @@ public:
     static qreal TAG_ARROW_WIDTH /*= 5*/;
     static qreal EMBLEM_SIZE /*= 16*/;
     static qreal MIN_HEIGHT /*= 2*NOTE_MARGIN + EMBLEM_SIZE*/;
+
+    // Persistent identity for history and save/load.
+    QString uuid() const;
+    void setUuid(const QString &uuid);
 };
 
 /*

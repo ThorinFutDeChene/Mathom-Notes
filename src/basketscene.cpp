@@ -533,7 +533,8 @@ void BasketScene::loadNotes(const QDomElement &notes, Note *parent)
         note = nullptr;
         // Load a Group:
         if (e.tagName() == QStringLiteral("group")) {
-            note = new Note(this); // 1. Create the group...
+            note = new Note(this);
+            note->setUuid(e.attribute(QStringLiteral("id"))); // 1. Create the group...
 
             note->setPageId(
                 e.attribute(QStringLiteral("page")).trimmed());
@@ -549,7 +550,8 @@ void BasketScene::loadNotes(const QDomElement &notes, Note *parent)
         }
         // Load a Content-Based Note:
         if (e.tagName() == QStringLiteral("note") || e.tagName() == QStringLiteral("item")) { // Keep compatible with 0.6.0 Alpha 1
-            note = new Note(this); // Create the note...
+            note = new Note(this);
+            note->setUuid(e.attribute(QStringLiteral("id"))); // Create the note...
             NoteFactory::loadNode(XMLWork::getElement(e, QStringLiteral("content")),
                                   e.attribute(QStringLiteral("type")),
                                   note,
@@ -603,6 +605,7 @@ void BasketScene::saveNotes(QXmlStreamWriter &stream, Note *parent)
     while (note) {
         // Create Element:
         stream.writeStartElement(note->isGroup() ? "group" : "note");
+        stream.writeAttribute("id", note->uuid());
         // Free Note Properties:
         if (note->isFree()) {
             stream.writeAttribute("x", QString::number(note->x()));

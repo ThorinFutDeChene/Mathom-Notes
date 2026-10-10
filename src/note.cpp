@@ -42,6 +42,8 @@
 
 #define FOR_EACH_CHILD(childVar) for (Note *childVar = firstChild(); childVar; childVar = childVar->next())
 
+#include <QUuid>
+
 class NotePrivate
 {
 public:
@@ -56,6 +58,7 @@ public:
     Note *next;
     qreal width;
     qreal height;
+    QString uuid = QUuid::createUuid().toString(QUuid::WithoutBraces);
 };
 
 qreal Note::NOTE_MARGIN = 2;
@@ -108,6 +111,18 @@ Note::Note(BasketScene *parent)
         m_basket->addAnimation(m_animX);
         m_basket->addAnimation(m_animY);
     }
+}
+
+QString Note::uuid() const
+{
+    return d->uuid;
+}
+
+void Note::setUuid(const QString &uuid)
+{
+    const QUuid parsed(uuid);
+    if (!parsed.isNull())
+        d->uuid = parsed.toString(QUuid::WithoutBraces);
 }
 
 Note::~Note()
