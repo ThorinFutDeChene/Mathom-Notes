@@ -9,5 +9,6 @@ class AdvancedSettingsDialog final : public KCMultiDialog
 public:
     explicit AdvancedSettingsDialog(
         KActionCollection *actions,
+        KActionCollection *globalActions,
         QWidget *parent = nullptr);
 };

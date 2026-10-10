@@ -31,7 +31,6 @@ public:
 
 public Q_SLOTS:
     void toggleStatusBar();
-    void showShortcutsSettingsDialog();
     void configureToolbars() override;
     void showSettingsDialog();
     void showAdvancedSettingsDialog();

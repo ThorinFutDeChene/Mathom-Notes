@@ -30,7 +30,6 @@
 #include <KEditToolBar>
 #include <KLocalizedString>
 #include <KMessageBox>
-#include <KShortcutsDialog>
 #include <KToggleAction>
 
 #include "basketstatusbar.h"
@@ -90,7 +89,6 @@ void MainWindow::setupActions()
     m_actShowStatusbar = KStandardAction::showStatusbar(this, &MainWindow::toggleStatusBar, actionCollection());
 
 
-    (void)KStandardAction::keyBindings(this, &MainWindow::showShortcutsSettingsDialog, actionCollection());
 
     (void)KStandardAction::configureToolbars(this, &MainWindow::configureToolbars, actionCollection());
 
@@ -269,7 +267,10 @@ void MainWindow::showSettingsDialog()
 
 void MainWindow::showAdvancedSettingsDialog()
 {
-    AdvancedSettingsDialog dialog(actionCollection(), this);
+    AdvancedSettingsDialog dialog(
+        actionCollection(),
+        m_baskets->globalShortcutActions(),
+        this);
     dialog.exec();
 }
 
@@ -1119,11 +1120,6 @@ void MainWindow::showAboutThorinuxDialog()
     layout->addWidget(buttons);
 
     dialog.exec();
-}
-
-void MainWindow::showShortcutsSettingsDialog()
-{
-    KShortcutsDialog::showDialog(actionCollection(), KShortcutsEditor::LetterShortcutsAllowed, this);
 }
 
 bool MainWindow::event(QEvent *event)

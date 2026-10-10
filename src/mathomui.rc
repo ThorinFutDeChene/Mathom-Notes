@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE kpartgui SYSTEM "kpartgui.dtd">
-<gui name="basket" version="8">
+<gui name="basket" version="9">
  <MenuBar noMerge="1" >
   <Menu name="basket" >
    <text>&amp;Mathom-House</text>
@@ -102,8 +102,6 @@
    <Merge name="StandardToolBarMenuHandler" />
    <Action name="options_show_statusbar" />
    <Separator/>
-   <Action name="options_configure_keybinding" />
-   <Action name="options_configure_global_keybinding" />
    <Action name="options_configure_toolbars" />
    <Action name="options_update_settings" />
    <Action name="options_configure" />

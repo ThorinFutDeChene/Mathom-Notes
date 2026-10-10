@@ -15,6 +15,7 @@
 
 AdvancedSettingsDialog::AdvancedSettingsDialog(
     KActionCollection *actions,
+    KActionCollection *globalActions,
     QWidget *parent)
     : KCMultiDialog(parent)
 {
@@ -61,11 +62,23 @@ AdvancedSettingsDialog::AdvancedSettingsDialog(
         button,
         &QPushButton::clicked,
         this,
-        [this, actions]() {
-            KShortcutsDialog::showDialog(
-                actions,
+        [this, actions, globalActions]() {
+            KShortcutsDialog dialog(
+                KShortcutsEditor::AllActions,
                 KShortcutsEditor::LetterShortcutsAllowed,
                 this);
+
+            dialog.addCollection(
+                actions,
+                i18n("Mathom Notes commands"));
+
+            if (globalActions) {
+                dialog.addCollection(
+                    globalActions,
+                    i18n("Mathom Notes global shortcuts"));
+            }
+
+            dialog.configure(true);
         });
 
     auto *item = addPage(

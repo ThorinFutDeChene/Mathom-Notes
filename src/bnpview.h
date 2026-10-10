@@ -350,6 +350,11 @@ public Q_SLOTS:
         return m_actionCollection;
     };
 
+    KActionCollection *globalShortcutActions() const
+    {
+        return m_globalShortcutActions;
+    }
+
     QUndoStack *globalUndoStack() const
     {
         return m_undoStack;
@@ -404,6 +409,7 @@ private:
     NoteSelection *m_passiveDroppedSelection;
     static const int c_delayTooltipTime;
     KActionCollection *m_actionCollection;
+    KActionCollection *m_globalShortcutActions = nullptr;
     KXMLGUIClient *m_guiClient;
     BasketStatusBar *m_statusbar;
 

@@ -254,7 +254,8 @@ void BNPView::onFirstShow()
 
 void BNPView::setupGlobalShortcuts()
 {
-    auto *ac = new KActionCollection(this);
+    m_globalShortcutActions = new KActionCollection(this);
+    auto *ac = m_globalShortcutActions;
     QAction *a = nullptr;
 
     // Ctrl+Shift+W only works when started standalone:
@@ -281,6 +282,7 @@ void BNPView::setupGlobalShortcuts()
         i18n("Allows you to create a new Mathom-House without having to open the "
              "main window (you then can use the other global shortcuts to add "
              "a mathom, paste clipboard or paste selection in this new Mathom-House)."));
+    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
 
     a = ac->addAction(QStringLiteral("global_note_add_html"), this, &BNPView::addNoteHtml);
     a->setText(i18n("Insert text mathom"));
@@ -294,18 +296,21 @@ void BNPView::setupGlobalShortcuts()
     a->setStatusTip(
         i18n("Add an image mathom to the current location without having to open "
              "the main window."));
+    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
 
     a = ac->addAction(QStringLiteral("global_note_add_link"), this, &BNPView::addNoteLink);
     a->setText(i18n("Insert link mathom"));
     a->setStatusTip(
         i18n("Add a link mathom to the current location without having "
              "to open the main window."));
+    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
 
     a = ac->addAction(QStringLiteral("global_note_add_color"), this, &BNPView::addNoteColor);
     a->setText(i18n("Insert color mathom"));
     a->setStatusTip(
         i18n("Add a color mathom to the current location without having to open "
              "the main window."));
+    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
 
     a = ac->addAction(QStringLiteral("global_note_pick_color"), this, &BNPView::slotColorFromScreen);
     a->setText(i18n("Pick color from screen"));
@@ -313,12 +318,14 @@ void BNPView::setupGlobalShortcuts()
         i18n("Add a color mathom picked from one pixel on screen to the current "
              "location without "
              "having to open the main window."));
+    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
 
     a = ac->addAction(QStringLiteral("global_note_grab_screenshot"), this, &BNPView::grabScreenshot);
     a->setText(i18n("Grab screen zone"));
     a->setStatusTip(
         i18n("Grab a screen zone as an image mathom in the current location without "
              "having to open the main window."));
+    KGlobalAccel::setGlobalShortcut(a, QKeySequence());
 
 }
 
