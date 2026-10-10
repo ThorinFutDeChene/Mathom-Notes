@@ -19,7 +19,7 @@ Cette arborescence rassemble la documentation technique et utilisateur du projet
 La version stable actuelle est :
 
 ~~~text
-Mathom Notes 3.4.1
+Mathom Notes 3.10.2
 ~~~
 
 ## Documentation historique

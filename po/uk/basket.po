@@ -2964,7 +2964,7 @@ msgstr "Мітки"
 #, kde-format
 msgid "<qt>Do you really want to delete this mathom?</qt>"
 msgid_plural "<qt>Do you really want to delete these <b>%1</b> mathoms?</qt>"
-msgstr[0] "<qt>Справді вилучити цю нотатку Mathom?</qt>"
+msgstr[0] "<qt>Справді вилучити <b>%1</b> нотатку Mathom?</qt>"
 msgstr[1] "<qt>Справді вилучити <b>%1</b> нотатки Mathom?</qt>"
 msgstr[2] "<qt>Справді вилучити <b>%1</b> нотаток Mathom?</qt>"
 msgstr[3] "<qt>Справді вилучити <b>%1</b> нотатку Mathom?</qt>"
