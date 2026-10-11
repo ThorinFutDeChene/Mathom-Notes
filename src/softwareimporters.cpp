@@ -354,6 +354,14 @@ void SoftwareImporters::importTextFile()
         basket->renamePage(newPageId, QFileInfo(fileName).completeBaseName());
     }
 
+    // A new import destination always starts with a single column, even
+    // when its Page would otherwise inherit a free or multi-column layout.
+    // setCurrentPageDisposition creates the initial Page when a new House
+    // has none yet. Never change the layout of an existing destination Page.
+    if (dialog.destination() != TextFileImportDialog::Destination::CurrentPage) {
+        basket->setCurrentPageDisposition(/*freeLayout=*/false, /*columnCount=*/1);
+    }
+
     Note *first = nullptr;
     Note *last = nullptr;
     int imported = 0;
