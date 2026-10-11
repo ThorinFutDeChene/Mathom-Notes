@@ -36,6 +36,7 @@
 #include <KLocalizedString>
 #include <KMessageBox>
 #include <KToggleAction>
+#include <KToolBar>
 
 #include "basketstatusbar.h"
 #include "bnpview.h"
@@ -315,7 +316,7 @@ void MainWindow::removeObsoleteNewToolbarAction()
 {
     QAction *action = actionCollection()->action(QStringLiteral("basket_new_menu"));
     if (action) {
-        if (QToolBar *mainToolbar = toolBar(QStringLiteral("mainToolBar")))
+        if (KToolBar *mainToolbar = toolBar(QStringLiteral("mainToolBar")))
             mainToolbar->removeAction(action);
     }
 }
