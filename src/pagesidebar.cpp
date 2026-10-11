@@ -347,6 +347,25 @@ void PageSidebar::registerShortcutActions(
     createAction->setText(i18n("Create Page"));
     registerScoped(createAction);
 
+    // Renommer la Page selectionnee.
+    auto *renameAction = category->addAction(
+        QStringLiteral("page_rename"),
+        this,
+        [this]() {
+            if (!m_basket)
+                return;
+
+            QListWidgetItem *item = m_list->currentItem();
+
+            if (!item)
+                return;
+
+            m_list->editItem(item);
+        });
+
+    renameAction->setText(i18n("Rename Page"));
+    registerScoped(renameAction);
+
     // Supprimer une Page : conserve les protections
     // et la confirmation deja existantes.
     auto *deleteAction = category->addAction(

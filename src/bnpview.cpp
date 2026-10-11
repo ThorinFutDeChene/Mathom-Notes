@@ -827,6 +827,49 @@ void BNPView::setupActions()
     newBasketMenu->addAction(actNewSiblingBasket);
     connect(newBasketMenu, &QAction::triggered, this, qOverload<>(&BNPView::askNewBasket));
 
+    // Configurable shortcuts for hierarchy conversions.
+    // No default shortcuts are assigned.
+    auto *hierarchyCategory = new KActionCategory(
+        i18n("Hierarchy"), ac);
+
+    const auto registerConversionAction =
+        [this, hierarchyCategory](
+            const QString &id,
+            const QString &title,
+            void (BNPView::*converter)(BasketScene *)) {
+
+            QAction *action = hierarchyCategory->addAction(
+                id,
+                this,
+                [this, converter]() {
+                    BasketScene *basket = currentBasket();
+
+                    if (basket)
+                        (this->*converter)(basket);
+                });
+
+            action->setText(title);
+            action->setShortcutContext(
+                Qt::WidgetWithChildrenShortcut);
+
+            addAction(action);
+        };
+
+    registerConversionAction(
+        QStringLiteral("hierarchy_shelf_to_page"),
+        i18n("Convert Shelf to Page"),
+        &BNPView::convertShelfToPage);
+
+    registerConversionAction(
+        QStringLiteral("hierarchy_shelf_to_house"),
+        i18n("Convert Shelf to Mathom-House"),
+        &BNPView::convertShelfToMathomHouse);
+
+    registerConversionAction(
+        QStringLiteral("hierarchy_house_to_shelf"),
+        i18n("Convert Mathom-House to Shelf"),
+        &BNPView::convertMathomHouseToShelf);
+
     a = ac->addAction(QStringLiteral("basket_properties"), this, &BNPView::propBasket);
     a->setText(i18n("&Properties..."));
     a->setIcon(MathomIcons::icon(QStringLiteral("document-properties")));
