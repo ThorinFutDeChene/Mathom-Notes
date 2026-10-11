@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE kpartgui SYSTEM "kpartgui.dtd">
-<gui name="basket" version="10">
+<gui name="basket" version="11">
  <MenuBar noMerge="1" >
   <Menu name="basket" >
    <text>&amp;Mathom-House</text>
@@ -13,13 +13,6 @@
     <Action name="basket_export_all_archives" />
     <Action name="basket_export_html" />
     <Action name="basket_export_current_page_pdf" />
-   </Menu>
-   <Menu icon="view-sort-ascending" >
-    <text>&amp;Sort</text>
-    <Action name="basket_sort_children_asc" />
-    <Action name="basket_sort_children_desc" />
-    <Action name="basket_sort_siblings_asc" />
-    <Action name="basket_sort_siblings_desc" />
    </Menu>
    <Action name="basket_remove" />
    <Separator/>

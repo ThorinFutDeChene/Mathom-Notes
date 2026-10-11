@@ -201,6 +201,29 @@ private:
 };
 
 
+class BasketHierarchySortCommand : public QUndoCommand
+{
+public:
+    BasketHierarchySortCommand(
+        BNPView *view,
+        BasketScene *parentBasket,
+        const QStringList &before,
+        const QStringList &after,
+        const QString &label,
+        QUndoCommand *parent = nullptr);
+
+    void undo() override;
+    void redo() override;
+
+private:
+    BNPView *m_view = nullptr;
+    QPointer<BasketScene> m_parentBasket;
+    QStringList m_before;
+    QStringList m_after;
+    bool m_root = false;
+};
+
+
 class BasketHierarchyMoveCommand : public QUndoCommand
 {
 public:

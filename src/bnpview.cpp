@@ -12,6 +12,8 @@
 #include <QEvent>
 #include <QGraphicsView>
 #include <QHideEvent>
+#include <QHash>
+#include <QHBoxLayout>
 #include <QImage>
 #include <QInputDialog>
 #include <QKeyEvent>
@@ -29,6 +31,7 @@
 #include <QPixmap>
 #include <QPointer>
 #include <QProgressDialog>
+#include <QSignalBlocker>
 #include <QRegularExpression>
 #include <QResizeEvent>
 #include <QSaveFile>
@@ -58,6 +61,7 @@
 #include <KXMLGUIClient>
 #include <KXMLGUIFactory>
 
+#include <algorithm>
 #include <cstdlib>
 #include <unistd.h> // usleep
 
@@ -152,7 +156,7 @@ BNPView::BNPView(QWidget *parent, KXMLGUIClient *aGUIClient, KActionCollection *
 BNPView::~BNPView()
 {
     const QList<int> splitterSizes = sizes();
-    const int treeIndex = indexOf(m_tree);
+    const int treeIndex = indexOf(m_treePanel);
 
     int treeWidth =
         splitterSizes.value(treeIndex);
@@ -349,9 +353,53 @@ void BNPView::setupGlobalShortcuts()
 
 void BNPView::initialize()
 {
+    // The organization panel and its controls form one splitter pane.
+    // This keeps focus-mode hiding and resizing fully operational.
+    m_treePanel = new QWidget(this);
+    auto *treeLayout = new QVBoxLayout(m_treePanel);
+    treeLayout->setContentsMargins(6, 6, 6, 6);
+    treeLayout->setSpacing(6);
+
+    auto *treeTitle = new QLabel(
+        i18n("Mathom-Houses and Shelves"), m_treePanel);
+    QFont treeTitleFont = treeTitle->font();
+    treeTitleFont.setBold(true);
+    treeTitle->setFont(treeTitleFont);
+    treeLayout->addWidget(treeTitle);
+
+    auto *treeButtons = new QHBoxLayout();
+    treeButtons->setContentsMargins(0, 0, 0, 0);
+    treeButtons->setSpacing(4);
+
+    m_treeAddButton = new QToolButton(m_treePanel);
+    m_treeAddButton->setText(QStringLiteral("+"));
+    m_treeAddButton->setToolTip(i18n("Create Mathom-House or Shelf"));
+    m_treeAddButton->setAccessibleName(i18n("Create Mathom-House or Shelf"));
+    m_treeAddButton->setPopupMode(QToolButton::InstantPopup);
+    treeButtons->addWidget(m_treeAddButton);
+
+    m_treeRemoveButton = new QToolButton(m_treePanel);
+    m_treeRemoveButton->setText(QStringLiteral("-"));
+    m_treeRemoveButton->setToolTip(i18n("Remove Mathom-House or Shelf"));
+    m_treeRemoveButton->setAccessibleName(i18n("Remove Mathom-House or Shelf"));
+    m_treeRemoveButton->setPopupMode(QToolButton::InstantPopup);
+    treeButtons->addWidget(m_treeRemoveButton);
+
+    treeButtons->addStretch(1);
+
+    m_treeSortButton = new QToolButton(m_treePanel);
+    m_treeSortButton->setText(i18n("Sort"));
+    m_treeSortButton->setToolTip(i18n("Sort Shelves or Mathom-Houses once"));
+    m_treeSortButton->setAccessibleName(i18n("Sort Shelves or Mathom-Houses"));
+    m_treeSortButton->setPopupMode(QToolButton::InstantPopup);
+    treeButtons->addWidget(m_treeSortButton);
+    treeLayout->addLayout(treeButtons);
+
     /// Configure the List View Columns:
-    m_tree = new BasketTreeListView(this);
+    m_tree = new BasketTreeListView(m_treePanel);
+    treeLayout->addWidget(m_tree, 1);
     m_tree->setHeaderLabel(i18n("Mathom-Houses"));
+    m_tree->setHeaderHidden(true);
     m_tree->setSortingEnabled(false /*Disabled*/);
     m_tree->setRootIsDecorated(true);
     m_tree->setLineWidth(1);
@@ -426,9 +474,9 @@ void BNPView::initialize()
 
     setOpaqueResize(true);
 
-    setCollapsible(indexOf(m_tree), true);
+    setCollapsible(indexOf(m_treePanel), true);
     setCollapsible(indexOf(m_contentPane), false);
-    setStretchFactor(indexOf(m_tree), 0);
+    setStretchFactor(indexOf(m_treePanel), 0);
     setStretchFactor(indexOf(m_contentPane), 1);
 
     // Give the splitter handle enough room for a small focus-mode button.
@@ -877,22 +925,22 @@ void BNPView::setupActions()
     m_actPropBasket = a;
 
     a = ac->addAction(QStringLiteral("basket_sort_children_asc"), this, &BNPView::sortChildrenAsc);
-    a->setText(i18n("Sort Children Ascending"));
+    a->setText(i18n("Sort Shelves A to Z"));
     a->setIcon(MathomIcons::icon(QStringLiteral("view-sort-ascending")));
     m_actSortChildrenAsc = a;
 
     a = ac->addAction(QStringLiteral("basket_sort_children_desc"), this, &BNPView::sortChildrenDesc);
-    a->setText(i18n("Sort Children Descending"));
+    a->setText(i18n("Sort Shelves Z to A"));
     a->setIcon(MathomIcons::icon(QStringLiteral("view-sort-descending")));
     m_actSortChildrenDesc = a;
 
     a = ac->addAction(QStringLiteral("basket_sort_siblings_asc"), this, &BNPView::sortSiblingsAsc);
-    a->setText(i18n("Sort Siblings Ascending"));
+    a->setText(i18n("Sort Mathom-Houses A to Z"));
     a->setIcon(MathomIcons::icon(QStringLiteral("view-sort-ascending")));
     m_actSortSiblingsAsc = a;
 
     a = ac->addAction(QStringLiteral("basket_sort_siblings_desc"), this, &BNPView::sortSiblingsDesc);
-    a->setText(i18n("Sort Siblings Descending"));
+    a->setText(i18n("Sort Mathom-Houses Z to A"));
     a->setIcon(MathomIcons::icon(QStringLiteral("view-sort-descending")));
     m_actSortSiblingsDesc = a;
 
@@ -901,6 +949,51 @@ void BNPView::setupActions()
     a->setIcon(MathomIcons::icon(QStringLiteral("edit-delete")));
     a->setShortcut(0);
     m_actDelBasket = a;
+
+    // Sidebar '+' reuses the same creation commands as the right-click menu.
+    auto *treeAddMenu = new QMenu(m_treeAddButton);
+    treeAddMenu->addAction(actNewBasket);
+    treeAddMenu->addAction(actNewSubBasket);
+    m_treeAddButton->setMenu(treeAddMenu);
+
+    // Sidebar '-' offers the two explicit deletion choices.
+    // Both delegate to the existing confirmation/Undo implementation.
+    auto *treeRemoveMenu = new QMenu(m_treeRemoveButton);
+    QAction *removeHouseAction = treeRemoveMenu->addAction(
+        i18n("Remove Mathom-House"));
+    QAction *removeShelfAction = treeRemoveMenu->addAction(
+        i18n("Remove Shelf"));
+    connect(removeHouseAction, &QAction::triggered, this, [this]() {
+        BasketScene *basket = currentBasket();
+        if (basket && !basket->isLocked()
+            && !parentBasketOf(basket))
+            delBasket();
+    });
+    connect(removeShelfAction, &QAction::triggered, this, [this]() {
+        BasketScene *basket = currentBasket();
+        if (basket && !basket->isLocked()
+            && parentBasketOf(basket))
+            delBasket();
+    });
+    connect(treeRemoveMenu, &QMenu::aboutToShow, this,
+            [this, removeHouseAction, removeShelfAction]() {
+        BasketScene *basket = currentBasket();
+        const bool allowed = basket && !basket->isLocked();
+        const bool shelf = basket && parentBasketOf(basket);
+        removeHouseAction->setEnabled(allowed && !shelf);
+        removeShelfAction->setEnabled(allowed && shelf);
+    });
+    m_treeRemoveButton->setMenu(treeRemoveMenu);
+
+    // The four original configurable actions are also in the right-click
+    // menu. This is an explicit one-off operation, never an automatic mode.
+    auto *treeSortMenu = new QMenu(m_treeSortButton);
+    treeSortMenu->addAction(m_actSortChildrenAsc);
+    treeSortMenu->addAction(m_actSortChildrenDesc);
+    treeSortMenu->addSeparator();
+    treeSortMenu->addAction(m_actSortSiblingsAsc);
+    treeSortMenu->addAction(m_actSortSiblingsDesc);
+    m_treeSortButton->setMenu(treeSortMenu);
 
 #ifdef HAVE_LIBGPGME
     a = ac->addAction(QStringLiteral("basket_password"), this, &BNPView::password);
@@ -2753,7 +2846,7 @@ void BNPView::toggleTreeVisibility()
 
     QList<int> currentSizes = sizes();
 
-    const int treeIndex = indexOf(m_tree);
+    const int treeIndex = indexOf(m_treePanel);
     const int contentIndex = indexOf(m_contentPane);
 
     if (treeIndex < 0
@@ -2777,8 +2870,8 @@ void BNPView::toggleTreeVisibility()
         // Some native desktop styles keep a minimum effective width even
         // when QSplitter::setSizes() asks for zero. Force the tree geometry
         // to zero while keeping the splitter handle and its restore button.
-        m_tree->setMinimumWidth(0);
-        m_tree->setMaximumWidth(0);
+        m_treePanel->setMinimumWidth(0);
+        m_treePanel->setMaximumWidth(0);
 
         currentSizes[treeIndex] = 0;
         currentSizes[contentIndex] =
@@ -2786,8 +2879,8 @@ void BNPView::toggleTreeVisibility()
     } else {
         // Restore normal sizing before asking the splitter for the previous
         // user width.
-        m_tree->setMinimumWidth(0);
-        m_tree->setMaximumWidth(QWIDGETSIZE_MAX);
+        m_treePanel->setMinimumWidth(0);
+        m_treePanel->setMaximumWidth(QWIDGETSIZE_MAX);
 
         int restoredWidth = m_treeLastWidth;
 
@@ -2829,7 +2922,7 @@ void BNPView::updateTreeToggleButton()
 
     const QList<int> currentSizes = sizes();
 
-    const int treeIndex = indexOf(m_tree);
+    const int treeIndex = indexOf(m_treePanel);
     const int contentIndex = indexOf(m_contentPane);
 
     if (treeIndex < 0
@@ -2927,9 +3020,9 @@ void BNPView::updatePagesToggleButton()
 void BNPView::setTreePlacement(bool onLeft)
 {
     if (onLeft)
-        insertWidget(0, m_tree);
+        insertWidget(0, m_treePanel);
     else
-        addWidget(m_tree);
+        addWidget(m_treePanel);
     updateTreeToggleButton();
 
     // updateGeometry();
@@ -4813,30 +4906,150 @@ QString BNPView::folderFromBasketNameLink(QStringList pages, QTreeWidgetItem *pa
 
 void BNPView::sortChildrenAsc()
 {
-    m_tree->currentItem()->sortChildren(0, Qt::AscendingOrder);
+    sortHierarchy(/*houses=*/false, Qt::AscendingOrder);
 }
 
 void BNPView::sortChildrenDesc()
 {
-    m_tree->currentItem()->sortChildren(0, Qt::DescendingOrder);
+    sortHierarchy(/*houses=*/false, Qt::DescendingOrder);
 }
 
 void BNPView::sortSiblingsAsc()
 {
-    QTreeWidgetItem *parent = m_tree->currentItem()->parent();
-    if (!parent)
-        m_tree->sortItems(0, Qt::AscendingOrder);
-    else
-        parent->sortChildren(0, Qt::AscendingOrder);
+    sortHierarchy(/*houses=*/true, Qt::AscendingOrder);
 }
 
 void BNPView::sortSiblingsDesc()
 {
-    QTreeWidgetItem *parent = m_tree->currentItem()->parent();
-    if (!parent)
-        m_tree->sortItems(0, Qt::DescendingOrder);
-    else
-        parent->sortChildren(0, Qt::DescendingOrder);
+    sortHierarchy(/*houses=*/true, Qt::DescendingOrder);
+}
+
+void BNPView::sortHierarchy(bool houses, Qt::SortOrder order)
+{
+    if (!m_tree || !m_undoStack)
+        return;
+
+    QTreeWidgetItem *scope = m_tree->invisibleRootItem();
+    BasketScene *scopeBasket = nullptr;
+
+    if (!houses) {
+        auto *selection = dynamic_cast<BasketListViewItem *>(
+            m_tree->currentItem());
+        if (!selection)
+            return;
+
+        // A container sorts its immediate shelves. If a leaf shelf is
+        // selected, sort the shelves alongside it within its parent.
+        if (selection->childCount() > 0)
+            scope = selection;
+        else if (selection->parent())
+            scope = selection->parent();
+        else
+            return;
+
+        scopeBasket = static_cast<BasketListViewItem *>(scope)->basket();
+    }
+
+    if (scope->childCount() < 2)
+        return;
+
+    QStringList before;
+    QList<BasketListViewItem *> items;
+    before.reserve(scope->childCount());
+    items.reserve(scope->childCount());
+
+    for (int index = 0; index < scope->childCount(); ++index) {
+        auto *item = static_cast<BasketListViewItem *>(
+            scope->child(index));
+        before.append(item->basket()->folderName());
+        items.append(item);
+    }
+
+    std::stable_sort(items.begin(), items.end(),
+                     [order](const BasketListViewItem *left,
+                             const BasketListViewItem *right) {
+        const int comparison = QString::localeAwareCompare(
+            left->text(0), right->text(0));
+        return order == Qt::AscendingOrder
+            ? comparison < 0 : comparison > 0;
+    });
+
+    QStringList after;
+    after.reserve(items.size());
+    for (BasketListViewItem *item : std::as_const(items))
+        after.append(item->basket()->folderName());
+
+    if (before == after)
+        return;
+
+    m_undoStack->push(new BasketHierarchySortCommand(
+        this, scopeBasket, before, after,
+        houses ? i18n("Sort Mathom-Houses") : i18n("Sort Shelves")));
+}
+
+bool BNPView::reorderHierarchy(BasketScene *parentBasket,
+                               const QStringList &orderedFolderNames)
+{
+    if (!m_tree)
+        return false;
+
+    QTreeWidgetItem *scope = parentBasket
+        ? static_cast<QTreeWidgetItem *>(listViewItemForBasket(parentBasket))
+        : m_tree->invisibleRootItem();
+
+    if (!scope || scope->childCount() != orderedFolderNames.size())
+        return false;
+
+    QHash<QString, QTreeWidgetItem *> original;
+    for (int index = 0; index < scope->childCount(); ++index) {
+        auto *item = static_cast<BasketListViewItem *>(scope->child(index));
+        const QString id = item->basket()->folderName();
+        if (original.contains(id))
+            return false;
+        original.insert(id, item);
+    }
+
+    QList<QTreeWidgetItem *> reordered;
+    reordered.reserve(orderedFolderNames.size());
+    QSet<QString> used;
+    for (const QString &id : orderedFolderNames) {
+        if (!original.contains(id) || used.contains(id))
+            return false;
+        used.insert(id);
+        reordered.append(original.value(id));
+    }
+
+    // Remember all expanded nodes before detaching/reinserting siblings.
+    // Qt can otherwise reset expansion and the current selection.
+    QHash<QTreeWidgetItem *, bool> expanded;
+    for (QTreeWidgetItemIterator it(m_tree); *it; ++it)
+        expanded.insert(*it, (*it)->isExpanded());
+    QTreeWidgetItem *selected = m_tree->currentItem();
+
+    {
+        const QSignalBlocker blocker(m_tree);
+        const QList<QTreeWidgetItem *> detached = scope->takeChildren();
+        if (detached.size() != reordered.size()) {
+            // This should never happen after the validation above.
+            scope->addChildren(detached);
+            return false;
+        }
+        scope->addChildren(reordered);
+
+        for (QTreeWidgetItemIterator it(m_tree); *it; ++it) {
+            const auto saved = expanded.constFind(*it);
+            if (saved != expanded.constEnd())
+                (*it)->setExpanded(saved.value());
+        }
+
+        if (selected && selected->treeWidget() == m_tree)
+            m_tree->setCurrentItem(selected);
+    }
+
+    save();
+    updateNavigationBar();
+    m_tree->viewport()->update();
+    return true;
 }
 
 #include "moc_bnpview.cpp"

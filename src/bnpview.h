@@ -7,6 +7,7 @@
 #define BNPVIEW_H
 
 #include <QSplitter>
+#include <QStringList>
 #include <QtCore/QList>
 #include <QtGui/QClipboard>
 
@@ -74,6 +75,10 @@ public:
         BasketScene *basket,
         BasketScene *newParent,
         int index);
+
+    // Apply exact sibling order, also used by global Undo / Redo.
+    bool reorderHierarchy(BasketScene *parentBasket,
+                          const QStringList &orderedFolderNames);
 
     void convertPageToShelf(
         BasketScene *basket,
@@ -311,6 +316,7 @@ private:
     // collapse/restore the organization tree from the splitter handle.
     void toggleTreeVisibility();
     void updateTreeToggleButton();
+    void sortHierarchy(bool houses, Qt::SortOrder order);
 
     // Pages sidebar:
     void togglePagesVisibility();
@@ -391,6 +397,10 @@ protected:
 
 private:
     BasketTreeListView *m_tree;
+    QWidget *m_treePanel = nullptr;
+    QToolButton *m_treeAddButton = nullptr;
+    QToolButton *m_treeRemoveButton = nullptr;
+    QToolButton *m_treeSortButton = nullptr;
     QToolButton *m_treeToggleButton = nullptr;
     int m_treeLastWidth = -1;
 

@@ -1126,6 +1126,38 @@ void PageTransferCommand::redo()
 }
 
 
+/** One-off, Undoable Shelf or Mathom-House sorting. */
+
+BasketHierarchySortCommand::BasketHierarchySortCommand(
+    BNPView *view,
+    BasketScene *parentBasket,
+    const QStringList &before,
+    const QStringList &after,
+    const QString &label,
+    QUndoCommand *parent)
+    : QUndoCommand(parent)
+    , m_view(view)
+    , m_parentBasket(parentBasket)
+    , m_before(before)
+    , m_after(after)
+    , m_root(parentBasket == nullptr)
+{
+    setText(label);
+}
+
+void BasketHierarchySortCommand::undo()
+{
+    if (m_view && (m_root || m_parentBasket))
+        m_view->reorderHierarchy(m_parentBasket, m_before);
+}
+
+void BasketHierarchySortCommand::redo()
+{
+    if (m_view && (m_root || m_parentBasket))
+        m_view->reorderHierarchy(m_parentBasket, m_after);
+}
+
+
 /** Mathom-House / Shelf hierarchy level conversion */
 
 BasketHierarchyMoveCommand::BasketHierarchyMoveCommand(
