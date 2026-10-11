@@ -881,6 +881,10 @@ SpreadsheetEditor::SpreadsheetEditor(SpreadsheetContent *spreadsheetContent, QWi
     auto *removeRow = new QPushButton(i18n("- Row"), container);
     auto *addColumn = new QPushButton(i18n("+ Column"), container);
     auto *removeColumn = new QPushButton(i18n("- Column"), container);
+    m_addRowButton = addRow;
+    m_removeRowButton = removeRow;
+    m_addColumnButton = addColumn;
+    m_removeColumnButton = removeColumn;
     tools->addWidget(addRow);
     tools->addWidget(removeRow);
     tools->addWidget(addColumn);
@@ -938,6 +942,19 @@ SpreadsheetEditor::SpreadsheetEditor(SpreadsheetContent *spreadsheetContent, QWi
     layout->addWidget(m_table);
     setInlineEditor(container);
     deferInlineWidgetDeletion();
+
+    // Only the open Spreadsheet editor owns these shortcuts.
+    if (Global::bnpView) {
+        KActionCollection *collection =
+            Global::bnpView->actionCollection();
+
+        if (collection) {
+            for (QAction *action : collection->actions()) {
+                if (action->property("mathomSpreadsheetShortcut").toBool())
+                    container->addAction(action);
+            }
+        }
+    }
 
     BasketScene *scene = spreadsheetContent->note()->basket();
 
@@ -1001,6 +1018,48 @@ SpreadsheetEditor::SpreadsheetEditor(SpreadsheetContent *spreadsheetContent, QWi
 }
 
 SpreadsheetEditor::~SpreadsheetEditor() = default;
+
+void SpreadsheetEditor::executeCommand(Command command)
+{
+    switch (command) {
+    case Command::AddRow:
+        m_addRowButton->click();
+        return;
+    case Command::RemoveRow:
+        m_removeRowButton->click();
+        return;
+    case Command::AddColumn:
+        m_addColumnButton->click();
+        return;
+    case Command::RemoveColumn:
+        m_removeColumnButton->click();
+        return;
+    case Command::ApplyFormula:
+        commitFormulaBar();
+        return;
+    case Command::Sum:
+        insertFunction(QStringLiteral("SUM"));
+        return;
+    case Command::Average:
+        insertFunction(QStringLiteral("AVERAGE"));
+        return;
+    case Command::Minimum:
+        insertFunction(QStringLiteral("MIN"));
+        return;
+    case Command::Maximum:
+        insertFunction(QStringLiteral("MAX"));
+        return;
+    case Command::Count:
+        insertFunction(QStringLiteral("COUNT"));
+        return;
+    case Command::Superscript:
+        applyScriptToFormulaSelection(true);
+        return;
+    case Command::Subscript:
+        applyScriptToFormulaSelection(false);
+        return;
+    }
+}
 
 void SpreadsheetEditor::ensureCellExists(int row, int column)
 {

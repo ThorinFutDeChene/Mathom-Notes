@@ -964,6 +964,73 @@ void BNPView::setupActions()
 
     InlineEditors::instance()->initToolBars(actionCollection());
 
+    // Spreadsheet shortcuts have no defaults and are installed only
+    // on an open Spreadsheet editor (not on the entire Mathom window).
+    auto *spreadsheetCategory = new KActionCategory(
+        i18n("Spreadsheet"), ac);
+
+    const auto registerSpreadsheetAction =
+        [this, spreadsheetCategory](
+            const QString &id,
+            const QString &label,
+            SpreadsheetEditor::Command command) {
+            QAction *action = spreadsheetCategory->addAction(
+                id,
+                this,
+                [this, command]() {
+                    BasketScene *basket = currentBasket();
+                    if (!basket)
+                        return;
+
+                    auto *editor = dynamic_cast<SpreadsheetEditor *>(
+                        basket->activeNoteEditor());
+                    if (editor)
+                        editor->executeCommand(command);
+                });
+
+            action->setText(label);
+            action->setShortcutContext(
+                Qt::WidgetWithChildrenShortcut);
+            action->setProperty("mathomSpreadsheetShortcut", true);
+        };
+
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_add_row"),
+        i18n("Add Row"), SpreadsheetEditor::Command::AddRow);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_remove_row"),
+        i18n("Remove Row"), SpreadsheetEditor::Command::RemoveRow);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_add_column"),
+        i18n("Add Column"), SpreadsheetEditor::Command::AddColumn);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_remove_column"),
+        i18n("Remove Column"), SpreadsheetEditor::Command::RemoveColumn);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_apply_formula"),
+        i18n("Apply Formula"), SpreadsheetEditor::Command::ApplyFormula);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_formula_sum"),
+        i18n("Insert Sum Formula"), SpreadsheetEditor::Command::Sum);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_formula_average"),
+        i18n("Insert Average Formula"), SpreadsheetEditor::Command::Average);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_formula_min"),
+        i18n("Insert Minimum Formula"), SpreadsheetEditor::Command::Minimum);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_formula_max"),
+        i18n("Insert Maximum Formula"), SpreadsheetEditor::Command::Maximum);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_formula_count"),
+        i18n("Insert Count Formula"), SpreadsheetEditor::Command::Count);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_superscript"),
+        i18n("Convert to Superscript"), SpreadsheetEditor::Command::Superscript);
+    registerSpreadsheetAction(
+        QStringLiteral("spreadsheet_subscript"),
+        i18n("Convert to Subscript"), SpreadsheetEditor::Command::Subscript);
+
     // Commandes configurables de l'interface.
     auto *interfaceCategory = new KActionCategory(
         i18n("Interface"), ac);

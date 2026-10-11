@@ -716,6 +716,10 @@ public:
     {
         return m_editor;
     }
+    NoteEditor *activeNoteEditor() const
+    {
+        return m_editor;
+    }
     bool redirectEditActions()
     {
         return m_redirectEditActions;

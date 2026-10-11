@@ -260,6 +260,23 @@ public:
     void validate() override;
     void autoSave(bool toFileToo) override;
 
+    enum class Command {
+        AddRow,
+        RemoveRow,
+        AddColumn,
+        RemoveColumn,
+        ApplyFormula,
+        Sum,
+        Average,
+        Minimum,
+        Maximum,
+        Count,
+        Superscript,
+        Subscript
+    };
+
+    void executeCommand(Command command);
+
 private:
     void syncContent(bool saveToFile);
     void updateFormulaBar();
@@ -273,6 +290,10 @@ private:
     QLabel *m_cellAddress;
     QLineEdit *m_formulaEdit;
     QComboBox *m_functionCombo;
+    QPushButton *m_addRowButton = nullptr;
+    QPushButton *m_removeRowButton = nullptr;
+    QPushButton *m_addColumnButton = nullptr;
+    QPushButton *m_removeColumnButton = nullptr;
 };
 
 /** The dialog to edit Link Note content.
