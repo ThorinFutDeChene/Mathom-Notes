@@ -4,6 +4,66 @@ Ce fichier résume les principales versions propres au fork Mathom.
 
 Le journal de développement détaillé reste la référence technique complète du projet.
 
+## 3.12.0
+
+### Added
+
+- raccourcis clavier configurables pour le renommage et les proprietes des Pages ;
+- raccourcis configurables pour les conversions entre Etageres, Pages et Mathom-Houses ;
+- douze raccourcis configurables pour le tableur : ajout/suppression de lignes et colonnes, formules et exposants/indices ;
+- barre d'organisation **+ / - / Trier** au-dessus des Mathom-Houses et Etageres ;
+- deux actions configurables distinctes pour supprimer une Mathom-House ou une Etagere.
+
+### Changed
+
+- quatre tris ponctuels : Etageres A-Z / Z-A au niveau selectionne, Mathom-Houses A-Z / Z-A ;
+- conservation du classement obtenu, de l'ajout en bas de liste et du deplacement manuel ;
+- suppression de l'entree Trier redondante du menu superieur, avec conservation du clic droit ;
+- conservation des identifiants des anciennes actions et des raccourcis personnalises.
+
+### Validation et limites
+
+- prereleases 3.12.0-dev1 a dev5 publiees et validees fonctionnellement ;
+- Annuler / Refaire disponible pour le tri pendant la session ;
+- aucun raccourci par defaut impose aux nouvelles actions ;
+- l'importation de PDF et la reconnaissance OCR/HTR ne font pas partie de cette version.
+
+## 3.11.0
+
+- parametres avances et configuration des raccourcis clavier ;
+- historiques Annuler / Refaire ameliores : 100 operations en session ;
+- reprise gardee de certaines operations sur 24 heures (20 par document) apres reouverture ;
+- identifiants persistants des Mathoms et verification d'integrite pour la recuperation.
+
+## 3.10.2
+
+- internationalisation synchronisee sur 38 catalogues, dont 12 variantes entierement traduites ;
+- etiquettes predefinies traduites en conservant les libelles personnalises.
+
+## 3.10.1
+
+- uniformisation des chaines sources internationalisables ;
+- correction des pluriels et completude du catalogue francais.
+
+## 3.10.0
+
+- conversions entre Mathom-Houses, Etageres et Pages ;
+- conservation des Mathoms et integration a Annuler / Refaire.
+
+## 3.9.1
+
+- boutons + et - pour creer/supprimer les Pages, avec confirmations et historique.
+
+## 3.9.0
+
+- export HTML prenant en charge les Pages, sous-Etageres et liens internes ;
+- export PDF de la Page courante avec rendu de sa disposition.
+
+## 3.8.0
+
+- sauvegardes et restaurations manuelles controlees ;
+- sauvegardes automatiques quotidiennes, hebdomadaires et mensuelles.
+
 ## 3.7.0
 
 ### Added
