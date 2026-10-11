@@ -47,6 +47,7 @@ private:
     QToolButton *m_addButton = nullptr;
     QToolButton *m_removeButton = nullptr;
     QToolButton *m_sortButton = nullptr;
+    QAction *m_propertiesAction = nullptr;
     QAction *m_toShelfAction = nullptr;
     QAction *m_toHouseAction = nullptr;
     SortMode m_sortMode = SortMode::Manual;

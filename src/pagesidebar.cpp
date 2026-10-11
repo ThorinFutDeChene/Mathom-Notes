@@ -142,6 +142,13 @@ PageSidebar::PageSidebar(QWidget *parent)
 
             QMenu menu(this);
 
+            // Reuse the existing Page Properties shortcut action, so the
+            // dialog targets the Page selected by the right click above.
+            if (m_propertiesAction) {
+                menu.addAction(m_propertiesAction);
+                menu.addSeparator();
+            }
+
             if (m_toShelfAction)
                 menu.addAction(m_toShelfAction);
 
@@ -389,6 +396,7 @@ void PageSidebar::registerShortcutActions(
         i18n("Page Properties..."));
 
     registerScoped(propertiesAction);
+    m_propertiesAction = propertiesAction;
 
     // Supprimer une Page : conserve les protections
     // et la confirmation deja existantes.
