@@ -10,6 +10,7 @@
 #include <QDialog>
 
 class QString;
+class QComboBox;
 class QGroupBox;
 class QRadioButton;
 class KTextEdit;
@@ -43,9 +44,15 @@ class TextFileImportDialog : public QDialog
 {
     Q_OBJECT
 public:
-    explicit TextFileImportDialog(QWidget *parent = nullptr);
+    enum class Destination { CurrentPage, NewPage, NewHouse };
+    enum class Encoding { Auto, Utf8, Latin1 };
+
+    explicit TextFileImportDialog(QWidget *parent = nullptr, bool hasCurrentBasket = true);
     ~TextFileImportDialog() override;
     QString separator();
+    bool customSeparatorSelected() const;
+    Destination destination() const;
+    Encoding encoding() const;
 protected Q_SLOTS:
     void customSeparatorChanged();
 
@@ -59,6 +66,8 @@ private:
     QRadioButton *m_all_in_one_choice;
     QRadioButton *m_anotherSeparator;
     KTextEdit *m_customSeparator;
+    QComboBox *m_destinationChoice;
+    QComboBox *m_encodingChoice;
 };
 
 /** Functions that import data from other software.

@@ -69,7 +69,7 @@ Note *NoteFactory::createNoteText(const QString &text, BasketScene *parent, bool
     int tagsLength = 0;
     Note *note = nullptr;
 
-    if (Settings::detectTextTags()) {
+    if (Settings::detectTextTags() && !reallyPlainText) {
         tags = Tools::detectTags(text, tagsLength);
     }
     QString textConverted = text.mid(tagsLength);
