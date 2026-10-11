@@ -14,6 +14,11 @@
 #include <QDialog>
 #include <QDialogButtonBox>
 #include <QGroupBox>
+#include <QFile>
+#include <QRegularExpression>
+#include <QSaveFile>
+#include <QStandardPaths>
+#include <QToolBar>
 // #include <QDesktopWidget>
 #include <QLabel>
 #include <QMoveEvent>
@@ -41,6 +46,57 @@
 
 #include <basket_debug.h>
 
+// Older KXMLGUI toolbar customizations retain actions removed from the
+// application's default layout, even after the XMLGUI version is raised.
+// Migrate only the obsolete "New" action from the main toolbar; preserve
+// every other toolbar customization and the right-click "New" menu.
+static void migrateObsoleteMathomToolbarAction()
+{
+    const QString dataHome =
+        QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    if (dataHome.isEmpty())
+        return;
+
+    const QString path =
+        dataHome + QStringLiteral("/kxmlgui5/mathom/mathomui.rc");
+    QFile file(path);
+    if (!file.open(QIODevice::ReadOnly))
+        return;
+
+    const QString xml = QString::fromUtf8(file.readAll());
+    file.close();
+
+    // Restrict the replacement to mainToolBar. The same action is still
+    // required in basket_popup and must never be removed from that menu.
+    const QRegularExpression toolbarPattern(
+        QStringLiteral(R"(<ToolBar\b[^>]*\bname\s*=\s*["']mainToolBar["'][^>]*>[\s\S]*?</ToolBar>)"));
+    const QRegularExpressionMatch match = toolbarPattern.match(xml);
+    if (!match.hasMatch())
+        return;
+
+    QString toolbarXml = match.captured();
+    const QRegularExpression obsoleteActionPattern(
+        QStringLiteral(R"((?m)^[ \t]*<Action\b[^>]*\bname\s*=\s*["']basket_new_menu["'][^>]*/>[ \t]*(?:\r?\n)?)"));
+    toolbarXml.remove(obsoleteActionPattern);
+    if (toolbarXml == match.captured())
+        return;
+
+    QString updatedXml = xml;
+    updatedXml.replace(match.capturedStart(), match.capturedLength(), toolbarXml);
+
+    // Atomic write: a failed migration must not corrupt user settings.
+    QSaveFile output(path);
+    if (!output.open(QIODevice::WriteOnly))
+        return;
+
+    const QByteArray contents = updatedXml.toUtf8();
+    if (output.write(contents) != contents.size()) {
+        output.cancelWriting();
+        return;
+    }
+    output.commit();
+}
+
 /** Container */
 
 MainWindow::MainWindow(QWidget *parent)
@@ -63,9 +119,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     setStandardToolBarMenuEnabled(true);
 
+    migrateObsoleteMathomToolbarAction();
     createGUI(QStringLiteral("mathomui.rc"));
     KConfigGroup group = KSharedConfig::openConfig()->group(autoSaveGroup());
     applyMainWindowSettings(group);
+    removeObsoleteNewToolbarAction();
 }
 
 MainWindow::~MainWindow()
@@ -250,6 +308,16 @@ void MainWindow::slotNewToolbarConfig() // This is called when OK or Apply is cl
 
     KConfigGroup group = KSharedConfig::openConfig()->group(autoSaveGroup());
     applyMainWindowSettings(group);
+    removeObsoleteNewToolbarAction();
+}
+
+void MainWindow::removeObsoleteNewToolbarAction()
+{
+    QAction *action = actionCollection()->action(QStringLiteral("basket_new_menu"));
+    if (action) {
+        if (QToolBar *mainToolbar = toolBar(QStringLiteral("mainToolBar")))
+            mainToolbar->removeAction(action);
+    }
 }
 
 void MainWindow::showSettingsDialog()
