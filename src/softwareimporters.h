@@ -79,6 +79,7 @@ void finishImport(BasketScene *basket);
 
 // The importers in themselves:
 void importTextFile();
+void importPdfFile();
 }
 
 #endif // SOFTWAREIMPORTERS_H

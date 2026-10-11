@@ -640,6 +640,11 @@ void BNPView::setupActions()
     a->setIcon(MathomIcons::icon(QStringLiteral("text-plain")));
     a->setShortcut(0);
 
+    a = ac->addAction(QStringLiteral("basket_import_pdf_file"), this, &BNPView::importPdfFile);
+    a->setText(i18n("&PDF Document..."));
+    a->setIcon(MathomIcons::icon(QStringLiteral("application-pdf")));
+    a->setShortcut(0);
+
     a = ac->addAction(QStringLiteral("basket_backup_restore"), this, &BNPView::backupRestore);
     a->setText(i18n("&Backup && Restore..."));
     a->setShortcut(0);
@@ -3566,6 +3571,11 @@ void BNPView::slotResetFilter()
 void BNPView::importTextFile()
 {
     SoftwareImporters::importTextFile();
+}
+
+void BNPView::importPdfFile()
+{
+    SoftwareImporters::importPdfFile();
 }
 
 void BNPView::backupRestore()

@@ -6465,3 +6465,83 @@ msgstr "Écraser les fichiers existants."
 #~ msgid "No valid Mathom Debian package was found in the latest release."
 #~ msgstr ""
 #~ "Aucun paquet Debian Mathom valide n’a été trouvé dans la dernière version."
+
+#, kde-format
+msgid "Import PDF Document"
+msgstr "Importer un document PDF"
+
+#, kde-format
+msgid "PDF files (*.pdf);;All files (*)"
+msgstr "Fichiers PDF (*.pdf);;Tous les fichiers (*)"
+
+#, kde-format
+msgid "PDF page grouping"
+msgstr "Regroupement des pages PDF"
+
+#, kde-format
+msgid "One Mathom per PDF page"
+msgstr "Un Mathom par page PDF"
+
+#, kde-format
+msgid "Entire document in one Mathom"
+msgstr "Document entier dans un seul Mathom"
+
+#, kde-format
+msgid "PDF text extraction order"
+msgstr "Ordre d'extraction du texte PDF"
+
+#, kde-format
+msgid "Reading order (recommended)"
+msgstr "Ordre de lecture (recommandé)"
+
+#, kde-format
+msgid "Preserve physical page layout"
+msgstr "Conserver la disposition physique de la page"
+
+#, kde-format
+msgid "This import creates editable Mathoms from selectable PDF text. Scanned pages require OCR; images and PDF formatting are not imported."
+msgstr "Cet import crée des Mathoms modifiables à partir du texte sélectionnable d'un PDF. Les pages numérisées nécessitent l'OCR ; les images et la mise en forme du PDF ne sont pas importées."
+
+#, kde-format
+msgid "Cannot open this PDF file."
+msgstr "Impossible d'ouvrir ce fichier PDF."
+
+#, kde-format
+msgid "This PDF is password protected and cannot be imported yet."
+msgstr "Ce PDF est protégé par un mot de passe et ne peut pas encore être importé."
+
+#, kde-format
+msgid "This PDF does not permit text extraction."
+msgstr "Ce PDF n'autorise pas l'extraction de texte."
+
+#, kde-format
+msgid "This PDF contains no pages."
+msgstr "Ce PDF ne contient aucune page."
+
+#, kde-format
+msgid "Reading PDF text..."
+msgstr "Lecture du texte du PDF..."
+
+#, kde-format
+msgid "Cannot read PDF page %1."
+msgstr "Impossible de lire la page PDF %1."
+
+#, kde-format
+msgid "This PDF contains too much text for a single import."
+msgstr "Ce PDF contient trop de texte pour une seule importation."
+
+#, kde-format
+msgid "This PDF contains no selectable text. Scanned PDFs require OCR."
+msgstr "Ce PDF ne contient aucun texte sélectionnable. Les PDF numérisés nécessitent un OCR."
+
+#, kde-format
+msgid "The PDF import was interrupted: %1 of %2 Mathoms were created."
+msgstr "L'importation PDF a été interrompue : %1 Mathoms créés sur %2."
+
+#, kde-format
+msgid "Pages without selectable text skipped: %1. OCR is not available yet."
+msgstr "Pages sans texte sélectionnable ignorées : %1. L'OCR n'est pas encore disponible."
+
+#, kde-format
+msgid "&PDF Document..."
+msgstr "Document &PDF..."

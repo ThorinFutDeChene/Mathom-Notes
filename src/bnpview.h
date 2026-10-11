@@ -147,6 +147,7 @@ public Q_SLOTS:
     bool isFilteringAllBaskets();
     // From main window
     void importTextFile();
+    void importPdfFile();
     void backupRestore();
     void checkCleanup();
 

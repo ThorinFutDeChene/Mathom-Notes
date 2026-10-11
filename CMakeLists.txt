@@ -86,6 +86,9 @@ find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS
     Core5Compat
 )
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(POPPLER_QT6 REQUIRED IMPORTED_TARGET poppler-qt6)
+
 find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
     Archive
     Codecs

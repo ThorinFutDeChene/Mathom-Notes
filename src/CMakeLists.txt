@@ -52,6 +52,7 @@ set(libbasket_SRCS
     secondarylanguagevalidator.cpp secondarylanguagevalidator.h
     settings_versionsync.cpp settings_versionsync.h
     softwareimporters.cpp softwareimporters.h
+    pdfimporter.cpp
     spreadsheetcontent.cpp spreadsheetcontent.h
     tag.cpp tag.h
     tagsedit.cpp tagsedit.h
@@ -106,6 +107,7 @@ target_link_libraries(LibBasket
     Qt::Gui
     Qt::Multimedia
     Qt::Network
+    PkgConfig::POPPLER_QT6
 )
 
 if(TARGET PkgConfig::gpgme)
