@@ -3709,6 +3709,8 @@ void BasketScene::insertNote(Note *note, Note *clicked, int zone, const QPointF 
         // Group if note have siblings:
         if (note->next()) {
             Note *group = new Note(this);
+            // Conserver la Page des Mathoms dans leur groupe.
+            group->setPageId(note->pageId());
             for (Note *n = note; n; n = n->next())
                 n->setParentNote(group);
             group->setFirstChild(note);
