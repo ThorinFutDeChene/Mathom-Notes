@@ -4,8 +4,6 @@
  <MenuBar noMerge="1" >
   <Menu name="basket" >
    <text>&amp;Mathom-House</text>
-   <Action name="basket_new_menu" />
-   <Separator/>
    <Action name="basket_properties" />
    <Menu icon="document-export" >
     <text>&amp;Export</text>
@@ -132,8 +130,7 @@
  <ToolBar newline="false" position="Top" noMerge="1" name="mainToolBar" fullWidth="true" >
   <text>Main Toolbar</text>
 
-  <!-- Zone 1: prise de notes immediate -->
-  <Action name="basket_new_menu" />
+  <!-- Zone 1: historique des modifications -->
   <Action name="richtext_undo" />
   <Action name="richtext_redo" />
 
