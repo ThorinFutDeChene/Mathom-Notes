@@ -367,8 +367,14 @@ void SoftwareImporters::importTextFile()
     int imported = 0;
     bool partialFailure = false;
     for (const QString &part : parts) {
-        // Explicit plain text: do not treat #RGB, URLs or markup as other Mathom types.
-        Note *note = NoteFactory::createNoteText(part, basket, /*reallyPlainText=*/true);
+        // Convert TXT into the same HtmlContent notes as normal Mathom text.
+        // Escape the source text and preserve line breaks, without converting
+        // color strings, URLs or tags into other Mathom types on import.
+        const QString html = QStringLiteral(
+            "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\">"
+            "<meta name=\"qrichtext\" content=\"1\" /></head><body>%1</body></html>")
+                                 .arg(Tools::textToHTMLWithoutP(part));
+        Note *note = NoteFactory::createNoteHtml(html, basket);
         if (!note) {
             partialFailure = true;
             break;
