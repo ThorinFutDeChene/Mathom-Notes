@@ -55,6 +55,7 @@ private:
     SettingsDialog *settings();
 
     void setupActions();
+    void removeObsoleteNewToolbarAction();
 
     KToggleAction *m_actShowStatusbar = nullptr;
     QAction *actQuit = nullptr;
