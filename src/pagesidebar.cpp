@@ -28,6 +28,7 @@
 #include "bnpview.h"
 #include "global.h"
 #include "history.h"
+#include "pagepropertiesdialog.h"
 
 namespace
 {
@@ -365,6 +366,29 @@ void PageSidebar::registerShortcutActions(
 
     renameAction->setText(i18n("Rename Page"));
     registerScoped(renameAction);
+
+    // Open the properties of the current Page.
+    auto *propertiesAction = category->addAction(
+        QStringLiteral("page_properties"),
+        this,
+        [this]() {
+            if (!m_basket)
+                return;
+
+            if (m_basket->currentPageId().isEmpty())
+                m_basket->ensureTodayPage();
+
+            PagePropertiesDialog dialog(
+                m_basket,
+                this);
+
+            dialog.exec();
+        });
+
+    propertiesAction->setText(
+        i18n("Page Properties..."));
+
+    registerScoped(propertiesAction);
 
     // Supprimer une Page : conserve les protections
     // et la confirmation deja existantes.
