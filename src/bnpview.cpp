@@ -950,39 +950,52 @@ void BNPView::setupActions()
     a->setShortcut(0);
     m_actDelBasket = a;
 
+    // Keep basket_remove and its original ID for existing custom shortcuts.
+    // The two type-specific actions below have NO default shortcuts.
+    const auto registerHierarchyRemoveAction =
+        [this, hierarchyCategory](
+            const QString &id,
+            const QString &label,
+            bool removeShelf) -> QAction * {
+            QAction *action = hierarchyCategory->addAction(
+                id, this, [this, removeShelf]() {
+                    BasketScene *basket = currentBasket();
+                    if (!basket || basket->isLocked())
+                        return;
+
+                    // A House shortcut must never delete a Shelf, or vice versa.
+                    if ((parentBasketOf(basket) != nullptr) != removeShelf)
+                        return;
+
+                    delBasket(); // Existing confirmation + global Undo/Redo.
+                });
+            action->setText(label);
+            action->setIcon(MathomIcons::icon(QStringLiteral("edit-delete")));
+            action->setShortcutContext(Qt::WidgetWithChildrenShortcut);
+            action->setEnabled(false); // Enabled on first valid selection.
+            addAction(action); // Works even when the '-' menu is closed.
+            return action;
+        };
+
+    m_actRemoveMathomHouse = registerHierarchyRemoveAction(
+        QStringLiteral("hierarchy_remove_house"),
+        i18n("Remove Mathom-House"), false);
+    m_actRemoveShelf = registerHierarchyRemoveAction(
+        QStringLiteral("hierarchy_remove_shelf"),
+        i18n("Remove Shelf"), true);
+
     // Sidebar '+' reuses the same creation commands as the right-click menu.
     auto *treeAddMenu = new QMenu(m_treeAddButton);
     treeAddMenu->addAction(actNewBasket);
     treeAddMenu->addAction(actNewSubBasket);
     m_treeAddButton->setMenu(treeAddMenu);
 
-    // Sidebar '-' offers the two explicit deletion choices.
-    // Both delegate to the existing confirmation/Undo implementation.
+    // Sidebar '-' uses these SAME configurable deletion actions.
     auto *treeRemoveMenu = new QMenu(m_treeRemoveButton);
-    QAction *removeHouseAction = treeRemoveMenu->addAction(
-        i18n("Remove Mathom-House"));
-    QAction *removeShelfAction = treeRemoveMenu->addAction(
-        i18n("Remove Shelf"));
-    connect(removeHouseAction, &QAction::triggered, this, [this]() {
-        BasketScene *basket = currentBasket();
-        if (basket && !basket->isLocked()
-            && !parentBasketOf(basket))
-            delBasket();
-    });
-    connect(removeShelfAction, &QAction::triggered, this, [this]() {
-        BasketScene *basket = currentBasket();
-        if (basket && !basket->isLocked()
-            && parentBasketOf(basket))
-            delBasket();
-    });
-    connect(treeRemoveMenu, &QMenu::aboutToShow, this,
-            [this, removeHouseAction, removeShelfAction]() {
-        BasketScene *basket = currentBasket();
-        const bool allowed = basket && !basket->isLocked();
-        const bool shelf = basket && parentBasketOf(basket);
-        removeHouseAction->setEnabled(allowed && !shelf);
-        removeShelfAction->setEnabled(allowed && shelf);
-    });
+    treeRemoveMenu->addAction(m_actRemoveMathomHouse);
+    treeRemoveMenu->addAction(m_actRemoveShelf);
+    connect(treeRemoveMenu, &QMenu::aboutToShow,
+            this, &BNPView::updateHierarchyRemoveActions);
     m_treeRemoveButton->setMenu(treeRemoveMenu);
 
     // The four original configurable actions are also in the right-click
@@ -4431,8 +4444,21 @@ void BNPView::activatedTagShortcut()
     currentBasket()->activatedTagShortcut(tag);
 }
 
+void BNPView::updateHierarchyRemoveActions()
+{
+    BasketScene *basket = currentBasket();
+    const bool allowed = basket && !basket->isLocked();
+    const bool isShelf = basket && parentBasketOf(basket) != nullptr;
+
+    if (m_actRemoveMathomHouse)
+        m_actRemoveMathomHouse->setEnabled(allowed && !isShelf);
+    if (m_actRemoveShelf)
+        m_actRemoveShelf->setEnabled(allowed && isShelf);
+}
+
 void BNPView::slotBasketChanged()
 {
+    updateHierarchyRemoveActions();
     const bool isShelf = currentBasket() && parentBasketOf(currentBasket()) != nullptr;
 
     m_actDelBasket->setText(isShelf
@@ -4467,6 +4493,7 @@ void BNPView::isLockedChanged()
     //  m_actLockBasket->setChecked(isLocked);
     m_actPropBasket->setEnabled(!isLocked);
     m_actDelBasket->setEnabled(!isLocked);
+    updateHierarchyRemoveActions();
     updateNotesActions();
 }
 

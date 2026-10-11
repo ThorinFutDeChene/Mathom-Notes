@@ -264,6 +264,8 @@ public:
     QAction *m_actSortSiblingsAsc;
     QAction *m_actSortSiblingsDesc;
     QAction *m_actDelBasket;
+    QAction *m_actRemoveMathomHouse = nullptr;
+    QAction *m_actRemoveShelf = nullptr;
     KToggleAction *m_actFilterAllBaskets;
 
 private:
@@ -309,6 +311,7 @@ private:
     QAction *m_actExpandBasket;
 
     void setupActions();
+    void updateHierarchyRemoveActions();
     void setupGlobalShortcuts();
     void updateNavigationBar();
 
