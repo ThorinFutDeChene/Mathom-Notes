@@ -421,6 +421,21 @@ SettingsDialog::SettingsDialog(QWidget *parent)
 
 SettingsDialog::~SettingsDialog() = default;
 
+bool SettingsDialog::isActiveModuleWidget(
+    const QWidget *moduleWidget) const
+{
+    const auto *page = currentPage();
+
+    if (!page || !moduleWidget)
+        return false;
+
+    const QWidget *currentWidget = page->widget();
+
+    return currentWidget
+        && (currentWidget == moduleWidget
+            || currentWidget->isAncestorOf(moduleWidget));
+}
+
 void SettingsDialog::showEvent(QShowEvent *event)
 {
     QDialog::showEvent(event);

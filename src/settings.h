@@ -38,6 +38,7 @@ public:
     explicit SettingsDialog(QWidget *parent);
     ~SettingsDialog() override;
     virtual int exec() override;
+    bool isActiveModuleWidget(const QWidget *moduleWidget) const;
 
 Q_SIGNALS:
     void applyRequested();
@@ -497,7 +498,11 @@ public:
         connect(settings, &SettingsDialog::acceptRequested, this, &AbstractSettingsPage::slotAccept);
         connect(settings, &SettingsDialog::applyRequested, this, &AbstractSettingsPage::slotApply);
         connect(settings, &SettingsDialog::cancelRequested, this, &AbstractSettingsPage::slotCancel);
-        connect(settings, &SettingsDialog::defaultsRequested, this, &AbstractSettingsPage::slotDefaults);
+        connect(settings, &SettingsDialog::defaultsRequested,
+                this, [this, settings]() {
+            if (settings->isActiveModuleWidget(widget()))
+                slotDefaults();
+        });
         AbstractSettingsPage::load();
     }
     ~AbstractSettingsPage() override = default;
