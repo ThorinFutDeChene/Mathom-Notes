@@ -3274,14 +3274,14 @@ void BasketScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
         return;
     }
 
-    // Forward right-clicks inside the active text editor to Qt.
-    // Do not replace the editor with the Mathom context menu.
+    // The context-menu event is delivered separately.
+    // Keep the inline editor alive without holding a native mouse grab.
     if (m_editor && m_editor->textEdit()
         && m_editor->graphicsWidget()
         && m_editor->graphicsWidget()->sceneBoundingRect().contains(event->scenePos())
         && event->button() == Qt::RightButton) {
-        m_editorNativeMouseEvent = true;
-        QGraphicsScene::mousePressEvent(event);
+        m_noActionOnMouseRelease = true;
+        event->accept();
         return;
     }
 

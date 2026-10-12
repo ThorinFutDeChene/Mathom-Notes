@@ -71,6 +71,11 @@ void FocusedTextEdit::contextMenuEvent(QContextMenuEvent *event)
 {
     // Keep the usual editing actions and add the mathematical catalog.
     QMenu *menu = createStandardContextMenu();
+
+    // Keep this popup outside QGraphicsProxyWidget.
+    // Otherwise BasketScene can intercept clicks meant for menu actions.
+    menu->setWindowFlag(Qt::BypassGraphicsProxyWidget, true);
+
     QMenu *symbols = menu->addMenu(i18n("Mathematical symbols"));
     MathSymbolPalette::populateMenu(symbols, this);
     menu->exec(event->globalPos());
