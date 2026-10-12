@@ -26,6 +26,7 @@
 #include "secondarylanguageengine.h"
 #include "secondarylanguagesettings.h"
 #include "mathsymbolengine.h"
+#include "mathscientificformat.h"
 #include "mathsymbolpalette.h"
 #include <KLocalizedString>
 
@@ -309,9 +310,16 @@ void FocusedTextEdit::applySecondaryLanguageTransformation()
         cursorPosition,
         QTextCursor::KeepAnchor);
 
-    cursor.insertText(
-        transformation.replacement,
-        format);
+    if (transformation.verticalFraction
+        && property("mathomAccessibilityRichText").toBool()) {
+        MathScientificFormat::insertVerticalFraction(
+            cursor, transformation.numerator,
+            transformation.denominator, palette().text());
+    } else {
+        // Plain-text Mathoms and one-line fields cannot persist
+        // a QTextTable: use the Unicode diagonal fallback.
+        cursor.insertText(transformation.replacement, format);
+    }
 
     cursor.endEditBlock();
 

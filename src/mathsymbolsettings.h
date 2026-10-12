@@ -12,16 +12,25 @@ struct BASKET_EXPORT MathSymbolShortcut
     QString input;
 };
 
+// French suggestions only: every field may be customized or left blank.
+struct BASKET_EXPORT MathScientificPreferences
+{
+    QString fractionSeparator = QStringLiteral("/");
+    QString exponentKeyword = QStringLiteral("exposant");
+    QString subscriptKeyword = QStringLiteral("indice");
+    bool verticalFractions = true;
+};
+
 struct BASKET_EXPORT MathSymbolPreferences
 {
     QString trigger;
     QVector<MathSymbolShortcut> shortcuts;
+    MathScientificPreferences scientific;
 };
 
 class BASKET_EXPORT MathSymbolSettings
 {
 public:
-    // French defaults are applied only when an alias has never been saved.
     static MathSymbolPreferences load();
     static QString trigger();
     static MathSymbolPreferences defaults();

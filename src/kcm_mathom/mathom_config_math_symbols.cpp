@@ -12,6 +12,9 @@
 #include <KPluginFactory>
 
 #include <QAbstractItemView>
+#include <QComboBox>
+#include <QFormLayout>
+#include <QGroupBox>
 #include <QFont>
 #include <QFrame>
 #include <QHash>
@@ -20,6 +23,7 @@
 #include <QIcon>
 #include <QLabel>
 #include <QLineEdit>
+#include <QRegularExpression>
 #include <QScrollArea>
 #include <QSet>
 #include <QSignalBlocker>
@@ -57,6 +61,38 @@ public:
         triggerRow->addWidget(m_trigger);
         triggerRow->addStretch();
         layout->addLayout(triggerRow);
+
+        auto *expressions = new QGroupBox(i18n("Scientific expressions"), widget());
+        auto *expressionForm = new QFormLayout(expressions);
+
+        m_fractionStyle = new QComboBox(expressions);
+        m_fractionStyle->addItem(i18n("Vertical (stacked)"), true);
+        m_fractionStyle->addItem(i18n("Diagonal (compact)"), false);
+        expressionForm->addRow(i18n("Fraction display:"), m_fractionStyle);
+
+        m_fractionSeparator = new QLineEdit(expressions);
+        m_fractionSeparator->setPlaceholderText(QStringLiteral("/"));
+        m_fractionSeparator->setToolTip(i18n("Input placed between numerator and denominator; / by default."));
+        expressionForm->addRow(i18n("Fraction separator:"), m_fractionSeparator);
+
+        m_exponentKeyword = new QLineEdit(expressions);
+        m_exponentKeyword->setPlaceholderText(QStringLiteral("exposant"));
+        expressionForm->addRow(i18n("Exponent keyword:"), m_exponentKeyword);
+
+        m_subscriptKeyword = new QLineEdit(expressions);
+        m_subscriptKeyword->setPlaceholderText(QStringLiteral("indice"));
+        expressionForm->addRow(i18n("Subscript keyword:"), m_subscriptKeyword);
+
+        auto *formatNote = new QLabel(
+            i18n("Stacked fractions are supported in rich-text Mathoms. "
+                 "Plain-text Mathoms and single-line fields use diagonal Unicode fractions "
+                 "to keep their content editable and persistent."), expressions);
+        formatNote->setWordWrap(true);
+        expressionForm->addRow(formatNote);
+        m_sciencePreview = new QLabel(expressions);
+        m_sciencePreview->setWordWrap(true);
+        expressionForm->addRow(m_sciencePreview);
+        layout->addWidget(expressions);
 
         m_conflictPanel = new QFrame(widget());
         m_conflictPanel->setFrameShape(QFrame::StyledPanel);
@@ -122,8 +158,20 @@ public:
         connect(m_trigger, &QLineEdit::textChanged, this, [this]() {
             markAsChanged();
             updatePreview();
+            updateSciencePreview();
             updateWarnings();
         });
+        connect(m_fractionStyle, &QComboBox::currentIndexChanged, this, [this]() {
+            markAsChanged();
+            updateSciencePreview();
+        });
+        for (QLineEdit *editor : {m_fractionSeparator, m_exponentKeyword, m_subscriptKeyword}) {
+            connect(editor, &QLineEdit::textChanged, this, [this]() {
+                markAsChanged();
+                updateSciencePreview();
+                updateWarnings();
+            });
+        }
         connect(m_search, &QLineEdit::textChanged, this,
                 [this](const QString &value) { filterCatalog(value); });
         connect(m_tree, &QTreeWidget::currentItemChanged, this,
@@ -158,12 +206,25 @@ public:
             const QSignalBlocker blocker(m_trigger);
             m_trigger->setText(settings.trigger);
         }
+        {
+            const QSignalBlocker blocker(m_fractionStyle);
+            m_fractionStyle->setCurrentIndex(settings.scientific.verticalFractions ? 0 : 1);
+        }
+        {
+            const QSignalBlocker a(m_fractionSeparator);
+            const QSignalBlocker b(m_exponentKeyword);
+            const QSignalBlocker c(m_subscriptKeyword);
+            m_fractionSeparator->setText(settings.scientific.fractionSeparator);
+            m_exponentKeyword->setText(settings.scientific.exponentKeyword);
+            m_subscriptKeyword->setText(settings.scientific.subscriptKeyword);
+        }
         for (const MathSymbolShortcut &mapping : settings.shortcuts) {
             if (QTreeWidgetItem *item = symbolItem(mapping.symbol))
                 item->setText(2, mapping.input);
         }
         syncSelection();
         updatePreview();
+        updateSciencePreview();
         updateWarnings();
         setNeedsSave(false);
     }
@@ -172,6 +233,10 @@ public:
     {
         MathSymbolPreferences settings;
         settings.trigger = m_trigger->text();
+        settings.scientific.verticalFractions = m_fractionStyle->currentData().toBool();
+        settings.scientific.fractionSeparator = m_fractionSeparator->text();
+        settings.scientific.exponentKeyword = m_exponentKeyword->text();
+        settings.scientific.subscriptKeyword = m_subscriptKeyword->text();
         for (int categoryIndex = 0; categoryIndex < m_tree->topLevelItemCount(); ++categoryIndex) {
             auto *category = m_tree->topLevelItem(categoryIndex);
             for (int index = 0; index < category->childCount(); ++index) {
@@ -188,12 +253,17 @@ public:
     {
         const MathSymbolPreferences settings = MathSymbolSettings::defaults();
         m_trigger->setText(settings.trigger);
+        m_fractionStyle->setCurrentIndex(settings.scientific.verticalFractions ? 0 : 1);
+        m_fractionSeparator->setText(settings.scientific.fractionSeparator);
+        m_exponentKeyword->setText(settings.scientific.exponentKeyword);
+        m_subscriptKeyword->setText(settings.scientific.subscriptKeyword);
         for (const MathSymbolShortcut &mapping : settings.shortcuts) {
             if (QTreeWidgetItem *item = symbolItem(mapping.symbol))
                 item->setText(2, mapping.input);
         }
         syncSelection();
         updatePreview();
+        updateSciencePreview();
         updateWarnings();
         markAsChanged();
     }
@@ -260,6 +330,22 @@ private:
         }
     }
 
+    void updateSciencePreview()
+    {
+        const QString trig = m_trigger->text();
+        if (trig.isEmpty()) {
+            m_sciencePreview->setText(i18n("Choose the mathematical trigger to activate scientific input."));
+            return;
+        }
+        const QString exampleFraction = QStringLiteral("8") + m_fractionSeparator->text()
+            + QStringLiteral("153") + trig;
+        const QString exampleExponent = QStringLiteral("x10") + m_exponentKeyword->text() + trig;
+        const QString exampleSubscript = QStringLiteral("H2") + m_subscriptKeyword->text() + trig
+            + QStringLiteral("O");
+        m_sciencePreview->setText(i18n("Examples: %1 (fraction), %2 (exponent), %3 (subscript)",
+            exampleFraction, exampleExponent, exampleSubscript));
+    }
+
     void updateWarnings()
     {
         QStringList warnings;
@@ -279,6 +365,10 @@ private:
             }
         }
 
+        if (!m_exponentKeyword->text().isEmpty()
+            && m_exponentKeyword->text() == m_subscriptKeyword->text()) {
+            warnings.append(i18n("Exponent and subscript share the same keyword; numeric input is ambiguous."));
+        }
         QHash<QString, QStringList> aliases;
         for (int categoryIndex = 0; categoryIndex < m_tree->topLevelItemCount(); ++categoryIndex) {
             auto *category = m_tree->topLevelItem(categoryIndex);
@@ -294,6 +384,31 @@ private:
                     it.key(), it.value().join(QStringLiteral(", "))));
             }
         }
+        // Explicit aliases may clash with generated fraction/exponent/indice
+        // commands. The warning is advisory; the engine handles ambiguity.
+        const QString fractionPattern = m_fractionSeparator->text().isEmpty()
+            ? QString() : QStringLiteral("^[+-]?[0-9]+")
+                  + QRegularExpression::escape(m_fractionSeparator->text())
+                  + QStringLiteral("[0-9]+$");
+        const QString exponentPattern = m_exponentKeyword->text().isEmpty()
+            ? QString() : QStringLiteral("^[+-]?[0-9]+")
+                  + QRegularExpression::escape(m_exponentKeyword->text())
+                  + QStringLiteral("$");
+        const QString subscriptPattern = m_subscriptKeyword->text().isEmpty()
+            ? QString() : QStringLiteral("^[+-]?[0-9]+")
+                  + QRegularExpression::escape(m_subscriptKeyword->text())
+                  + QStringLiteral("$");
+        for (auto it = aliases.cbegin(); it != aliases.cend(); ++it) {
+            const auto patternMatches = [&it](const QString &pattern) {
+                return !pattern.isEmpty()
+                    && QRegularExpression(pattern).match(it.key()).hasMatch();
+            };
+            if (patternMatches(fractionPattern) || patternMatches(exponentPattern)
+                || patternMatches(subscriptPattern)) {
+                warnings.append(i18n("Input word \"%1\" overlaps a scientific expression; "
+                                     "you can keep it, but the result may be ambiguous.", it.key()));
+            }
+        }
         warnings.sort();
         if (warnings.isEmpty()) {
             m_conflictText->clear();
@@ -307,6 +422,11 @@ private:
     }
 
     QLineEdit *m_trigger = nullptr;
+    QComboBox *m_fractionStyle = nullptr;
+    QLineEdit *m_fractionSeparator = nullptr;
+    QLineEdit *m_exponentKeyword = nullptr;
+    QLineEdit *m_subscriptKeyword = nullptr;
+    QLabel *m_sciencePreview = nullptr;
     QLineEdit *m_search = nullptr;
     QTreeWidget *m_tree = nullptr;
     QLabel *m_selectedLabel = nullptr;

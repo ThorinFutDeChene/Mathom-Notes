@@ -50,6 +50,7 @@ set(libbasket_SRCS
     mathsymbolcatalog.cpp mathsymbolcatalog.h
     mathsymbolsettings.cpp mathsymbolsettings.h
     mathsymbolengine.cpp mathsymbolengine.h
+    mathscientificformat.cpp mathscientificformat.h
     mathsymbolpalette.cpp mathsymbolpalette.h
     secondarylanguagevalidator.cpp secondarylanguagevalidator.h
     secondarylanguagespage.cpp secondarylanguagespage.h
