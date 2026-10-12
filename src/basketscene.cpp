@@ -3274,6 +3274,17 @@ void BasketScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
         return;
     }
 
+    // Forward right-clicks inside the active text editor to Qt.
+    // Do not replace the editor with the Mathom context menu.
+    if (m_editor && m_editor->textEdit()
+        && m_editor->graphicsWidget()
+        && m_editor->graphicsWidget()->sceneBoundingRect().contains(event->scenePos())
+        && event->button() == Qt::RightButton) {
+        m_editorNativeMouseEvent = true;
+        QGraphicsScene::mousePressEvent(event);
+        return;
+    }
+
     // Ctrl+double-click is reserved for additive word selection.
     // Swallow its first click so the existing text selection is not
     // collapsed before the double-click reaches FocusedTextEdit.
@@ -3561,6 +3572,15 @@ void BasketScene::delayedCancelInsertPopupMenu()
 
 void BasketScene::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 {
+    // Let the embedded editor display its own context menu.
+    if (event->reason() == QGraphicsSceneContextMenuEvent::Mouse
+        && m_editor && m_editor->textEdit()
+        && m_editor->graphicsWidget()
+        && m_editor->graphicsWidget()->sceneBoundingRect().contains(event->scenePos())) {
+        QGraphicsScene::contextMenuEvent(event);
+        return;
+    }
+
     if (event->reason() == QGraphicsSceneContextMenuEvent::Keyboard) {
         if (countFounds /*countShown*/ () == 0) { // TODO: Count shown!!
             QMenu *menu = Global::bnpView->popupMenu(QStringLiteral("insert_popup"));
