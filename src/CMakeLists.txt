@@ -194,3 +194,12 @@ install(TARGETS mathom_config_backups
 install(FILES fr.thorinux.mathom.desktop DESTINATION ${KDE_INSTALL_APPDIR})
 install(FILES fr.thorinux.mathom.metainfo.xml DESTINATION ${KDE_INSTALL_METAINFODIR})
 
+
+# Configuration des symboles mathematiques
+add_library(mathom_config_math_symbols MODULE
+    kcm_mathom/mathom_config_math_symbols.cpp)
+
+target_link_libraries(mathom_config_math_symbols LibBasket)
+
+install(TARGETS mathom_config_math_symbols
+    DESTINATION ${KDE_INSTALL_PLUGINDIR}/pim/kcms/mathom/)

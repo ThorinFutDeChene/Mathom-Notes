@@ -1,0 +1,22 @@
+{
+    "KPlugin": {
+        "Description": "Mathematical symbols and custom input",
+        "Description[fr]": "Symboles mathématiques et saisie personnalisée",
+        "Icon": "accessories-calculator",
+        "Name": "Mathematical Symbols",
+        "Name[fr]": "Symboles mathématiques",
+        "ServiceTypes": [
+            "KCModule"
+        ]
+    },
+    "X-KDE-CfgDlgHierarchy": "Basket",
+    "X-KDE-FactoryName": "mathom_config_math_symbols",
+    "X-KDE-HasReadOnlyMode": "false",
+    "X-KDE-ModuleType": "Library",
+    "X-KDE-ParentApp": "basket",
+    "X-KDE-ParentComponents": [
+        "basket",
+        "kontact_basketplugin"
+    ],
+    "X-KDE-Weight": 16
+}
