@@ -298,6 +298,7 @@ private:
     QAction *m_actInsertCrossReference;
     QAction *m_actInsertImage;
     QAction *m_actInsertSpreadsheet;
+    QAction *m_actInsertMathSymbols;
     QAction *m_actInsertColor;
     QAction *m_actImportKMenu;
     QAction *m_actInsertLauncher;

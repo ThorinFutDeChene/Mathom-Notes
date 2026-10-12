@@ -7,6 +7,10 @@
 
 #include <QApplication>
 #include <QEvent>
+#include <QContextMenuEvent>
+#include <QFocusEvent>
+#include <QMenu>
+#include <QPointer>
 #include <QKeyEvent>
 #include <QMimeData>
 #include <QMouseEvent>
@@ -21,11 +25,15 @@
 #include "settings.h"
 #include "secondarylanguageengine.h"
 #include "secondarylanguagesettings.h"
-#include "secondarylanguagevalidator.h"
+#include "mathsymbolengine.h"
+#include "mathsymbolpalette.h"
+#include <KLocalizedString>
 
 #ifdef KeyPress
 #undef KeyPress
 #endif
+
+namespace { QPointer<FocusedTextEdit> s_lastFocusedEditor; }
 
 /** class FocusedTextEdit */
 
@@ -33,18 +41,10 @@ FocusedTextEdit::FocusedTextEdit(bool disableUpdatesOnKeyPress, QWidget *parent)
     : KTextEdit(parent)
     , m_disableUpdatesOnKeyPress(disableUpdatesOnKeyPress)
     , m_secondaryLanguages(SecondaryLanguageSettings::load())
+    , m_mathSymbols(MathSymbolSettings::load())
 {
-    /*
-     * Une configuration comportant un conflit de déclencheurs ne doit
-     * jamais produire une transformation imprévisible.
-     *
-     * La page de paramètres signale déjà ces conflits visuellement.
-     * Tant qu'ils ne sont pas résolus, la saisie secondaire reste
-     * inactive dans cet éditeur.
-     */
-    m_secondaryLanguagesValid =
-        SecondaryLanguageValidator::isValid(
-            m_secondaryLanguages);
+    // Ambiguous mappings are left untouched, not used to block
+    // all other valid combinations.
 
     connect(
         this,
@@ -54,6 +54,28 @@ FocusedTextEdit::FocusedTextEdit(bool disableUpdatesOnKeyPress, QWidget *parent)
 }
 
 FocusedTextEdit::~FocusedTextEdit() = default;
+
+FocusedTextEdit *FocusedTextEdit::lastFocusedEditor()
+{
+    return s_lastFocusedEditor.data();
+}
+
+void FocusedTextEdit::focusInEvent(QFocusEvent *event)
+{
+    s_lastFocusedEditor = this;
+    KTextEdit::focusInEvent(event);
+}
+
+void FocusedTextEdit::contextMenuEvent(QContextMenuEvent *event)
+{
+    // Keep the usual editing actions and add the mathematical catalog.
+    QMenu *menu = createStandardContextMenu();
+    QMenu *symbols = menu->addMenu(i18n("Mathematical symbols"));
+    MathSymbolPalette::populateMenu(symbols, this);
+    menu->exec(event->globalPos());
+    delete menu;
+}
+
 
 void FocusedTextEdit::paste(QClipboard::Mode mode)
 {
@@ -224,10 +246,8 @@ void FocusedTextEdit::applyVerticalAlignment(QTextCharFormat::VerticalAlignment 
 
 void FocusedTextEdit::applySecondaryLanguageTransformation()
 {
-    if (!m_secondaryLanguagesValid
-        || m_secondaryLanguages.isEmpty()) {
+    if (m_secondaryLanguages.isEmpty() && m_mathSymbols.trigger.isEmpty())
         return;
-    }
 
     QTextCursor cursor =
         textCursor();
@@ -258,10 +278,9 @@ void FocusedTextEdit::applySecondaryLanguageTransformation()
     const QString textBeforeCursor =
         contextCursor.selectedText();
 
-    const SecondaryLanguageTransformation transformation =
-        SecondaryLanguageEngine::transform(
-            textBeforeCursor,
-            m_secondaryLanguages);
+    const MathSymbolTransformation transformation =
+        MathSymbolEngine::transform(
+            textBeforeCursor, m_mathSymbols, m_secondaryLanguages);
 
     if (!transformation.matched
         || transformation.ambiguous

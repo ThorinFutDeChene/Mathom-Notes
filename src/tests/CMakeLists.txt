@@ -14,6 +14,7 @@ set(BASKET_TEST_SRC
     secondarylanguagetest.cpp
     secondarylanguageenginetest.cpp
     secondarylanguagevalidatortest.cpp
+    mathsymbolenginetest.cpp
 )
 
 ecm_add_tests(${BASKET_TEST_SRC} LINK_LIBRARIES LibBasket Qt::Test)

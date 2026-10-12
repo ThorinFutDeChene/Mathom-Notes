@@ -47,6 +47,10 @@ set(libbasket_SRCS
     secondarylanguagecatalog.cpp secondarylanguagecatalog.h
     secondarylanguagesettings.cpp secondarylanguagesettings.h
     secondarylanguageengine.cpp secondarylanguageengine.h
+    mathsymbolcatalog.cpp mathsymbolcatalog.h
+    mathsymbolsettings.cpp mathsymbolsettings.h
+    mathsymbolengine.cpp mathsymbolengine.h
+    mathsymbolpalette.cpp mathsymbolpalette.h
     secondarylanguagevalidator.cpp secondarylanguagevalidator.h
     secondarylanguagespage.cpp secondarylanguagespage.h
     secondarylanguagevalidator.cpp secondarylanguagevalidator.h

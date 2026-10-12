@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE kpartgui SYSTEM "kpartgui.dtd">
-<gui name="basket" version="14">
+<gui name="basket" version="15">
  <MenuBar noMerge="1" >
   <Menu name="basket" >
    <text>&amp;Mathom-House</text>
@@ -78,6 +78,7 @@
    <Action name="insert_html" />
    <Action name="insert_image" />
    <Action name="insert_spreadsheet" />
+   <Action name="insert_math_symbols" />
    <Action name="insert_link" />
    <Action name="insert_cross_reference" />
    <Action name="insert_launcher" />
@@ -237,6 +238,7 @@
  </Menu>
  <Menu noMerge="1" name="insert_popup" >
   <Action name="insert_html" />
+  <Action name="insert_math_symbols" />
   <Action name="insert_image" />
   <Action name="insert_link" />
   <Action name="insert_cross_reference" />

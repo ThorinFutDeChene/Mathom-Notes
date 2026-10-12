@@ -29,7 +29,8 @@
 #include "mathomicons.h"
 #include "secondarylanguageengine.h"
 #include "secondarylanguagesettings.h"
-#include "secondarylanguagevalidator.h"
+#include "mathsymbolengine.h"
+#include "mathsymbolsettings.h"
 
 #if HAVE_LIBGIT2
 extern "C" {
@@ -92,10 +93,8 @@ void applySecondaryLanguageTransformation(
     const QVector<SecondaryLanguageSelection> selections =
         SecondaryLanguageSettings::load();
 
-    if (selections.isEmpty()
-        || !SecondaryLanguageValidator::isValid(selections)) {
+    if (selections.isEmpty() && MathSymbolSettings::trigger().isEmpty())
         return;
-    }
 
     const int cursorPosition =
         lineEdit->cursorPosition();
@@ -103,10 +102,23 @@ void applySecondaryLanguageTransformation(
     if (cursorPosition <= 0)
         return;
 
-    const SecondaryLanguageTransformation transformation =
-        SecondaryLanguageEngine::transform(
-            lineEdit->text().left(cursorPosition),
-            selections);
+    const QString textBeforeCursor = lineEdit->text().left(cursorPosition);
+    const QString mathTrigger = MathSymbolSettings::trigger();
+    bool languageCandidate = false;
+    for (const auto &language : selections) {
+        if (!language.trigger.isEmpty() && textBeforeCursor.endsWith(language.trigger)) {
+            languageCandidate = true;
+            break;
+        }
+    }
+    const bool mathCandidate = !mathTrigger.isEmpty() && textBeforeCursor.endsWith(mathTrigger);
+    if (!mathCandidate && !languageCandidate)
+        return;
+    const MathSymbolPreferences mathPreferences = mathCandidate
+        ? MathSymbolSettings::load() : MathSymbolPreferences();
+    const MathSymbolTransformation transformation =
+        MathSymbolEngine::transform(
+            textBeforeCursor, mathPreferences, selections);
 
     if (!transformation.matched
         || transformation.ambiguous

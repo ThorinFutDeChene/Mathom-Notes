@@ -179,6 +179,7 @@ SecondaryLanguageEngine::transform(
                 != first.replacement) {
 
             result.ambiguous = true;
+            result.replaceLength = first.replaceLength;
             return result;
         }
     }

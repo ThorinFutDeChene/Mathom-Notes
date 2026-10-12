@@ -3,6 +3,7 @@
 #include "secondarylanguagecatalog.h"
 #include "secondarylanguagesettings.h"
 #include "secondarylanguagevalidator.h"
+#include "mathsymbolsettings.h"
 
 #include <KLocalizedString>
 
@@ -856,11 +857,57 @@ void SecondaryLanguagesPage::updateConflictWarning()
             row.widget);
     }
 
+    const QVector<SecondaryLanguageSelection> current = currentSelections();
     const QVector<SecondaryLanguageConflict> conflicts =
-        SecondaryLanguageValidator::conflicts(
-            currentSelections());
+        SecondaryLanguageValidator::conflicts(current);
 
-    if (conflicts.isEmpty()) {
+    // The same trigger is always worth mentioning, even if the current
+    // language profiles happen not to contain identical input sequences.
+    QStringList additionalMessages;
+    QSet<QString> additionalIds;
+    for (int i = 0; i < current.size(); ++i) {
+        const auto &first = current.at(i);
+        if (first.trigger.isEmpty())
+            continue;
+        const auto firstProfile = SecondaryLanguageCatalog::profileById(first.id);
+        const QString firstName = firstProfile.isValid() ? firstProfile.name : first.id;
+        for (int j = i + 1; j < current.size(); ++j) {
+            const auto &second = current.at(j);
+            if (second.trigger.isEmpty())
+                continue;
+            const bool overlap = first.trigger == second.trigger
+                || first.trigger.startsWith(second.trigger)
+                || second.trigger.startsWith(first.trigger);
+            if (!overlap)
+                continue;
+            const auto secondProfile = SecondaryLanguageCatalog::profileById(second.id);
+            const QString secondName = secondProfile.isValid() ? secondProfile.name : second.id;
+            additionalMessages.append(i18n(
+                "%1 (%2) and %3 (%4) have overlapping input triggers.",
+                firstName, first.trigger, secondName, second.trigger));
+            additionalIds.insert(first.id);
+            additionalIds.insert(second.id);
+        }
+    }
+    const QString mathTrigger = MathSymbolSettings::load().trigger;
+    if (!mathTrigger.isEmpty()) {
+        for (const auto &language : current) {
+            if (language.trigger.isEmpty())
+                continue;
+            if (language.trigger != mathTrigger
+                && !language.trigger.startsWith(mathTrigger)
+                && !mathTrigger.startsWith(language.trigger))
+                continue;
+            const auto profile = SecondaryLanguageCatalog::profileById(language.id);
+            additionalMessages.append(i18n(
+                "%1 (%2) and mathematical symbols (%3) have overlapping input triggers.",
+                profile.isValid() ? profile.name : language.id,
+                language.trigger, mathTrigger));
+            additionalIds.insert(language.id);
+        }
+    }
+
+    if (conflicts.isEmpty() && additionalMessages.isEmpty()) {
 
         m_conflictLabel->clear();
 
@@ -870,8 +917,8 @@ void SecondaryLanguagesPage::updateConflictWarning()
         return;
     }
 
-    QStringList messages;
-    QSet<QString> conflictingLanguages;
+    QStringList messages = additionalMessages;
+    QSet<QString> conflictingLanguages = additionalIds;
 
     for (const SecondaryLanguageConflict &conflict :
          conflicts) {
@@ -962,6 +1009,7 @@ void SecondaryLanguagesPage::updateConflictWarning()
         row.widget->update();
     }
 
+    messages.append(i18n("You may keep these settings; ambiguous sequences will not be replaced."));
     m_conflictLabel->setText(
         QStringLiteral("<b>")
         + i18n("Input conflict")

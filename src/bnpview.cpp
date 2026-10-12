@@ -81,6 +81,8 @@
 #include "gitwrapper.h"
 #include "global.h"
 #include "mathomicons.h"
+#include "mathsymbolpalette.h"
+#include "focusedwidgets.h"
 #include "mathomnavigationbar.h"
 #include "history.h"
 #include "persistenthistory.h"
@@ -771,6 +773,13 @@ void BNPView::setupActions()
     a->setIcon(MathomIcons::icon(QStringLiteral("x-office-spreadsheet")));
     m_actInsertSpreadsheet = a;
 
+    a = ac->addAction(QStringLiteral("insert_math_symbols"), this, [this]() {
+        MathSymbolPalette::open(this, FocusedTextEdit::lastFocusedEditor());
+    });
+    a->setText(i18n("Mathematical symbols..."));
+    a->setIcon(QIcon::fromTheme(QStringLiteral("accessories-calculator")));
+    m_actInsertMathSymbols = a;
+
     a = ac->addAction(QStringLiteral("insert_color"));
     a->setText(i18n("&Color"));
     a->setIcon(MathomIcons::icon(QStringLiteral("fill-color")));
@@ -845,6 +854,7 @@ void BNPView::setupActions()
     m_insertActions.append(m_actInsertCrossReference);
     m_insertActions.append(m_actInsertImage);
     m_insertActions.append(m_actInsertSpreadsheet);
+    m_insertActions.append(m_actInsertMathSymbols);
     m_insertActions.append(m_actInsertColor);
     m_insertActions.append(m_actImportKMenu);
     m_insertActions.append(m_actInsertLauncher);

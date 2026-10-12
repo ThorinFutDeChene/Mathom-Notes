@@ -7,6 +7,7 @@
 #define FOCUSEDWIDGETS_H
 
 #include "secondarylanguagesettings.h"
+#include "mathsymbolsettings.h"
 
 #include <KTextEdit>
 #include <QClipboard>
@@ -17,6 +18,8 @@
 
 class QColor;
 class QEvent;
+class QFocusEvent;
+class QContextMenuEvent;
 class QKeyEvent;
 class QMouseEvent;
 class QWheelEvent;
@@ -35,6 +38,7 @@ public:
     }
 
     void clearMultiSelection();
+    static FocusedTextEdit *lastFocusedEditor();
 
 public Q_SLOTS:
     void onSelectionChanged(); //!< Put selected text into the global mouse selection
@@ -51,6 +55,8 @@ public Q_SLOTS:
 
 protected:
     void keyPressEvent(QKeyEvent *event) override;
+    void focusInEvent(QFocusEvent *event) override;
+    void contextMenuEvent(QContextMenuEvent *event) override;
     void mouseDoubleClickEvent(QMouseEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
     void enterEvent(QEnterEvent *event) override;
@@ -69,7 +75,7 @@ private:
     QList<QTextCursor> m_multiSelectionCursors;
 
     QVector<SecondaryLanguageSelection> m_secondaryLanguages;
-    bool m_secondaryLanguagesValid = true;
+    MathSymbolPreferences m_mathSymbols;
 };
 
 /** class FocusWidgetFilter
