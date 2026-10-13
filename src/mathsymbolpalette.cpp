@@ -3,6 +3,8 @@
 
 #include "focusedwidgets.h"
 #include "mathsymbolcatalog.h"
+#include "global.h"
+#include "bnpview.h"
 
 #include <KLocalizedString>
 
@@ -129,8 +131,9 @@ void MathSymbolPalette::populateMenu(QMenu *menu, FocusedTextEdit *target)
     QAction *allSymbols = menu->addAction(i18n("Open symbol palette..."));
     QObject::connect(allSymbols, &QAction::triggered, menu,
         [menu, safeTarget]() {
-            MathSymbolPalette::open(safeTarget ? safeTarget->window() : nullptr,
-                                    safeTarget.data());
+            MathSymbolPalette::open(
+                Global::bnpView ? Global::bnpView->window() : nullptr,
+                safeTarget.data());
         });
     menu->addSeparator();
     QString previous;

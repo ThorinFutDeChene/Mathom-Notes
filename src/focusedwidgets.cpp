@@ -11,6 +11,7 @@
 #include <QFocusEvent>
 #include <QMenu>
 #include <QPointer>
+#include <QTimer>
 #include <QKeyEvent>
 #include <QMimeData>
 #include <QMouseEvent>
@@ -72,14 +73,30 @@ void FocusedTextEdit::contextMenuEvent(QContextMenuEvent *event)
     // Keep the usual editing actions and add the mathematical catalog.
     QMenu *menu = createStandardContextMenu();
 
-    // Keep this popup outside QGraphicsProxyWidget.
-    // Otherwise BasketScene can intercept clicks meant for menu actions.
-    menu->setWindowFlag(Qt::BypassGraphicsProxyWidget, true);
+    // Reparent to Mathom's real main window, outside the graphics proxy.
+    QWidget *host = Global::bnpView
+        ? Global::bnpView->window() : nullptr;
+
+    menu->setParent(
+        host, Qt::Popup | Qt::BypassGraphicsProxyWidget);
 
     QMenu *symbols = menu->addMenu(i18n("Mathematical symbols"));
     MathSymbolPalette::populateMenu(symbols, this);
-    menu->exec(event->globalPos());
-    delete menu;
+    QPointer<FocusedTextEdit> safeEditor(this);
+
+    connect(menu, &QMenu::aboutToHide, menu,
+        [safeEditor]() {
+            QTimer::singleShot(0, [safeEditor]() {
+                if (safeEditor && safeEditor->isVisible())
+                    safeEditor->setFocus(Qt::PopupFocusReason);
+            });
+        });
+
+    connect(menu, &QMenu::aboutToHide,
+            menu, &QObject::deleteLater);
+
+    menu->popup(event->globalPos());
+    event->accept();
 }
 
 

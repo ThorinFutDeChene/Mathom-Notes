@@ -3280,7 +3280,7 @@ void BasketScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
         && m_editor->graphicsWidget()
         && m_editor->graphicsWidget()->sceneBoundingRect().contains(event->scenePos())
         && event->button() == Qt::RightButton) {
-        m_noActionOnMouseRelease = true;
+        m_noActionOnMouseRelease = false;
         event->accept();
         return;
     }
@@ -4150,6 +4150,17 @@ void BasketScene::acceptDropEvent(QGraphicsSceneDragDropEvent *event, bool preCo
 
 void BasketScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
+    // A right-click inside the editor must not enter Mathom's
+    // note-selection and mouse-release processing.
+    if (event->button() == Qt::RightButton
+        && m_editor && m_editor->textEdit()
+        && m_editor->graphicsWidget()
+        && m_editor->graphicsWidget()->sceneBoundingRect().contains(event->scenePos())) {
+        m_noActionOnMouseRelease = false;
+        event->accept();
+        return;
+    }
+
     if (m_editorNativeMouseEvent) {
         m_editorNativeMouseEvent = false;
         QGraphicsScene::mouseReleaseEvent(event);
