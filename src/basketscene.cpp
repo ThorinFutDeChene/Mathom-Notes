@@ -90,6 +90,7 @@
 #include "decoratedbasket.h"
 #include "diagnosticmanager.h"
 #include "focusedwidgets.h"
+#include "mathsymbolpalette.h"
 #include "gitwrapper.h"
 #include "global.h"
 #include "history.h"
@@ -3572,13 +3573,38 @@ void BasketScene::delayedCancelInsertPopupMenu()
 
 void BasketScene::contextMenuEvent(QGraphicsSceneContextMenuEvent *event)
 {
-    // Let the embedded editor display its own context menu.
+    // Handle the editor context menu directly in the scene.
+    // Its native popup must not be embedded by QGraphicsProxyWidget.
     if (event->reason() == QGraphicsSceneContextMenuEvent::Mouse
         && m_editor && m_editor->textEdit()
         && m_editor->graphicsWidget()
         && m_editor->graphicsWidget()->sceneBoundingRect().contains(event->scenePos())) {
-        QGraphicsScene::contextMenuEvent(event);
-        return;
+
+        auto *editor = dynamic_cast<FocusedTextEdit *>(m_editor->textEdit());
+
+        if (editor) {
+            QMenu *menu = editor->createStandardContextMenu();
+
+            // Parent the menu to the real graphics view, not the editor.
+            menu->setParent(
+                m_view,
+                Qt::Popup | Qt::BypassGraphicsProxyWidget);
+
+            QMenu *symbols = menu->addMenu(
+                i18n("Mathematical symbols"));
+
+            MathSymbolPalette::populateMenu(symbols, editor);
+
+            // The scene supplies the correct global screen position.
+            menu->exec(event->screenPos());
+            delete menu;
+
+            // Restore both proxy and text-editor focus.
+            QTimer::singleShot(0, this, &BasketScene::focusEditor);
+
+            event->accept();
+            return;
+        }
     }
 
     if (event->reason() == QGraphicsSceneContextMenuEvent::Keyboard) {
