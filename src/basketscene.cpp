@@ -42,6 +42,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPoint>
+#include <QPointer>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSaveFile>
@@ -90,6 +91,7 @@
 #include "decoratedbasket.h"
 #include "diagnosticmanager.h"
 #include "focusedwidgets.h"
+#include "mathsymbolpalette.h"
 #include "gitwrapper.h"
 #include "global.h"
 #include "history.h"
@@ -3274,6 +3276,25 @@ void BasketScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
         return;
     }
 
+    // DEV5: reserve right-clicks inside the active text editor.
+    // The native popup will open after mouse release, not during press.
+    if (event->button() == Qt::RightButton
+        && m_editor && m_editor->textEdit()
+        && m_editor->graphicsWidget()
+        && m_editor->graphicsWidget()->sceneBoundingRect()
+               .contains(event->scenePos())) {
+        m_editorContextMenuPending = true;
+        m_noActionOnMouseRelease = true;
+
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("MATHOM_EDIT_CONTEXT_RIGHT_PRESS"));
+
+        event->accept();
+        return;
+    }
+
+    m_editorContextMenuPending = false;
+
     // Ctrl+double-click is reserved for additive word selection.
     // Swallow its first click so the existing text selection is not
     // collapsed before the double-click reaches FocusedTextEdit.
@@ -4130,6 +4151,113 @@ void BasketScene::acceptDropEvent(QGraphicsSceneDragDropEvent *event, bool preCo
 
 void BasketScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
+    // DEV5: handle a right-click reserved during mousePressEvent.
+    if (event->button() == Qt::RightButton
+        && m_editorContextMenuPending) {
+
+        m_editorContextMenuPending = false;
+        m_noActionOnMouseRelease = false;
+
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("MATHOM_EDIT_CONTEXT_RIGHT_RELEASE"));
+
+        QPointer<FocusedTextEdit> safeEditor(
+            m_editor
+                ? dynamic_cast<FocusedTextEdit *>(m_editor->textEdit())
+                : nullptr);
+
+        const QPoint globalPos = event->screenPos();
+
+        const bool releaseInsideEditor =
+            m_editor && m_editor->graphicsWidget()
+            && m_editor->graphicsWidget()->sceneBoundingRect()
+                   .contains(event->scenePos());
+
+        event->accept();
+
+        if (!safeEditor || !releaseInsideEditor)
+            return;
+
+        // Wait until Qt has finished dispatching the mouse event.
+        QTimer::singleShot(0, this,
+            [this, safeEditor, globalPos]() {
+
+                if (!safeEditor || !m_editor
+                    || m_editor->textEdit() != safeEditor.data())
+                    return;
+
+                QMenu *menu =
+                    safeEditor->createStandardContextMenu();
+
+                if (!menu)
+                    return;
+
+                // The menu belongs to the real window, not the
+                // embedded QGraphicsProxyWidget.
+                menu->setParent(
+                    m_view->window(),
+                    Qt::Popup | Qt::BypassGraphicsProxyWidget);
+
+                QMenu *symbols = menu->addMenu(
+                    i18n("Mathematical symbols"));
+
+                MathSymbolPalette::populateMenu(
+                    symbols, safeEditor.data());
+
+                connect(menu, &QMenu::aboutToShow,
+                    this, []() {
+                        DiagnosticManager::instance().logEvent(
+                            QStringLiteral(
+                                "MATHOM_EDIT_CONTEXT_MENU_SHOW"));
+                    });
+
+                connect(menu, &QMenu::triggered,
+                    this, [](QAction *) {
+                        DiagnosticManager::instance().logEvent(
+                            QStringLiteral(
+                                "MATHOM_EDIT_CONTEXT_MENU_ACTION"));
+                    });
+
+                connect(menu, &QMenu::aboutToHide,
+                    this, [this, safeEditor]() {
+
+                        DiagnosticManager::instance().logEvent(
+                            QStringLiteral(
+                                "MATHOM_EDIT_CONTEXT_MENU_HIDE"));
+
+                        QTimer::singleShot(0, this,
+                            [this, safeEditor]() {
+
+                                if (!safeEditor || !m_editor
+                                    || m_editor->textEdit()
+                                           != safeEditor.data())
+                                    return;
+
+                                if (qApp->activePopupWidget()
+                                    || qApp->activeModalWidget())
+                                    return;
+
+                                QWidget *active =
+                                    qApp->activeWindow();
+
+                                if (active
+                                    && active != m_view->window()
+                                    && active->isVisible())
+                                    return;
+
+                                focusEditor();
+                            });
+                    });
+
+                connect(menu, &QMenu::aboutToHide,
+                    menu, &QObject::deleteLater);
+
+                menu->popup(globalPos);
+            });
+
+        return;
+    }
+
     if (m_editorNativeMouseEvent) {
         m_editorNativeMouseEvent = false;
         QGraphicsScene::mouseReleaseEvent(event);
@@ -6191,6 +6319,7 @@ bool BasketScene::closeEditor(bool deleteEmptyNote /* =true*/)
     }
     m_editorTrackMouseEvent = false;
     m_editorNativeMouseEvent = false;
+    m_editorContextMenuPending = false;
     removeItem(m_editor->graphicsWidget());
     m_editor->validate();
 

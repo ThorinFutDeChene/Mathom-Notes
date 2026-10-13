@@ -698,6 +698,7 @@ private:
     bool m_redirectEditActions;
     bool m_editorTrackMouseEvent;
     bool m_editorNativeMouseEvent;
+    bool m_editorContextMenuPending = false;
     qreal m_editorWidth;
     qreal m_editorHeight;
     QTimer m_inactivityAutoSaveTimer;
