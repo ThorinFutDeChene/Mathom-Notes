@@ -19,6 +19,7 @@
 #include "note.h" // For Note::Zone
 
 class QFrame;
+class QMenu;
 class QPixmap;
 class QPushButton;
 
@@ -698,6 +699,8 @@ private:
     bool m_redirectEditActions;
     bool m_editorTrackMouseEvent;
     bool m_editorNativeMouseEvent;
+    bool m_editorContextMenuPending = false;
+    QMenu *m_editorContextMenu = nullptr;
     qreal m_editorWidth;
     qreal m_editorHeight;
     QTimer m_inactivityAutoSaveTimer;

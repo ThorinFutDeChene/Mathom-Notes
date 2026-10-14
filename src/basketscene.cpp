@@ -9,6 +9,7 @@
 #include <QAction>
 #include <QActionGroup>
 #include <QApplication>
+#include <QGuiApplication>
 #include <QClipboard>
 #include <QContextMenuEvent>
 #include <QCursor>
@@ -42,11 +43,13 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPoint>
+#include <QPointer>
 #include <QPushButton>
 #include <QResizeEvent>
 #include <QSaveFile>
 #include <QSignalBlocker>
 #include <functional>
+#include <QScreen>
 #include <QScrollBar>
 #include <QStringList>
 #include <QTextDocument>
@@ -90,6 +93,7 @@
 #include "decoratedbasket.h"
 #include "diagnosticmanager.h"
 #include "focusedwidgets.h"
+#include "mathsymbolpalette.h"
 #include "gitwrapper.h"
 #include "global.h"
 #include "history.h"
@@ -3274,6 +3278,19 @@ void BasketScene::mousePressEvent(QGraphicsSceneMouseEvent *event)
         return;
     }
 
+    // DEV6: reserve a right click inside an active inline text editor.
+    if (event->button() == Qt::RightButton && m_editor
+        && m_editor->textEdit() && m_editor->graphicsWidget()
+        && m_editor->graphicsWidget()->sceneBoundingRect()
+               .contains(event->scenePos())) {
+        m_editorContextMenuPending = (m_editorContextMenu == nullptr);
+        m_noActionOnMouseRelease = true;
+        event->accept();
+        return;
+    }
+    if (event->button() == Qt::RightButton)
+        m_editorContextMenuPending = false;
+
     // Ctrl+double-click is reserved for additive word selection.
     // Swallow its first click so the existing text selection is not
     // collapsed before the double-click reaches FocusedTextEdit.
@@ -4130,6 +4147,144 @@ void BasketScene::acceptDropEvent(QGraphicsSceneDragDropEvent *event, bool preCo
 
 void BasketScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
 {
+    if (event->button() == Qt::RightButton && m_editorContextMenuPending) {
+        m_editorContextMenuPending = false;
+        m_noActionOnMouseRelease = true;
+
+        QPointer<FocusedTextEdit> editor(
+            m_editor ? dynamic_cast<FocusedTextEdit *>(m_editor->textEdit())
+                     : nullptr);
+
+        const bool inside = m_editor && m_editor->graphicsWidget()
+            && m_editor->graphicsWidget()->sceneBoundingRect()
+                   .contains(event->scenePos());
+
+        const QPoint cursorPos = QCursor::pos();
+        const QPoint eventPos = event->screenPos();
+        const QPoint mappedPos = m_view->viewport()->mapToGlobal(
+            m_view->mapFromScene(event->scenePos()));
+
+        event->accept();
+
+        if (!inside || !editor || m_editorContextMenu)
+            return;
+
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("MATHOM_DEV6_CONTEXT_RELEASE"),
+            {{QStringLiteral("cursor_x"), cursorPos.x()},
+             {QStringLiteral("cursor_y"), cursorPos.y()},
+             {QStringLiteral("event_x"), eventPos.x()},
+             {QStringLiteral("event_y"), eventPos.y()},
+             {QStringLiteral("mapped_x"), mappedPos.x()},
+             {QStringLiteral("mapped_y"), mappedPos.y()}});
+
+        QTimer::singleShot(0, this, [this, editor, cursorPos]() {
+            if (!editor || !m_editor
+                || m_editor->textEdit() != editor.data()
+                || m_editorContextMenu)
+                return;
+
+            // Create a native menu under the real main window.
+            QMenu *menu = new QMenu(m_view->window());
+            menu->setWindowFlag(Qt::BypassGraphicsProxyWidget);
+
+            QMenu *standard = editor->createStandardContextMenu();
+            if (!standard) {
+                menu->deleteLater();
+                return;
+            }
+
+            standard->setParent(menu);
+            menu->addActions(standard->actions());
+
+            QMenu *symbols = menu->addMenu(
+                i18n("Mathematical symbols"));
+
+            MathSymbolPalette::populateMenu(
+                symbols, editor.data());
+
+            m_editorContextMenu = menu;
+
+            connect(menu, &QObject::destroyed, this, [this, menu]() {
+                if (m_editorContextMenu == menu)
+                    m_editorContextMenu = nullptr;
+            });
+
+            connect(menu, &QMenu::aboutToHide, this, [this, editor]() {
+                DiagnosticManager::instance().logEvent(
+                    QStringLiteral("MATHOM_DEV6_CONTEXT_HIDE"));
+
+                QTimer::singleShot(0, this, [this, editor]() {
+                    if (editor && m_editor
+                        && m_editor->textEdit() == editor.data()
+                        && qApp->activeWindow() == m_view->window()
+                        && !qApp->activePopupWidget()
+                        && !qApp->activeModalWidget())
+                        focusEditor();
+                });
+            });
+
+            connect(menu, &QMenu::triggered, this, [](QAction *) {
+                DiagnosticManager::instance().logEvent(
+                    QStringLiteral("MATHOM_DEV6_CONTEXT_ACTION"));
+            });
+
+            connect(menu, &QMenu::aboutToHide,
+                    menu, &QObject::deleteLater);
+
+            QPoint target = cursorPos;
+            QScreen *screen = QGuiApplication::screenAt(target);
+
+            if (!screen)
+                screen = m_view->screen();
+
+            if (screen) {
+                const QRect bounds = screen->availableGeometry();
+                const QSize size = menu->sizeHint();
+
+                target.setX(qBound(
+                    bounds.left(), target.x(),
+                    qMax(bounds.left(),
+                         bounds.right() - size.width() + 1)));
+
+                target.setY(qBound(
+                    bounds.top(), target.y(),
+                    qMax(bounds.top(),
+                         bounds.bottom() - size.height() + 1)));
+            }
+
+            DiagnosticManager::instance().logEvent(
+                QStringLiteral("MATHOM_DEV6_CONTEXT_REQUEST"),
+                {{QStringLiteral("x"), target.x()},
+                 {QStringLiteral("y"), target.y()},
+                 {QStringLiteral("width"), menu->sizeHint().width()},
+                 {QStringLiteral("height"), menu->sizeHint().height()}});
+
+            menu->popup(target);
+
+            QPointer<QMenu> safeMenu(menu);
+
+            QTimer::singleShot(0, this, [safeMenu]() {
+                if (!safeMenu)
+                    return;
+
+                const QRect rect = safeMenu->geometry();
+
+                DiagnosticManager::instance().logEvent(
+                    QStringLiteral("MATHOM_DEV6_CONTEXT_GEOMETRY"),
+                    {{QStringLiteral("x"), rect.x()},
+                     {QStringLiteral("y"), rect.y()},
+                     {QStringLiteral("width"), rect.width()},
+                     {QStringLiteral("height"), rect.height()},
+                     {QStringLiteral("visible"), safeMenu->isVisible()},
+                     {QStringLiteral("embedded"),
+                         safeMenu->graphicsProxyWidget() != nullptr}});
+            });
+        });
+
+        return;
+    }
+
     if (m_editorNativeMouseEvent) {
         m_editorNativeMouseEvent = false;
         QGraphicsScene::mouseReleaseEvent(event);
@@ -6191,6 +6346,11 @@ bool BasketScene::closeEditor(bool deleteEmptyNote /* =true*/)
     }
     m_editorTrackMouseEvent = false;
     m_editorNativeMouseEvent = false;
+    m_editorContextMenuPending = false;
+
+    if (m_editorContextMenu)
+        m_editorContextMenu->close();
+
     removeItem(m_editor->graphicsWidget());
     m_editor->validate();
 
