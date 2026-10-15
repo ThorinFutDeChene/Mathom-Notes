@@ -10,6 +10,8 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
+#include <QTransform>
 #include <QFont>
 #include <QFormLayout>
 #include <QFutureWatcher>
@@ -152,12 +154,18 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     m_moveLeft = new QPushButton(i18n("Move left"), this);
     m_moveRight = new QPushButton(i18n("Move right"), this);
     m_delete = new QPushButton(i18n("Delete page"), this);
+    m_replace = new QPushButton(i18n("Replace page"), this);
+    m_undo = new QPushButton(i18n("Undo rotation"), this);
+    m_redo = new QPushButton(i18n("Redo rotation"), this);
     m_saveButton = new QPushButton(i18n("Finish and save"), this);
     pageActions->addWidget(m_rotateLeft);
     pageActions->addWidget(m_rotateRight);
+    pageActions->addWidget(m_undo);
+    pageActions->addWidget(m_redo);
     pageActions->addWidget(m_moveLeft);
     pageActions->addWidget(m_moveRight);
     pageActions->addWidget(m_delete);
+    pageActions->addWidget(m_replace);
     pageActions->addStretch(1);
     pageActions->addWidget(m_saveButton);
     layout->addLayout(pageActions);
@@ -180,6 +188,14 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
             this, [this] { rotatePage(-1); });
     connect(m_rotateRight, &QPushButton::clicked,
             this, [this] { rotatePage(1); });
+    connect(m_undo, &QPushButton::clicked, this, &MathomScanDialog::undoRotation);
+    connect(m_redo, &QPushButton::clicked, this, &MathomScanDialog::redoRotation);
+    connect(m_replace, &QPushButton::clicked, this, [this] {
+        if (m_selected < 0 || m_selected >= m_pages.size() || m_busy)
+            return;
+        m_replacing = m_selected;
+        startAcquisition();
+    });
     connect(m_moveLeft, &QPushButton::clicked,
             this, [this] { movePage(-1); });
     connect(m_moveRight, &QPushButton::clicked,
@@ -239,8 +255,16 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     connect(&m_acquisition, &QFutureWatcher<MathomScan::Result>::finished,
             this, [this] {
         const MathomScan::Result result = m_acquisition.result();
-        for (const QString &path : result.paths)
-            m_pages.append({path, 0, m_paper->currentText()});
+        int first = 0;
+        if (m_replacing >= 0 && !result.paths.isEmpty()
+            && m_replacing < m_pages.size()) {
+            m_ignored.insert(QFileInfo(m_pages.at(m_replacing).path).fileName());
+            m_pages[m_replacing] = {result.paths.first(), 0, m_paper->currentText()};
+            first = 1;
+        }
+        m_replacing = -1;
+        for (int i = first; i < result.paths.size(); ++i)
+            m_pages.append({result.paths.at(i), 0, m_paper->currentText()});
         m_nextPageNumber += result.paths.size();
         saveManifest();
         m_selected = m_pages.isEmpty() ? -1 : int(m_pages.size()) - 1;
@@ -300,6 +324,9 @@ void MathomScanDialog::setBusy(bool busy, const QString &message)
     m_rotateLeft->setEnabled(!busy && selected);
     m_rotateRight->setEnabled(!busy && selected);
     m_delete->setEnabled(!busy && selected);
+    m_replace->setEnabled(!busy && selected);
+    m_undo->setEnabled(!busy && !m_rotationUndo.isEmpty());
+    m_redo->setEnabled(!busy && !m_rotationRedo.isEmpty());
     m_moveLeft->setEnabled(!busy && selected && m_selected > 0);
     m_moveRight->setEnabled(!busy && selected && m_selected + 1 < m_pages.size());
 }
@@ -449,8 +476,44 @@ void MathomScanDialog::rotatePage(int delta)
     if (m_busy || m_selected < 0 || m_selected >= m_pages.size())
         return;
     auto &page = m_pages[m_selected];
+    m_rotationUndo.append({page.path, page.quarterTurns});
+    m_rotationRedo.clear();
     page.quarterTurns = (page.quarterTurns + delta + 4) % 4;
     saveManifest();
+    refreshPages();
+}
+
+void MathomScanDialog::undoRotation()
+{
+    while (!m_rotationUndo.isEmpty()) {
+        const auto step = m_rotationUndo.takeLast();
+        for (auto &page : m_pages) {
+            if (page.path == step.first) {
+                m_rotationRedo.append({page.path, page.quarterTurns});
+                page.quarterTurns = step.second;
+                saveManifest();
+                refreshPages();
+                return;
+            }
+        }
+    }
+    refreshPages();
+}
+
+void MathomScanDialog::redoRotation()
+{
+    while (!m_rotationRedo.isEmpty()) {
+        const auto step = m_rotationRedo.takeLast();
+        for (auto &page : m_pages) {
+            if (page.path == step.first) {
+                m_rotationUndo.append({page.path, page.quarterTurns});
+                page.quarterTurns = step.second;
+                saveManifest();
+                refreshPages();
+                return;
+            }
+        }
+    }
     refreshPages();
 }
 
