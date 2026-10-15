@@ -6601,6 +6601,10 @@ msgid "Source:"
 msgstr "Source :"
 
 #: src/mathomscan*
+msgid "Color:"
+msgstr "Couleur :"
+
+#: src/mathomscan*
 msgid "Sides:"
 msgstr "Faces :"
 
