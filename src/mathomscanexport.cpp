@@ -2,6 +2,7 @@
 #include "mathomscanexport.h"
 
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QImage>
 #include <QLockFile>
@@ -59,10 +60,15 @@ bool writePdf(const QList<MathomScanExport::Page> &pages,
     }
     QPdfWriter writer(&output);
     writer.setResolution(300);
-    const QPageSize::PageSizeId pageId =
-        paper == QStringLiteral("A3") ? QPageSize::A3
-        : paper == QStringLiteral("A5") ? QPageSize::A5 : QPageSize::A4;
-    writer.setPageSize(QPageSize(pageId));
+    auto pageSize = [&pages, &paper](qsizetype index) {
+        const QString choice = pages.at(index).paper.isEmpty()
+            ? paper : pages.at(index).paper;
+        const QPageSize::PageSizeId id =
+            choice == QStringLiteral("A3") ? QPageSize::A3
+            : choice == QStringLiteral("A5") ? QPageSize::A5 : QPageSize::A4;
+        return QPageSize(id);
+    };
+    writer.setPageSize(pageSize(0));
     writer.setPageMargins(QMarginsF(0, 0, 0, 0));
     QPainter painter(&writer);
     if (!painter.isActive()) {
@@ -72,6 +78,9 @@ bool writePdf(const QList<MathomScanExport::Page> &pages,
     }
     painter.setRenderHint(QPainter::SmoothPixmapTransform);
     for (qsizetype i = 0; i < pages.size(); ++i) {
+        if (i) {
+            writer.setPageSize(pageSize(i));
+        }
         if (i && !writer.newPage()) {
             *error = QStringLiteral("Could not add PDF page");
             painter.end();
