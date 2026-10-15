@@ -30,6 +30,8 @@ set(libbasket_SRCS
     kgpgme.cpp kgpgme.h
     linklabel.cpp linklabel.h
     mathomicons.cpp mathomicons.h
+    mathomscanbackend.cpp mathomscanbackend.h
+    mathomscanconfig.cpp mathomscanconfig.h
     mathomnavigationbar.cpp mathomnavigationbar.h
     newbasketdialog.cpp newbasketdialog.h
     note.cpp note.h
@@ -82,6 +84,8 @@ ecm_qt_declare_logging_category(libbasket_SRCS
 add_library(LibBasket SHARED ${libbasket_SRCS} ${basket_FORM_HDRS} ${basket_RESOURCES})
 target_sources(LibBasket PRIVATE accessibilitysettings.cpp)
 
+target_include_directories(LibBasket PRIVATE ${SANE_INCLUDE_DIR})
+
 target_compile_definitions(LibBasket PRIVATE
     MATHOM_VERSION_STRING="${MATHOM_VERSION}"
 )
@@ -113,6 +117,7 @@ target_link_libraries(LibBasket
     Qt::Multimedia
     Qt::Network
     PkgConfig::POPPLER_QT6
+    ${SANE_LIBRARY}
 )
 
 if(TARGET PkgConfig::gpgme)
@@ -141,6 +146,8 @@ set(basket_SRCS
     main.cpp
     mainwindow.cpp mainwindow.h
     advancedsettingsdialog.cpp advancedsettingsdialog.h
+    mathomscandialog.cpp mathomscandialog.h
+    mathomscanexport.cpp mathomscanexport.h
     application.cpp application.h
     basket.qrc
 )
@@ -150,7 +157,7 @@ if(DEBUG_PIPE)
 endif()
 
 add_executable(mathom ${basket_SRCS})
-target_link_libraries(mathom LibBasket)
+target_link_libraries(mathom LibBasket Qt::Concurrent Qt::Widgets)
 
 if (TARGET LibGit2::LibGit2)
     target_link_libraries(LibBasket LibGit2::LibGit2)
@@ -207,4 +214,10 @@ add_library(mathom_config_math_symbols MODULE
 target_link_libraries(mathom_config_math_symbols LibBasket)
 
 install(TARGETS mathom_config_math_symbols
+    DESTINATION ${KDE_INSTALL_PLUGINDIR}/pim/kcms/mathom/)
+
+# Advanced configuration: scanner selection mode and output directory.
+add_library(mathom_config_scan MODULE kcm_mathom/mathom_config_scan.cpp)
+target_link_libraries(mathom_config_scan LibBasket Qt::Concurrent Qt::Widgets)
+install(TARGETS mathom_config_scan
     DESTINATION ${KDE_INSTALL_PLUGINDIR}/pim/kcms/mathom/)
