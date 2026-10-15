@@ -9,6 +9,7 @@
 #include <QDialog>
 #include <QFutureWatcher>
 #include <QList>
+#include <QPair>
 #include <QSet>
 #include <QString>
 #include <memory>
@@ -43,6 +44,8 @@ private:
     void loadRecoveredSession();
     void saveDocument();
     void movePage(int delta);
+    void undoRotation();
+    void redoRotation();
     QString sessionsRoot() const;
     void setBusy(bool busy, const QString &message);
 
@@ -63,6 +66,9 @@ private:
     QPushButton *m_moveLeft = nullptr;
     QPushButton *m_moveRight = nullptr;
     QPushButton *m_delete = nullptr;
+    QPushButton *m_replace = nullptr;
+    QPushButton *m_undo = nullptr;
+    QPushButton *m_redo = nullptr;
     QLabel *m_status = nullptr;
 
     QFutureWatcher<QList<MathomScan::Device>> m_discovery;
@@ -80,6 +86,9 @@ private:
     bool m_busy = false;
     MathomScan::Capabilities m_capabilities;
     QSet<QString> m_ignored;
+    QList<QPair<QString, int>> m_rotationUndo;
+    QList<QPair<QString, int>> m_rotationRedo;
+    int m_replacing = -1;
     bool m_exporting = false;
     bool m_closeAfterSave = false;
     bool m_allowClose = false;
