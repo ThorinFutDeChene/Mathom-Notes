@@ -32,7 +32,6 @@
 #include <QStandardItemModel>
 #include <QStandardPaths>
 #include <QToolButton>
-#include <QToolBar>
 #include <QUuid>
 #include <QVBoxLayout>
 #include <QtConcurrent>
@@ -107,37 +106,45 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     hardware->addWidget(m_refreshButton);
     layout->addLayout(hardware);
 
-    // One native Qt toolbar with an overflow menu on narrow windows.
-    auto *toolbar = new QToolBar(i18n("Scanner options"), this);
-    toolbar->setMovable(false);
-    m_sources = new QComboBox(toolbar);
-    m_duplex = new QCheckBox(i18n("Duplex"), toolbar);
-    m_color = new QComboBox(toolbar);
-    m_dpi = new QComboBox(toolbar);
-    m_paper = new QComboBox(toolbar);
-    m_output = new QComboBox(toolbar);
+    // Keep every option visible: QToolBar's overflow hid the PDF/JPEG
+    // selector even at normal window sizes with French translations.
+    m_sources = new QComboBox(this);
+    m_sources->setMinimumContentsLength(12);
+    m_sources->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
+    m_duplex = new QCheckBox(i18n("Duplex"), this);
+    m_color = new QComboBox(this);
+    m_dpi = new QComboBox(this);
+    m_paper = new QComboBox(this);
+    m_output = new QComboBox(this);
     m_paper->addItems({QStringLiteral("A5"), QStringLiteral("A4"), QStringLiteral("A3")});
     m_paper->setCurrentText(QStringLiteral("A4"));
     m_output->addItems({QStringLiteral("PDF"), QStringLiteral("JPEG")});
-    m_scanButton = new QPushButton(i18n("Scan"), toolbar);
+    m_scanButton = new QPushButton(i18n("Scan"), this);
     m_scanButton->setIcon(QIcon::fromTheme(QStringLiteral("scanner")));
-    toolbar->addWidget(m_scanButton);
-    m_cancelButton = new QPushButton(i18n("Stop scan"), toolbar);
+    m_cancelButton = new QPushButton(i18n("Stop scan"), this);
     m_cancelButton->hide();
-    toolbar->addWidget(m_cancelButton);
-    toolbar->addSeparator();
-    toolbar->addWidget(new QLabel(i18n("Source:"), toolbar));
-    toolbar->addWidget(m_sources);
-    toolbar->addWidget(m_duplex);
-    toolbar->addWidget(new QLabel(i18n("Color:"), toolbar));
-    toolbar->addWidget(m_color);
-    toolbar->addWidget(new QLabel(i18n("Resolution:"), toolbar));
-    toolbar->addWidget(m_dpi);
-    toolbar->addWidget(new QLabel(i18n("Page size:"), toolbar));
-    toolbar->addWidget(m_paper);
-    toolbar->addWidget(new QLabel(i18n("File type:"), toolbar));
-    toolbar->addWidget(m_output);
-    layout->addWidget(toolbar);
+
+    auto *acquisitionControls = new QHBoxLayout;
+    acquisitionControls->addWidget(m_scanButton);
+    acquisitionControls->addWidget(m_cancelButton);
+    acquisitionControls->addSpacing(12);
+    acquisitionControls->addWidget(new QLabel(i18n("Source:"), this));
+    acquisitionControls->addWidget(m_sources);
+    acquisitionControls->addWidget(m_duplex);
+    acquisitionControls->addStretch(1);
+    layout->addLayout(acquisitionControls);
+
+    auto *scanOptions = new QHBoxLayout;
+    scanOptions->addWidget(new QLabel(i18n("Color:"), this));
+    scanOptions->addWidget(m_color);
+    scanOptions->addWidget(new QLabel(i18n("Resolution:"), this));
+    scanOptions->addWidget(m_dpi);
+    scanOptions->addWidget(new QLabel(i18n("Page size:"), this));
+    scanOptions->addWidget(m_paper);
+    scanOptions->addWidget(new QLabel(i18n("File type:"), this));
+    scanOptions->addWidget(m_output);
+    scanOptions->addStretch(1);
+    layout->addLayout(scanOptions);
 
     m_status = new QLabel(i18n("Connect your scanner, then choose it."), this);
     m_status->setWordWrap(true);
