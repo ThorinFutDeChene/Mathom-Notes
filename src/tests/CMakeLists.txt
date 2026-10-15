@@ -19,3 +19,8 @@ set(BASKET_TEST_SRC
 )
 
 ecm_add_tests(${BASKET_TEST_SRC} LINK_LIBRARIES LibBasket Qt::Test)
+
+# Native scanning export has no dependency on physical scanner hardware.
+ecm_add_test(mathomscanexporttest.cpp ../mathomscanexport.cpp
+    TEST_NAME mathomscanexporttest
+    LINK_LIBRARIES Qt::Test Qt::Gui Qt::Widgets)
