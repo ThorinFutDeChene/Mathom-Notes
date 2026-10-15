@@ -8,6 +8,7 @@
 #define CONTAINER_H
 
 #include <KXmlGuiWindow>
+#include <QPointer>
 
 class QResizeEvent;
 class QVBoxLayout;
@@ -21,6 +22,8 @@ class SettingsDialog;
 /** The window that contain baskets, organized by tabs.
  * @author Sébastien Laoût
  */
+class MathomScanDialog;
+
 class MainWindow : public KXmlGuiWindow
 {
     Q_OBJECT
@@ -33,6 +36,7 @@ public Q_SLOTS:
     void toggleStatusBar();
     void configureToolbars() override;
     void showSettingsDialog();
+    void showScanDialog();
     void showAdvancedSettingsDialog();
     void showCustomAccessibilityDialog();
     void showUpdateSettingsDialog();
@@ -65,6 +69,7 @@ private:
     bool m_startDocked;
     SettingsDialog *m_settings = nullptr;
     bool m_quit;
+    QPointer<MathomScanDialog> m_scanDialog;
 };
 
 #endif // CONTAINER_H
