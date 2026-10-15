@@ -32,6 +32,7 @@
 #include <QStandardItemModel>
 #include <QStandardPaths>
 #include <QToolButton>
+#include <QToolBar>
 #include <QUuid>
 #include <QVBoxLayout>
 #include <QtConcurrent>
@@ -106,29 +107,34 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     hardware->addWidget(m_refreshButton);
     layout->addLayout(hardware);
 
-    auto *options = new QHBoxLayout;
-    auto *controls = new QFormLayout;
-    m_sources = new QComboBox(this);
-    m_duplex = new QCheckBox(i18n("Duplex"), this);
-    m_color = new QComboBox(this);
-    m_dpi = new QComboBox(this);
-    m_paper = new QComboBox(this);
-    m_output = new QComboBox(this);
+    // One native Qt toolbar with an overflow menu on narrow windows.
+    auto *toolbar = new QToolBar(i18n("Scanner options"), this);
+    toolbar->setMovable(false);
+    m_sources = new QComboBox(toolbar);
+    m_duplex = new QCheckBox(i18n("Duplex"), toolbar);
+    m_color = new QComboBox(toolbar);
+    m_dpi = new QComboBox(toolbar);
+    m_paper = new QComboBox(toolbar);
+    m_output = new QComboBox(toolbar);
     m_paper->addItems({QStringLiteral("A5"), QStringLiteral("A4"), QStringLiteral("A3")});
     m_paper->setCurrentText(QStringLiteral("A4"));
     m_output->addItems({QStringLiteral("PDF"), QStringLiteral("JPEG")});
-    controls->addRow(i18n("Source:"), m_sources);
-    controls->addRow(i18n("Sides:"), m_duplex);
-    controls->addRow(i18n("Color:"), m_color);
-    controls->addRow(i18n("Resolution:"), m_dpi);
-    controls->addRow(i18n("Page size:"), m_paper);
-    controls->addRow(i18n("File type:"), m_output);
-    options->addLayout(controls);
-    options->addStretch(1);
-    m_scanButton = new QPushButton(i18n("Scan"), this);
+    m_scanButton = new QPushButton(i18n("Scan"), toolbar);
     m_scanButton->setIcon(QIcon::fromTheme(QStringLiteral("scanner")));
-    options->addWidget(m_scanButton, 0, Qt::AlignBottom);
-    layout->addLayout(options);
+    toolbar->addWidget(m_scanButton);
+    toolbar->addSeparator();
+    toolbar->addWidget(new QLabel(i18n("Source:"), toolbar));
+    toolbar->addWidget(m_sources);
+    toolbar->addWidget(m_duplex);
+    toolbar->addWidget(new QLabel(i18n("Color:"), toolbar));
+    toolbar->addWidget(m_color);
+    toolbar->addWidget(new QLabel(i18n("Resolution:"), toolbar));
+    toolbar->addWidget(m_dpi);
+    toolbar->addWidget(new QLabel(i18n("Page size:"), toolbar));
+    toolbar->addWidget(m_paper);
+    toolbar->addWidget(new QLabel(i18n("File type:"), toolbar));
+    toolbar->addWidget(m_output);
+    layout->addWidget(toolbar);
 
     m_status = new QLabel(i18n("Connect your scanner, then choose it."), this);
     m_status->setWordWrap(true);
