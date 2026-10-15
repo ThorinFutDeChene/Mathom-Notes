@@ -190,14 +190,16 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
             this, &MathomScanDialog::selectScanner);
     connect(m_scanButton, &QPushButton::clicked,
             this, &MathomScanDialog::startAcquisition);
-    connect(m_preview, &QListWidget::itemClicked, this, [this](QListWidgetItem *item) {
+    auto activatePreview = [this](QListWidgetItem *item) {
         const int row = m_preview->row(item);
         if (row == m_pages.size()) {
             startAcquisition();
         } else {
             selectPage(row);
         }
-    });
+    };
+    connect(m_preview, &QListWidget::itemClicked, this, activatePreview);
+    connect(m_preview, &QListWidget::itemActivated, this, activatePreview);
     connect(m_rotateLeft, &QPushButton::clicked,
             this, [this] { rotatePage(-1); });
     connect(m_rotateRight, &QPushButton::clicked,
@@ -437,6 +439,10 @@ void MathomScanDialog::startAcquisition()
     if (m_busy || m_scanners->currentData().toString().isEmpty())
         return;
     if (m_sessionDir.isEmpty()) {
+        QDir().mkpath(sessionsRoot());
+        QFile::setPermissions(sessionsRoot(),
+                              QFileDevice::ReadOwner | QFileDevice::WriteOwner
+                              | QFileDevice::ExeOwner);
         const QString id = QDateTime::currentDateTime().toString(
             QStringLiteral("yyyyMMdd-HHmmss-"))
             + QUuid::createUuid().toString(QUuid::WithoutBraces);
