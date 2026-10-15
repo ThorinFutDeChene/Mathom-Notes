@@ -31,6 +31,7 @@
 #include <QSignalBlocker>
 #include <QStandardItemModel>
 #include <QStandardPaths>
+#include <QTimer>
 #include <QToolButton>
 #include <QUuid>
 #include <QVBoxLayout>
@@ -330,8 +331,12 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     });
 
     refreshPages();
-    loadRecoveredSession();
+    // Discover devices immediately. The recovery question must not delay
+    // SANE detection, even if the user keeps the question open.
     searchDevices();
+    // Defer the potentially modal recovery prompt until after the dialog's
+    // constructor returns, keeping initialization free of nested event loops.
+    QTimer::singleShot(0, this, &MathomScanDialog::loadRecoveredSession);
 }
 
 QString MathomScanDialog::sessionsRoot() const
