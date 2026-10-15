@@ -9,6 +9,7 @@
 #include <QDialog>
 #include <QFutureWatcher>
 #include <QList>
+#include <QSet>
 #include <QString>
 #include <memory>
 #include <atomic>
@@ -77,6 +78,8 @@ private:
     int m_selected = -1;
     int m_nextPageNumber = 1;
     bool m_busy = false;
+    MathomScan::Capabilities m_capabilities;
+    QSet<QString> m_ignored;
     bool m_exporting = false;
     bool m_closeAfterSave = false;
     bool m_allowClose = false;
