@@ -1,0 +1,83 @@
+// SPDX-License-Identifier: GPL-2.0-or-later
+#pragma once
+
+#include "mathomscanbackend.h"
+#include "mathomscanconfig.h"
+#include "mathomscanexport.h"
+
+#include <QDateTime>
+#include <QDialog>
+#include <QFutureWatcher>
+#include <QList>
+#include <QString>
+#include <memory>
+#include <atomic>
+
+class QCheckBox;
+class QCloseEvent;
+class QComboBox;
+class QLabel;
+class QListWidget;
+class QListWidgetItem;
+class QPushButton;
+
+class MathomScanDialog final : public QDialog
+{
+    Q_OBJECT
+public:
+    explicit MathomScanDialog(QWidget *parent = nullptr);
+
+protected:
+    void closeEvent(QCloseEvent *event) override;
+
+private:
+    void searchDevices();
+    void selectScanner();
+    void updateCapabilities(const MathomScan::Capabilities &capabilities);
+    void startAcquisition();
+    void refreshPages();
+    void selectPage(int index);
+    void rotatePage(int delta);
+    void saveManifest();
+    void loadRecoveredSession();
+    void saveDocument();
+    void movePage(int delta);
+    QString sessionsRoot() const;
+    void setBusy(bool busy, const QString &message);
+
+    MathomScanPreferences m_preferences;
+    QComboBox *m_scanners = nullptr;
+    QComboBox *m_sources = nullptr;
+    QComboBox *m_color = nullptr;
+    QComboBox *m_dpi = nullptr;
+    QComboBox *m_paper = nullptr;
+    QComboBox *m_output = nullptr;
+    QCheckBox *m_duplex = nullptr;
+    QListWidget *m_preview = nullptr;
+    QPushButton *m_scanButton = nullptr;
+    QPushButton *m_refreshButton = nullptr;
+    QPushButton *m_saveButton = nullptr;
+    QPushButton *m_rotateLeft = nullptr;
+    QPushButton *m_rotateRight = nullptr;
+    QPushButton *m_moveLeft = nullptr;
+    QPushButton *m_moveRight = nullptr;
+    QPushButton *m_delete = nullptr;
+    QLabel *m_status = nullptr;
+
+    QFutureWatcher<QList<MathomScan::Device>> m_discovery;
+    QFutureWatcher<MathomScan::Capabilities> m_inspection;
+    QFutureWatcher<MathomScan::Result> m_acquisition;
+    QFutureWatcher<MathomScanExport::Output> m_export;
+    std::shared_ptr<std::atomic_bool> m_cancel =
+        std::make_shared<std::atomic_bool>(false);
+
+    QList<MathomScanExport::Page> m_pages;
+    QString m_sessionDir;
+    QDateTime m_scanTime;
+    int m_selected = -1;
+    int m_nextPageNumber = 1;
+    bool m_busy = false;
+    bool m_exporting = false;
+    bool m_closeAfterSave = false;
+    bool m_allowClose = false;
+};
