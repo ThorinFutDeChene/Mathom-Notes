@@ -6545,3 +6545,317 @@ msgstr "Pages sans texte sélectionnable ignorées : %1. L'OCR n'est pas encore 
 #, kde-format
 msgid "&PDF Document..."
 msgstr "Document &PDF..."
+
+# Mathom Scan 5.0.0-dev1
+
+#: src/mathomscan*
+msgid "Scan a document..."
+msgstr "Numériser un document…"
+
+#: src/mathomscan*
+msgid "Mathom Scan"
+msgstr "Mathom Scan"
+
+#: src/mathomscan*
+msgid "Scanning"
+msgstr "Numérisation"
+
+#: src/mathomscan*
+msgid "Search again"
+msgstr "Rechercher à nouveau"
+
+#: src/mathomscan*
+msgid "Scanner:"
+msgstr "Scanner :"
+
+#: src/mathomscan*
+msgid "Scanner status"
+msgstr "État du scanner"
+
+#: src/mathomscan*
+msgid "Connect your scanner, then choose it."
+msgstr "Connectez votre scanner, puis sélectionnez-le."
+
+#: src/mathomscan*
+msgid "Glass"
+msgstr "Vitre"
+
+#: src/mathomscan*
+msgid "Document feeder (duplex)"
+msgstr "Chargeur automatique (recto verso)"
+
+#: src/mathomscan*
+msgid "Document feeder"
+msgstr "Chargeur automatique"
+
+#: src/mathomscan*
+msgid "Grayscale"
+msgstr "Niveaux de gris"
+
+#: src/mathomscan*
+msgid "Black and white"
+msgstr "Noir et blanc"
+
+#: src/mathomscan*
+msgid "Source:"
+msgstr "Source :"
+
+#: src/mathomscan*
+msgid "Sides:"
+msgstr "Faces :"
+
+#: src/mathomscan*
+msgid "Duplex"
+msgstr "Recto verso"
+
+#: src/mathomscan*
+msgid "Resolution:"
+msgstr "Définition :"
+
+#: src/mathomscan*
+msgid "Page size:"
+msgstr "Format de page :"
+
+#: src/mathomscan*
+msgid "File type:"
+msgstr "Format de fichier :"
+
+#: src/mathomscan*
+msgid "Scan"
+msgstr "Numériser"
+
+#: src/mathomscan*
+msgid "Scanned pages and add-page control"
+msgstr "Pages numérisées et commande d’ajout"
+
+#: src/mathomscan*
+msgid "Rotate left 90°"
+msgstr "Pivoter de 90° à gauche"
+
+#: src/mathomscan*
+msgid "Rotate right 90°"
+msgstr "Pivoter de 90° à droite"
+
+#: src/mathomscan*
+msgid "Move left"
+msgstr "Déplacer à gauche"
+
+#: src/mathomscan*
+msgid "Move right"
+msgstr "Déplacer à droite"
+
+#: src/mathomscan*
+msgid "Delete page"
+msgstr "Supprimer la page"
+
+#: src/mathomscan*
+msgid "Replace page"
+msgstr "Remplacer la page"
+
+#: src/mathomscan*
+msgid "Undo rotation"
+msgstr "Annuler la rotation"
+
+#: src/mathomscan*
+msgid "Redo rotation"
+msgstr "Refaire la rotation"
+
+#: src/mathomscan*
+msgid "Finish and save"
+msgstr "Terminer et enregistrer"
+
+#: src/mathomscan*
+msgid "Scan more pages"
+msgstr "Numériser d’autres pages"
+
+#: src/mathomscan*
+msgid "Scan the pages currently loaded in your scanner."
+msgstr "Numériser les feuilles actuellement chargées dans le scanner."
+
+#: src/mathomscan*
+msgid "Select page %1 to rotate, delete or move it."
+msgstr "Sélectionnez la page %1 pour la pivoter, la supprimer ou la déplacer."
+
+#: src/mathomscan*
+msgid "Page %1"
+msgstr "Page %1"
+
+#: src/mathomscan*
+msgid "Remove page"
+msgstr "Retirer la page"
+
+#: src/mathomscan*
+msgid "Remove the selected page from this document?"
+msgstr "Retirer la page sélectionnée de ce document ?"
+
+#: src/mathomscan*
+msgid "No matching scanner found. Turn it on, connect it, then search again."
+msgstr "Aucun scanner correspondant. Allumez-le, connectez-le, puis relancez la recherche."
+
+#: src/mathomscan*
+msgid "Searching for scanners..."
+msgstr "Recherche des scanners…"
+
+#: src/mathomscan*
+msgid "No scanner selected."
+msgstr "Aucun scanner sélectionné."
+
+#: src/mathomscan*
+msgid "Reading scanner capabilities..."
+msgstr "Lecture des capacités du scanner…"
+
+#: src/mathomscan*
+msgid "Cannot open scanner: %1"
+msgstr "Impossible d’ouvrir le scanner : %1"
+
+#: src/mathomscan*
+msgid "%1 dpi"
+msgstr "%1 ppp"
+
+#: src/mathomscan*
+msgid "Scanner ready. Choose options and scan."
+msgstr "Scanner prêt. Choisissez les réglages et lancez la numérisation."
+
+#: src/mathomscan*
+msgid "Scanning... You can continue working in Mathom Notes."
+msgstr "Numérisation en cours… Vous pouvez continuer à travailler dans Mathom Notes."
+
+#: src/mathomscan*
+msgid "Scanner error: %1. Previously scanned pages are preserved."
+msgstr "Erreur du scanner : %1. Les pages déjà numérisées sont conservées."
+
+#: src/mathomscan*
+msgid "Recover unfinished scan"
+msgstr "Récupérer une numérisation interrompue"
+
+#: src/mathomscan*
+msgid "Unfinished scanned pages were found. Restore this document?"
+msgstr "Des pages numérisées non enregistrées ont été retrouvées. Récupérer ce document ?"
+
+#: src/mathomscan*
+msgid "Unfinished scan restored. Your pages are safe."
+msgstr "Numérisation interrompue récupérée. Vos pages sont conservées."
+
+#: src/mathomscan*
+msgid "Saving your scanned document..."
+msgstr "Enregistrement du document numérisé…"
+
+#: src/mathomscan*
+msgid "Could not save the document: %1. Pages were kept."
+msgstr "Impossible d’enregistrer le document : %1. Les pages sont conservées."
+
+#: src/mathomscan*
+msgid "An operation is in progress. Wait for it to finish."
+msgstr "Une opération est en cours. Attendez sa fin."
+
+#: src/mathomscan*
+msgid "Unfinished scan"
+msgstr "Numérisation non enregistrée"
+
+#: src/mathomscan*
+msgid "Your scanned pages have not been saved."
+msgstr "Les pages numérisées ne sont pas encore enregistrées."
+
+#: src/mathomscan*
+msgid "Continue"
+msgstr "Continuer"
+
+#: src/mathomscan*
+msgid "Save"
+msgstr "Enregistrer"
+
+#: src/mathomscan*
+msgid "Abandon"
+msgstr "Abandonner"
+
+#: src/mathomscan*
+msgid "Discard scanned pages"
+msgstr "Abandonner la numérisation"
+
+#: src/mathomscan*
+msgid "Permanently discard all pages of this scan?"
+msgstr "Supprimer définitivement toutes les pages de cette numérisation ?"
+
+#: src/mathomscan*
+msgid "Configure how Mathom detects scanners and where documents are saved. Scanning never imports documents automatically into Mathoms."
+msgstr "Configurez la détection des scanners et le dossier d’enregistrement. La numérisation n’importe jamais automatiquement les documents dans les Mathoms."
+
+#: src/mathomscan*
+msgid "Choose a scanner each time"
+msgstr "Choisir un scanner à chaque utilisation"
+
+#: src/mathomscan*
+msgid "Use only the configured scanner"
+msgstr "Utiliser exclusivement le scanner configuré"
+
+#: src/mathomscan*
+msgid "Prefer the configured scanner; otherwise offer alternatives"
+msgstr "Privilégier le scanner configuré ; sinon proposer les autres"
+
+#: src/mathomscan*
+msgid "Selection behavior:"
+msgstr "Comportement de sélection :"
+
+#: src/mathomscan*
+msgid "Search for scanners"
+msgstr "Rechercher les scanners"
+
+#: src/mathomscan*
+msgid "Configured scanner:"
+msgstr "Scanner configuré :"
+
+#: src/mathomscan*
+msgid "Browse..."
+msgstr "Parcourir…"
+
+#: src/mathomscan*
+msgid "Save scanned documents in:"
+msgstr "Enregistrer les numérisations dans :"
+
+#: src/mathomscan*
+msgid "Choose scan destination"
+msgstr "Choisir le dossier de numérisation"
+
+#: src/mathomscan*
+msgid "Previously configured scanner (offline)"
+msgstr "Scanner configuré précédemment (hors ligne)"
+
+#: src/mathomscan*
+msgid "No scanner detected. Connect or turn on your scanner, then search again."
+msgstr "Aucun scanner détecté. Branchez-le ou allumez-le, puis relancez la recherche."
+
+#: src/mathomscan*
+msgid "Choose an output folder before saving."
+msgstr "Choisissez un dossier de destination avant d’enregistrer."
+
+#: src/mathomscan*
+msgid "Choose a scanner for the selected behavior."
+msgstr "Choisissez un scanner pour le comportement sélectionné."
+
+#, kde-format
+#: src/mathomscan*
+msgid "%1 scanner available"
+msgid_plural "%1 scanners available"
+msgstr[0] "%1 scanner disponible"
+msgstr[1] "%1 scanners disponibles"
+
+#, kde-format
+#: src/mathomscan*
+msgid "%1 scanner detected"
+msgid_plural "%1 scanners detected"
+msgstr[0] "%1 scanner détecté"
+msgstr[1] "%1 scanners détectés"
+
+#, kde-format
+#: src/mathomscan*
+msgid "%1 new page scanned"
+msgid_plural "%1 new pages scanned"
+msgstr[0] "%1 nouvelle page numérisée"
+msgstr[1] "%1 nouvelles pages numérisées"
+
+#, kde-format
+#: src/mathomscan*
+msgid "Saved %1 file in your configured folder."
+msgid_plural "Saved %1 files in your configured folder."
+msgstr[0] "%1 fichier enregistré dans le dossier configuré."
+msgstr[1] "%1 fichiers enregistrés dans le dossier configuré."
