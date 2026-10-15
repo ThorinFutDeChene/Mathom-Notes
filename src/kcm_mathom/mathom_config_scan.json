@@ -1,0 +1,22 @@
+{
+    "KPlugin": {
+        "Description": "Scanner selection and save location",
+        "Description[fr]": "Sélection du scanner et dossier de destination",
+        "Icon": "scanner",
+        "Name": "Scanning",
+        "Name[fr]": "Numérisation",
+        "ServiceTypes": [
+            "KCModule"
+        ]
+    },
+    "X-KDE-CfgDlgHierarchy": "Basket",
+    "X-KDE-FactoryName": "mathom_config_scan",
+    "X-KDE-HasReadOnlyMode": "false",
+    "X-KDE-ModuleType": "Library",
+    "X-KDE-ParentApp": "basket",
+    "X-KDE-ParentComponents": [
+        "basket"
+    ],
+    "X-KDE-Weight": 30,
+    "X-Mathom-SettingsSection": "advanced"
+}
