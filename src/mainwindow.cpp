@@ -5,6 +5,7 @@
  */
 
 #include "mainwindow.h"
+#include "mathomscandialog.h"
 #include "advancedsettingsdialog.h"
 #include "accessibilitysettings.h"
 
@@ -143,6 +144,11 @@ void MainWindow::setupActions()
     a->setText(i18n("Minimize"));
     a->setIcon(QIcon::fromTheme(QString()));
     a->setShortcut(0);
+
+    QAction *scanAction = actionCollection()->addAction(
+        QStringLiteral("insert_scan_document"), this, &MainWindow::showScanDialog);
+    scanAction->setText(i18n("Scan a document..."));
+    scanAction->setIcon(QIcon::fromTheme(QStringLiteral("scanner")));
 
     /** Settings : ************************************************************/
     m_actShowStatusbar = KStandardAction::showStatusbar(this, &MainWindow::toggleStatusBar, actionCollection());
@@ -332,6 +338,15 @@ void MainWindow::showSettingsDialog()
     }
 
     m_settings->show();
+}
+
+void MainWindow::showScanDialog()
+{
+    if (!m_scanDialog)
+        m_scanDialog = new MathomScanDialog(this);
+    m_scanDialog->show();
+    m_scanDialog->raise();
+    m_scanDialog->activateWindow();
 }
 
 void MainWindow::showAdvancedSettingsDialog()
