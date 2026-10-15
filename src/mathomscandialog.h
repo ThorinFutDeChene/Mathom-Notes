@@ -59,6 +59,7 @@ private:
     QCheckBox *m_duplex = nullptr;
     QListWidget *m_preview = nullptr;
     QPushButton *m_scanButton = nullptr;
+    QPushButton *m_cancelButton = nullptr;
     QPushButton *m_refreshButton = nullptr;
     QPushButton *m_saveButton = nullptr;
     QPushButton *m_rotateLeft = nullptr;
