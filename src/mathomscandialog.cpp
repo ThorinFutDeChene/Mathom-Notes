@@ -122,6 +122,9 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     m_scanButton = new QPushButton(i18n("Scan"), toolbar);
     m_scanButton->setIcon(QIcon::fromTheme(QStringLiteral("scanner")));
     toolbar->addWidget(m_scanButton);
+    m_cancelButton = new QPushButton(i18n("Stop scan"), toolbar);
+    m_cancelButton->hide();
+    toolbar->addWidget(m_cancelButton);
     toolbar->addSeparator();
     toolbar->addWidget(new QLabel(i18n("Source:"), toolbar));
     toolbar->addWidget(m_sources);
@@ -176,6 +179,11 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     pageActions->addWidget(m_saveButton);
     layout->addLayout(pageActions);
 
+    connect(m_cancelButton, &QPushButton::clicked, this, [this] {
+        m_cancel->store(true);
+        m_cancelButton->setEnabled(false);
+        m_status->setText(i18n("Stopping scanning after the current device operation..."));
+    });
     connect(m_refreshButton, &QPushButton::clicked,
             this, &MathomScanDialog::searchDevices);
     connect(m_scanners, qOverload<int>(&QComboBox::currentIndexChanged),
@@ -321,6 +329,11 @@ void MathomScanDialog::setBusy(bool busy, const QString &message)
     m_saveButton->setEnabled(!busy && !m_pages.isEmpty());
     m_scanners->setEnabled(!busy);
     m_sources->setEnabled(!busy);
+    m_duplex->setEnabled(!busy && feederSource(m_sources->currentData().toString())
+                         && m_capabilities.duplex);
+    m_cancelButton->setVisible(busy && m_acquisition.isRunning());
+    if (m_cancelButton->isVisible())
+        m_cancelButton->setEnabled(true);
     m_color->setEnabled(!busy);
     m_dpi->setEnabled(!busy);
     m_paper->setEnabled(!busy);
@@ -444,6 +457,8 @@ void MathomScanDialog::startAcquisition()
     m_acquisition.setFuture(QtConcurrent::run([options, cancel = m_cancel] {
         return MathomScan::acquire(options, cancel, {});
     }));
+    m_cancelButton->setVisible(true);
+    m_cancelButton->setEnabled(true);
 }
 
 void MathomScanDialog::refreshPages()
