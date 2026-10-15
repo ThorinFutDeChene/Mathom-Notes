@@ -157,7 +157,8 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     m_preview->setAccessibleName(i18n("Scanned pages and add-page control"));
     layout->addWidget(m_preview, 1);
 
-    auto *pageActions = new QHBoxLayout;
+    // Keep full action labels visible instead of squeezing all nine buttons
+    // into a single row (especially with translated text or larger fonts).
     m_rotateLeft = new QPushButton(i18n("Rotate left 90°"), this);
     m_rotateRight = new QPushButton(i18n("Rotate right 90°"), this);
     m_moveLeft = new QPushButton(i18n("Move left"), this);
@@ -167,17 +168,27 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     m_undo = new QPushButton(i18n("Undo rotation"), this);
     m_redo = new QPushButton(i18n("Redo rotation"), this);
     m_saveButton = new QPushButton(i18n("Finish and save"), this);
-    pageActions->addWidget(m_rotateLeft);
-    pageActions->addWidget(m_rotateRight);
-    pageActions->addWidget(m_undo);
-    pageActions->addWidget(m_redo);
+
+    auto *rotationActions = new QHBoxLayout;
+    rotationActions->addWidget(m_rotateLeft);
+    rotationActions->addWidget(m_rotateRight);
+    rotationActions->addWidget(m_undo);
+    rotationActions->addWidget(m_redo);
+    rotationActions->addStretch(1);
+    layout->addLayout(rotationActions);
+
+    auto *pageActions = new QHBoxLayout;
     pageActions->addWidget(m_moveLeft);
     pageActions->addWidget(m_moveRight);
     pageActions->addWidget(m_delete);
     pageActions->addWidget(m_replace);
     pageActions->addStretch(1);
-    pageActions->addWidget(m_saveButton);
     layout->addLayout(pageActions);
+
+    auto *saveActions = new QHBoxLayout;
+    saveActions->addStretch(1);
+    saveActions->addWidget(m_saveButton);
+    layout->addLayout(saveActions);
 
     connect(m_cancelButton, &QPushButton::clicked, this, [this] {
         m_cancel->store(true);
