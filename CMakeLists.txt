@@ -89,6 +89,10 @@ find_package(Qt6 ${QT_MIN_VERSION} REQUIRED COMPONENTS
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(POPPLER_QT6 REQUIRED IMPORTED_TARGET poppler-qt6)
 
+# Native scanner API; no GTK, Vala or KDE scanning framework.
+find_path(SANE_INCLUDE_DIR NAMES sane/sane.h REQUIRED)
+find_library(SANE_LIBRARY NAMES sane REQUIRED)
+
 find_package(KF6 ${KF_MIN_VERSION} REQUIRED COMPONENTS
     Archive
     Codecs
