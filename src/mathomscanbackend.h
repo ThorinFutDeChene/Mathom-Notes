@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include "basket_export.h"
+
 #include <QList>
 #include <QString>
 #include <QStringList>
@@ -46,9 +48,9 @@ struct Result {
 
 // SANE is used directly, without spawning scanimage or linking GTK/Vala.
 // Calls are serialized because many SANE backends are not thread-safe.
-QList<Device> discover(QString *error = nullptr);
-Capabilities inspect(const QString &deviceId);
-Result acquire(const Options &options,
+BASKET_EXPORT QList<Device> discover(QString *error = nullptr);
+BASKET_EXPORT Capabilities inspect(const QString &deviceId);
+BASKET_EXPORT Result acquire(const Options &options,
                const std::shared_ptr<std::atomic_bool> &cancel,
                const std::function<void(int)> &pageAvailable);
 }
