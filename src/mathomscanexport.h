@@ -10,6 +10,7 @@ namespace MathomScanExport {
 struct Page {
     QString path;
     int quarterTurns = 0;
+    QString paper = QStringLiteral("A4");
 };
 struct Output {
     QStringList files;
