@@ -6733,8 +6733,36 @@ msgid "Recover unfinished scan"
 msgstr "Récupérer une numérisation interrompue"
 
 #: src/mathomscan*
-msgid "Unfinished scanned pages were found. Restore this document?"
-msgstr "Des pages numérisées non enregistrées ont été retrouvées. Récupérer ce document ?"
+msgid "Unfinished scanned pages were found. What would you like to do?"
+msgstr "Des pages numérisées non enregistrées ont été retrouvées. Que souhaitez-vous faire ?"
+
+#: src/mathomscan*
+msgid "Recover"
+msgstr "Récupérer"
+
+#: src/mathomscan*
+msgid "Later"
+msgstr "Plus tard"
+
+#: src/mathomscan*
+msgid "Delete permanently"
+msgstr "Supprimer définitivement"
+
+#: src/mathomscan*
+msgid "Delete unfinished scan"
+msgstr "Supprimer la numérisation interrompue"
+
+#: src/mathomscan*
+msgid "Permanently delete all pages of this unfinished scan? This action cannot be undone."
+msgstr "Supprimer définitivement toutes les pages de cette numérisation interrompue ? Cette action est irréversible."
+
+#: src/mathomscan*
+msgid "Could not delete unfinished scan"
+msgstr "Impossible de supprimer la numérisation interrompue"
+
+#: src/mathomscan*
+msgid "Some files could not be deleted. Check the unfinished scan files."
+msgstr "Certains fichiers n’ont pas pu être supprimés. Vérifiez les fichiers de la numérisation interrompue."
 
 #: src/mathomscan*
 msgid "Unfinished scan restored. Your pages are safe."
