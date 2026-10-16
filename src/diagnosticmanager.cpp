@@ -1019,6 +1019,12 @@ QString DiagnosticManager::createReportForSession(const QString &sessionPath)
                       .arg(activeState(QStringLiteral("export_running"))));
         writeLine(QStringLiteral("  Operation bloquante declaree : %1")
                       .arg(activeState(QStringLiteral("busy"))));
+        writeLine(QStringLiteral("  Etape SANE recherche : %1")
+                      .arg(state.value(QStringLiteral("discovery_phase")).toString()));
+        writeLine(QStringLiteral("  Etape SANE capacites : %1")
+                      .arg(state.value(QStringLiteral("inspection_phase")).toString()));
+        writeLine(QStringLiteral("  Etape SANE numerisation : %1")
+                      .arg(state.value(QStringLiteral("acquisition_phase")).toString()));
         writeLine(QStringLiteral("  Pages presentes en memoire : %1")
                       .arg(state.value(QStringLiteral("page_count")).toInt()));
         writeLine(QStringLiteral("Dernieres etapes de Mathom Scan :"));
