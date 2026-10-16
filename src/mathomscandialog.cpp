@@ -668,8 +668,12 @@ void MathomScanDialog::loadRecoveredSession()
     for (const QString &name : directories) {
         const QString directory = root.filePath(name);
         const QDir dir(directory);
-        if (dir.entryList({QStringLiteral("page_*.png")}, QDir::Files).isEmpty())
+        const QStringList pendingPages =
+            dir.entryList({QStringLiteral("page_*.png")}, QDir::Files);
+        if (pendingPages.isEmpty())
             continue;
+        traceScanEvent(QStringLiteral("SCAN_RECOVERY_OFFERED"),
+                       {{QStringLiteral("pending_pages"), int(pendingPages.size())}});
         QMessageBox prompt(this);
         prompt.setIcon(QMessageBox::Question);
         prompt.setWindowTitle(i18n("Recover unfinished scan"));
@@ -684,22 +688,30 @@ void MathomScanDialog::loadRecoveredSession()
         prompt.exec();
 
         if (prompt.clickedButton() == deleteButton) {
+            traceScanEvent(QStringLiteral("SCAN_RECOVERY_DELETE_REQUEST"));
             const auto confirmation = QMessageBox::question(
                 this, i18n("Delete unfinished scan"),
                 i18n("Permanently delete all pages of this unfinished scan? "
                      "This action cannot be undone."),
                 QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
             if (confirmation == QMessageBox::Yes) {
-                if (QDir(directory).removeRecursively())
+                if (QDir(directory).removeRecursively()) {
+                    traceScanEvent(QStringLiteral("SCAN_RECOVERY_DELETED"));
                     continue; // Offer recovery of another pending session, if any.
+                }
+                traceScanEvent(QStringLiteral("SCAN_RECOVERY_DELETE_FAILED"));
                 QMessageBox::warning(
                     this, i18n("Could not delete unfinished scan"),
                     i18n("Some files could not be deleted. Check the unfinished scan files."));
+            } else {
+                traceScanEvent(QStringLiteral("SCAN_RECOVERY_LATER"));
             }
             return; // On cancellation or failure, keep remaining files.
         }
-        if (prompt.clickedButton() != recoverButton)
+        if (prompt.clickedButton() != recoverButton) {
+            traceScanEvent(QStringLiteral("SCAN_RECOVERY_LATER"));
             return; // "Later" or closing the prompt never deletes pages.
+        }
         m_sessionDir = directory;
         QFile file(dir.filePath(QStringLiteral("session.json")));
         if (file.open(QIODevice::ReadOnly)) {
@@ -731,6 +743,8 @@ void MathomScanDialog::loadRecoveredSession()
             {QStringLiteral("page_*.png")}, QDir::Files).size() + 1;
         m_selected = m_pages.isEmpty() ? -1 : 0;
         refreshPages();
+        traceScanEvent(QStringLiteral("SCAN_RECOVERY_RESTORED"),
+                       {{QStringLiteral("recovered_pages"), int(m_pages.size())}});
         m_status->setText(i18n("Unfinished scan restored. Your pages are safe."));
         break;
     }
@@ -757,12 +771,16 @@ void MathomScanDialog::saveDocument()
 
 void MathomScanDialog::closeEvent(QCloseEvent *event)
 {
+    // Capture the task state BEFORE closing or destroying the dialog.
+    traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_REQUEST"));
     if (m_busy) {
+        traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_BLOCKED"));
         m_status->setText(i18n("An operation is in progress. Wait for it to finish."));
         event->ignore();
         return;
     }
     if (m_allowClose || m_pages.isEmpty()) {
+        traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_ACCEPTED"));
         event->accept();
         return;
     }
@@ -774,8 +792,10 @@ void MathomScanDialog::closeEvent(QCloseEvent *event)
     auto *abandonButton = prompt.addButton(i18n("Abandon"), QMessageBox::DestructiveRole);
     prompt.exec();
     if (prompt.clickedButton() == continueButton) {
+        traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_CANCELLED"));
         event->ignore();
     } else if (prompt.clickedButton() == saveButton) {
+        traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_SAVE_REQUEST"));
         event->ignore();
         saveDocument();
     } else if (prompt.clickedButton() == abandonButton) {
@@ -785,11 +805,14 @@ void MathomScanDialog::closeEvent(QCloseEvent *event)
             if (!m_sessionDir.isEmpty())
                 QDir(m_sessionDir).removeRecursively();
             m_allowClose = true;
+            traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_ACCEPTED"));
             event->accept();
         } else {
+            traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_CANCELLED"));
             event->ignore();
         }
     } else {
+        traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_CANCELLED"));
         event->ignore();
     }
 }
