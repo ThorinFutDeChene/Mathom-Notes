@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "mathomscandialog.h"
+#include "diagnosticmanager.h"
 
 #include <KLocalizedString>
 
@@ -200,6 +201,7 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
 
     connect(m_cancelButton, &QPushButton::clicked, this, [this] {
         m_cancel->store(true);
+        traceScanEvent(QStringLiteral("SCAN_CANCEL_REQUEST"));
         m_cancelButton->setEnabled(false);
         m_status->setText(i18n("Stopping scanning after the current device operation..."));
     });
@@ -259,6 +261,8 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     connect(&m_discovery, &QFutureWatcher<QList<MathomScan::Device>>::finished,
             this, [this] {
         const auto devices = m_discovery.result();
+        traceScanEvent(QStringLiteral("SCAN_DISCOVERY_END"),
+                       {{QStringLiteral("device_count"), int(devices.size())}});
         QSignalBlocker blocker(m_scanners);
         m_scanners->clear();
         const bool hasPreference = !m_preferences.deviceId.isEmpty();
@@ -285,11 +289,19 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     });
     connect(&m_inspection, &QFutureWatcher<MathomScan::Capabilities>::finished,
             this, [this] {
-        updateCapabilities(m_inspection.result());
+        const auto capabilities = m_inspection.result();
+        traceScanEvent(QStringLiteral("SCAN_INSPECTION_END"),
+                       {{QStringLiteral("failed"), !capabilities.error.isEmpty()},
+                        {QStringLiteral("source_count"), int(capabilities.sources.size())}});
+        updateCapabilities(capabilities);
     });
     connect(&m_acquisition, &QFutureWatcher<MathomScan::Result>::finished,
             this, [this] {
         const MathomScan::Result result = m_acquisition.result();
+        traceScanEvent(QStringLiteral("SCAN_ACQUISITION_END"),
+                       {{QStringLiteral("failed"), !result.error.isEmpty()},
+                        {QStringLiteral("cancelled"), result.canceled},
+                        {QStringLiteral("pages_received"), int(result.paths.size())}});
         int first = 0;
         if (m_replacing >= 0 && !result.paths.isEmpty()
             && m_replacing < m_pages.size()) {
@@ -312,6 +324,9 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     connect(&m_export, &QFutureWatcher<MathomScanExport::Output>::finished,
             this, [this] {
         const auto result = m_export.result();
+        traceScanEvent(QStringLiteral("SCAN_EXPORT_END"),
+                       {{QStringLiteral("failed"), !result.error.isEmpty()},
+                        {QStringLiteral("files_saved"), int(result.files.size())}});
         if (!result.error.isEmpty()) {
             setBusy(false, i18n("Could not save the document: %1. Pages were kept.",
                                 result.error));
@@ -330,13 +345,48 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
             close();
     });
 
+    auto *diagnosticHeartbeat = new QTimer(this);
+    diagnosticHeartbeat->setInterval(5000);
+    connect(diagnosticHeartbeat, &QTimer::timeout, this, [this] {
+        traceScanEvent(QStringLiteral("SCAN_STATE"));
+    });
+    diagnosticHeartbeat->start();
+
     refreshPages();
+    traceScanEvent(QStringLiteral("SCAN_DIALOG_OPEN"));
     // Discover devices immediately. The recovery question must not delay
     // SANE detection, even if the user keeps the question open.
     searchDevices();
     // Defer the potentially modal recovery prompt until after the dialog's
     // constructor returns, keeping initialization free of nested event loops.
     QTimer::singleShot(0, this, &MathomScanDialog::loadRecoveredSession);
+}
+
+MathomScanDialog::~MathomScanDialog()
+{
+    traceScanEvent(QStringLiteral("SCAN_DIALOG_DESTROYED"));
+}
+
+QVariantMap MathomScanDialog::diagnosticState() const
+{
+    // Never include device IDs, IP addresses, document paths or page contents.
+    return {
+        {QStringLiteral("discovery_running"), m_discovery.isRunning()},
+        {QStringLiteral("inspection_running"), m_inspection.isRunning()},
+        {QStringLiteral("acquisition_running"), m_acquisition.isRunning()},
+        {QStringLiteral("export_running"), m_export.isRunning()},
+        {QStringLiteral("busy"), m_busy},
+        {QStringLiteral("page_count"), int(m_pages.size())}
+    };
+}
+
+void MathomScanDialog::traceScanEvent(
+    const QString &event, const QVariantMap &details) const
+{
+    QVariantMap state = diagnosticState();
+    for (auto it = details.cbegin(); it != details.cend(); ++it)
+        state.insert(it.key(), it.value());
+    DiagnosticManager::instance().logEvent(event, state);
 }
 
 QString MathomScanDialog::sessionsRoot() const
@@ -385,6 +435,7 @@ void MathomScanDialog::searchDevices()
     m_discovery.setFuture(QtConcurrent::run([] {
         return MathomScan::discover();
     }));
+    traceScanEvent(QStringLiteral("SCAN_DISCOVERY_BEGIN"));
 }
 
 void MathomScanDialog::selectScanner()
@@ -401,6 +452,7 @@ void MathomScanDialog::selectScanner()
     m_inspection.setFuture(QtConcurrent::run([id] {
         return MathomScan::inspect(id);
     }));
+    traceScanEvent(QStringLiteral("SCAN_INSPECTION_BEGIN"));
 }
 
 void MathomScanDialog::updateCapabilities(const MathomScan::Capabilities &capabilities)
@@ -486,6 +538,10 @@ void MathomScanDialog::startAcquisition()
     m_acquisition.setFuture(QtConcurrent::run([options, cancel = m_cancel] {
         return MathomScan::acquire(options, cancel, {});
     }));
+    traceScanEvent(QStringLiteral("SCAN_ACQUISITION_BEGIN"),
+                   {{QStringLiteral("dpi"), options.dpi},
+                    {QStringLiteral("duplex"), options.duplex},
+                    {QStringLiteral("paper"), options.paper}});
     m_cancelButton->setVisible(true);
     m_cancelButton->setEnabled(true);
 }
@@ -694,6 +750,9 @@ void MathomScanDialog::saveDocument()
     m_export.setFuture(QtConcurrent::run([pages, format, paper, destination, scanTime] {
         return MathomScanExport::write(pages, format, paper, destination, scanTime);
     }));
+    traceScanEvent(QStringLiteral("SCAN_EXPORT_BEGIN"),
+                   {{QStringLiteral("format"), format},
+                    {QStringLiteral("pages"), int(pages.size())}});
 }
 
 void MathomScanDialog::closeEvent(QCloseEvent *event)
