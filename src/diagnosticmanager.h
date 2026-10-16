@@ -47,7 +47,7 @@ private:
     void cleanupOldSessions(const QString &lastClosedSessionFile);
     bool sessionClosedNormally(const QString &path) const;
     QString createReportForSession(const QString &sessionPath);
-    void appendPostMortemDiagnostics(const QString &reportPath);
+    static void appendPostMortemDiagnostics(const QString &reportPath);
     void openReport(const QString &reportPath);
     void prepareEmail(const QString &reportPath);
     QVariantMap baseRecord(const QString &event) const;
