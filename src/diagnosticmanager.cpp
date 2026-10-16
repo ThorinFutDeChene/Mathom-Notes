@@ -12,6 +12,8 @@
 #include <QDesktopServices>
 #include <QDir>
 #include <QEvent>
+#include <QEventLoop>
+#include <QFutureWatcher>
 #include <QFile>
 #include <QFileInfo>
 #include <QJsonDocument>
@@ -20,6 +22,7 @@
 #include <QMessageBox>
 #include <QMouseEvent>
 #include <QProcess>
+#include <QProgressDialog>
 #include <QPushButton>
 #include <QStandardPaths>
 #include <QSysInfo>
@@ -30,6 +33,7 @@
 #include <QUrlQuery>
 #include <QUuid>
 #include <QWidget>
+#include <QtConcurrent>
 
 #ifdef Q_OS_LINUX
 #include <sys/resource.h>
@@ -1078,9 +1082,35 @@ QString DiagnosticManager::createReportForSession(const QString &sessionPath)
 
 void DiagnosticManager::openReport(const QString &reportPath)
 {
-    // Enrich the local report when it is viewed, without requiring an email.
-    // The post-mortem section is idempotent and is never sent automatically.
-    appendPostMortemDiagnostics(reportPath);
+    // Collect the post-mortem section locally, without requiring an email.
+    // The collection may call journalctl, Apport and coredumpctl, so it must
+    // not block Mathom's main event loop. Viewing waits with visible progress.
+    QFile report(reportPath);
+    bool needsEnrichment = true;
+    if (report.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        needsEnrichment = !report.readAll().contains(
+            QByteArrayLiteral("DIAGNOSTIC POST-MORTEM AUTOMATIQUE"));
+        report.close();
+    }
+    if (needsEnrichment) {
+        QFutureWatcher<void> watcher;
+        QEventLoop waitForReport;
+        connect(&watcher, &QFutureWatcher<void>::finished,
+                &waitForReport, &QEventLoop::quit);
+        QProgressDialog progress(
+            i18n("Collecting technical crash diagnostics..."),
+            QString(), 0, 0, qApp->activeWindow());
+        progress.setCancelButton(nullptr);
+        progress.setMinimumDuration(0);
+        progress.setWindowModality(Qt::ApplicationModal);
+        progress.show();
+        watcher.setFuture(QtConcurrent::run([reportPath] {
+            DiagnosticManager::appendPostMortemDiagnostics(reportPath);
+        }));
+        if (!watcher.isFinished())
+            waitForReport.exec();
+        progress.close();
+    }
     QDesktopServices::openUrl(QUrl::fromLocalFile(reportPath));
 }
 
@@ -1106,7 +1136,7 @@ void DiagnosticManager::appendPostMortemDiagnostics(
         QString::fromLatin1(reportPrefix).size());
 
     const QString sessionPath =
-        QDir(diagnosticsDirectory()).filePath(
+        QFileInfo(reportPath).dir().filePath(
             QStringLiteral("%1%2%3")
                 .arg(
                     QLatin1String(sessionPrefix),
