@@ -395,6 +395,12 @@ QVariantMap MathomScanDialog::diagnosticState() const
         {QStringLiteral("inspection_running"), m_inspection.isRunning()},
         {QStringLiteral("acquisition_running"), m_acquisition.isRunning()},
         {QStringLiteral("export_running"), m_export.isRunning()},
+        {QStringLiteral("discovery_phase"),
+            diagnosticPhaseName(m_discoveryPhase->load(std::memory_order_relaxed))},
+        {QStringLiteral("inspection_phase"),
+            diagnosticPhaseName(m_inspectionPhase->load(std::memory_order_relaxed))},
+        {QStringLiteral("acquisition_phase"),
+            diagnosticPhaseName(m_acquisitionPhase->load(std::memory_order_relaxed))},
         {QStringLiteral("busy"), m_busy},
         {QStringLiteral("page_count"), int(m_pages.size())}
     };
