@@ -83,6 +83,15 @@ private:
     std::shared_ptr<std::atomic_bool> m_cancel =
         std::make_shared<std::atomic_bool>(false);
 
+    using DiagnosticPhase = MathomScan::DiagnosticStage;
+    using PhaseAtomic = std::atomic<DiagnosticPhase>;
+    std::shared_ptr<PhaseAtomic> m_discoveryPhase =
+        std::make_shared<PhaseAtomic>(DiagnosticPhase::Idle);
+    std::shared_ptr<PhaseAtomic> m_inspectionPhase =
+        std::make_shared<PhaseAtomic>(DiagnosticPhase::Idle);
+    std::shared_ptr<PhaseAtomic> m_acquisitionPhase =
+        std::make_shared<PhaseAtomic>(DiagnosticPhase::Idle);
+
     QList<MathomScanExport::Page> m_pages;
     QString m_sessionDir;
     QDateTime m_scanTime;
