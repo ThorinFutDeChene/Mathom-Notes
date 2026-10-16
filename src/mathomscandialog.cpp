@@ -479,8 +479,12 @@ void MathomScanDialog::selectScanner()
     }
     m_scanButton->setEnabled(false);
     m_status->setText(i18n("Reading scanner capabilities..."));
-    m_inspection.setFuture(QtConcurrent::run([id] {
-        return MathomScan::inspect(id);
+    auto phase = m_inspectionPhase;
+    phase->store(MathomScan::DiagnosticStage::Idle, std::memory_order_relaxed);
+    m_inspection.setFuture(QtConcurrent::run([id, phase] {
+        return MathomScan::inspect(id, [phase](MathomScan::DiagnosticStage stage) {
+            phase->store(stage, std::memory_order_relaxed);
+        });
     }));
     traceScanEvent(QStringLiteral("SCAN_INSPECTION_BEGIN"));
 }
