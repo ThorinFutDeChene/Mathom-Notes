@@ -4187,6 +4187,11 @@ msgstr "(Non marqué)"
 msgid "(Tagged)"
 msgstr "(Marqué)"
 
+#: src/diagnosticmanager.cpp
+#, kde-format
+msgid "Collecting technical crash diagnostics..."
+msgstr "Collecte des informations techniques sur le plantage…"
+
 #: src/diagnosticmanager.cpp:1407
 #, kde-format
 msgid "Mathom - Diagnostic Report"
