@@ -12,6 +12,7 @@
 #include <QPair>
 #include <QSet>
 #include <QString>
+#include <QVariantMap>
 #include <memory>
 #include <atomic>
 
@@ -28,11 +29,14 @@ class MathomScanDialog final : public QDialog
     Q_OBJECT
 public:
     explicit MathomScanDialog(QWidget *parent = nullptr);
+    ~MathomScanDialog() override;
 
 protected:
     void closeEvent(QCloseEvent *event) override;
 
 private:
+    QVariantMap diagnosticState() const;
+    void traceScanEvent(const QString &event, const QVariantMap &details = {}) const;
     void searchDevices();
     void selectScanner();
     void updateCapabilities(const MathomScan::Capabilities &capabilities);
