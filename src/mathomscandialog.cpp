@@ -368,7 +368,10 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     auto *diagnosticHeartbeat = new QTimer(this);
     diagnosticHeartbeat->setInterval(5000);
     connect(diagnosticHeartbeat, &QTimer::timeout, this, [this] {
-        traceScanEvent(QStringLiteral("SCAN_STATE"));
+        // Avoid growing logs while Mathom Scan is idle for long periods.
+        if (m_discovery.isRunning() || m_inspection.isRunning()
+            || m_acquisition.isRunning() || m_export.isRunning())
+            traceScanEvent(QStringLiteral("SCAN_STATE"));
     });
     diagnosticHeartbeat->start();
 
