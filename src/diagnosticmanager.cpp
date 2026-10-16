@@ -345,6 +345,48 @@ QString humanEventName(const QString &event)
         return QStringLiteral("sauvegarde de l'arborescence reussie");
     if (event == QStringLiteral("HEARTBEAT"))
         return QStringLiteral("Mathom actif");
+    if (event == QStringLiteral("SCAN_DIALOG_OPEN"))
+        return QStringLiteral("fenetre Mathom Scan ouverte");
+    if (event == QStringLiteral("SCAN_DIALOG_CLOSE_REQUEST"))
+        return QStringLiteral("fermeture de Mathom Scan demandee");
+    if (event == QStringLiteral("SCAN_DIALOG_CLOSE_BLOCKED"))
+        return QStringLiteral("fermeture de Mathom Scan refusee");
+    if (event == QStringLiteral("SCAN_DIALOG_CLOSE_ACCEPTED"))
+        return QStringLiteral("fermeture de Mathom Scan acceptee");
+    if (event == QStringLiteral("SCAN_DIALOG_DESTROYED"))
+        return QStringLiteral("fenetre Mathom Scan detruite");
+    if (event == QStringLiteral("SCAN_DISCOVERY_BEGIN"))
+        return QStringLiteral("recherche de scanners commencee");
+    if (event == QStringLiteral("SCAN_DISCOVERY_END"))
+        return QStringLiteral("recherche de scanners terminee");
+    if (event == QStringLiteral("SCAN_INSPECTION_BEGIN"))
+        return QStringLiteral("lecture des capacites du scanner commencee");
+    if (event == QStringLiteral("SCAN_INSPECTION_END"))
+        return QStringLiteral("lecture des capacites du scanner terminee");
+    if (event == QStringLiteral("SCAN_ACQUISITION_BEGIN"))
+        return QStringLiteral("numerisation commencee");
+    if (event == QStringLiteral("SCAN_ACQUISITION_END"))
+        return QStringLiteral("numerisation terminee");
+    if (event == QStringLiteral("SCAN_EXPORT_BEGIN"))
+        return QStringLiteral("enregistrement de la numerisation commence");
+    if (event == QStringLiteral("SCAN_EXPORT_END"))
+        return QStringLiteral("enregistrement de la numerisation termine");
+    if (event == QStringLiteral("SCAN_STATE"))
+        return QStringLiteral("etat des operations Mathom Scan");
+    if (event == QStringLiteral("SCAN_RECOVERY_OFFERED"))
+        return QStringLiteral("recuperation de numerisation proposee");
+    if (event == QStringLiteral("SCAN_RECOVERY_LATER"))
+        return QStringLiteral("recuperation reportee");
+    if (event == QStringLiteral("SCAN_RECOVERY_RESTORED"))
+        return QStringLiteral("numerisation interrompue recuperee");
+    if (event == QStringLiteral("SCAN_RECOVERY_DELETE_REQUEST"))
+        return QStringLiteral("suppression de numerisation demandee");
+    if (event == QStringLiteral("SCAN_RECOVERY_DELETED"))
+        return QStringLiteral("numerisation interrompue supprimee");
+    if (event == QStringLiteral("SCAN_RECOVERY_DELETE_FAILED"))
+        return QStringLiteral("suppression de numerisation echouee");
+    if (event == QStringLiteral("SCAN_CANCEL_REQUEST"))
+        return QStringLiteral("arret de numerisation demande");
     return event;
 }
 
@@ -447,6 +489,11 @@ struct ParsedSession
     qint64 measuredPeakMemoryKiB = -1;
     int eventCount = 0;
     QStringList activeOperations;
+    QStringList scanTimeline;
+    QString scanOpenedAt;
+    QString scanLastStateAt;
+    QVariantMap scanLastState;
+    qint64 scanOpenedUptimeMs = -1;
     QList<QByteArray> rawLines;
 };
 
@@ -474,6 +521,23 @@ ParsedSession parseSession(QFile &input)
         summary.lastTimestamp = timestamp;
         summary.lastEvent = recordSummary(record);
         summary.uptimeMs = qMax(summary.uptimeMs, record.value(QStringLiteral("uptime_ms"), -1).toLongLong());
+
+        if (event.startsWith(QStringLiteral("SCAN_"))) {
+            // Keep the last scanner operations, separately from other UI events.
+            // No device IDs, filenames, addresses or page contents are recorded.
+            summary.scanLastState = details;
+            summary.scanLastStateAt = timestamp;
+            if (event == QStringLiteral("SCAN_DIALOG_OPEN")) {
+                summary.scanOpenedAt = timestamp;
+                summary.scanOpenedUptimeMs =
+                    record.value(QStringLiteral("uptime_ms"), -1).toLongLong();
+            }
+            if (event != QStringLiteral("SCAN_STATE")) {
+                summary.scanTimeline.append(recordSummary(record));
+                if (summary.scanTimeline.size() > 12)
+                    summary.scanTimeline.removeFirst();
+            }
+        }
 
         if (summary.sessionId.isEmpty())
             summary.sessionId = record.value(QStringLiteral("session")).toString();
@@ -922,6 +986,50 @@ QString DiagnosticManager::createReportForSession(const QString &sessionPath)
     }
 
     writeLine();
+    writeLine(QStringLiteral("MATHOM SCAN - CONTEXTE TECHNIQUE"));
+    writeLine(QStringLiteral("-------------------------------"));
+    if (summary.scanTimeline.isEmpty()) {
+        writeLine(QStringLiteral("  aucun evenement Mathom Scan enregistre"));
+    } else {
+        if (!summary.scanOpenedAt.isEmpty()) {
+            writeLine(QStringLiteral("Derniere ouverture de Mathom Scan : %1")
+                          .arg(summary.scanOpenedAt));
+            if (summary.scanOpenedUptimeMs >= 0
+                && summary.uptimeMs >= summary.scanOpenedUptimeMs) {
+                writeLine(QStringLiteral(
+                    "Duree jusqu'a la derniere trace : %1 (pas la duree exacte avant l'arret)")
+                              .arg(formatDuration(
+                                  summary.uptimeMs - summary.scanOpenedUptimeMs)));
+            }
+        }
+        writeLine(QStringLiteral("Dernier etat mesure : %1")
+                      .arg(summary.scanLastStateAt));
+        const QVariantMap state = summary.scanLastState;
+        const auto activeState = [&state](const QString &name) {
+            return state.value(name).toBool()
+                ? QStringLiteral("oui") : QStringLiteral("non");
+        };
+        writeLine(QStringLiteral("  Recherche des scanners active : %1")
+                      .arg(activeState(QStringLiteral("discovery_running"))));
+        writeLine(QStringLiteral("  Lecture des capacites active : %1")
+                      .arg(activeState(QStringLiteral("inspection_running"))));
+        writeLine(QStringLiteral("  Numerisation active : %1")
+                      .arg(activeState(QStringLiteral("acquisition_running"))));
+        writeLine(QStringLiteral("  Export actif : %1")
+                      .arg(activeState(QStringLiteral("export_running"))));
+        writeLine(QStringLiteral("  Operation bloquante declaree : %1")
+                      .arg(activeState(QStringLiteral("busy"))));
+        writeLine(QStringLiteral("  Pages presentes en memoire : %1")
+                      .arg(state.value(QStringLiteral("page_count")).toInt()));
+        writeLine(QStringLiteral("Dernieres etapes de Mathom Scan :"));
+        for (const QString &entry : summary.scanTimeline)
+            writeLine(QStringLiteral("  - %1").arg(entry));
+        writeLine(QStringLiteral(
+            "Attention : cet etat est une observation avant l'arret, "
+            "pas une preuve de sa cause."));
+    }
+
+    writeLine();
     writeLine(QStringLiteral("Cause technique :"));
     writeLine(QStringLiteral("  SESSION_CLOSE absent : la session s'est terminee de facon anormale."));
     writeLine(QStringLiteral("  Le journal seul ne permet pas de distinguer avec certitude un plantage,"));
@@ -964,6 +1072,9 @@ QString DiagnosticManager::createReportForSession(const QString &sessionPath)
 
 void DiagnosticManager::openReport(const QString &reportPath)
 {
+    // Enrich the local report when it is viewed, without requiring an email.
+    // The post-mortem section is idempotent and is never sent automatically.
+    appendPostMortemDiagnostics(reportPath);
     QDesktopServices::openUrl(QUrl::fromLocalFile(reportPath));
 }
 
