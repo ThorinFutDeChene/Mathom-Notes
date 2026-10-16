@@ -614,12 +614,36 @@ void MathomScanDialog::loadRecoveredSession()
         const QDir dir(directory);
         if (dir.entryList({QStringLiteral("page_*.png")}, QDir::Files).isEmpty())
             continue;
-        const auto choice = QMessageBox::question(
-            this, i18n("Recover unfinished scan"),
-            i18n("Unfinished scanned pages were found. Restore this document?"),
-            QMessageBox::Yes | QMessageBox::No, QMessageBox::Yes);
-        if (choice != QMessageBox::Yes)
-            return; // Keep files: user may recover them later.
+        QMessageBox prompt(this);
+        prompt.setIcon(QMessageBox::Question);
+        prompt.setWindowTitle(i18n("Recover unfinished scan"));
+        prompt.setText(i18n(
+            "Unfinished scanned pages were found. What would you like to do?"));
+        auto *recoverButton = prompt.addButton(i18n("Recover"), QMessageBox::AcceptRole);
+        auto *laterButton = prompt.addButton(i18n("Later"), QMessageBox::RejectRole);
+        auto *deleteButton = prompt.addButton(
+            i18n("Delete permanently"), QMessageBox::DestructiveRole);
+        prompt.setDefaultButton(laterButton);
+        prompt.setEscapeButton(laterButton);
+        prompt.exec();
+
+        if (prompt.clickedButton() == deleteButton) {
+            const auto confirmation = QMessageBox::question(
+                this, i18n("Delete unfinished scan"),
+                i18n("Permanently delete all pages of this unfinished scan? "
+                     "This action cannot be undone."),
+                QMessageBox::Yes | QMessageBox::No, QMessageBox::No);
+            if (confirmation == QMessageBox::Yes) {
+                if (QDir(directory).removeRecursively())
+                    continue; // Offer recovery of another pending session, if any.
+                QMessageBox::warning(
+                    this, i18n("Could not delete unfinished scan"),
+                    i18n("Some files could not be deleted. Check the unfinished scan files."));
+            }
+            return; // On cancellation or failure, keep remaining files.
+        }
+        if (prompt.clickedButton() != recoverButton)
+            return; // "Later" or closing the prompt never deletes pages.
         m_sessionDir = directory;
         QFile file(dir.filePath(QStringLiteral("session.json")));
         if (file.open(QIODevice::ReadOnly)) {
