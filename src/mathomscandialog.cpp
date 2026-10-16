@@ -458,8 +458,12 @@ void MathomScanDialog::searchDevices()
     m_refreshButton->setEnabled(false);
     m_scanButton->setEnabled(false);
     m_status->setText(i18n("Searching for scanners..."));
-    m_discovery.setFuture(QtConcurrent::run([] {
-        return MathomScan::discover();
+    auto phase = m_discoveryPhase;
+    phase->store(MathomScan::DiagnosticStage::Idle, std::memory_order_relaxed);
+    m_discovery.setFuture(QtConcurrent::run([phase] {
+        return MathomScan::discover(nullptr, [phase](MathomScan::DiagnosticStage stage) {
+            phase->store(stage, std::memory_order_relaxed);
+        });
     }));
     traceScanEvent(QStringLiteral("SCAN_DISCOVERY_BEGIN"));
 }
