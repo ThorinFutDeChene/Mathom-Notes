@@ -113,6 +113,7 @@ target_link_libraries(LibBasket
     KF6::TextWidgets
     KF6::XmlGui
     Qt::Core
+    Qt::Concurrent
     Qt::Gui
     Qt::Multimedia
     Qt::Network
