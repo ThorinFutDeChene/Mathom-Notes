@@ -569,8 +569,13 @@ void MathomScanDialog::startAcquisition()
     options.nextImageNumber = m_nextPageNumber;
     m_cancel->store(false);
     setBusy(true, i18n("Scanning... You can continue working in Mathom Notes."));
-    m_acquisition.setFuture(QtConcurrent::run([options, cancel = m_cancel] {
-        return MathomScan::acquire(options, cancel, {});
+    auto phase = m_acquisitionPhase;
+    phase->store(MathomScan::DiagnosticStage::Idle, std::memory_order_relaxed);
+    m_acquisition.setFuture(QtConcurrent::run([options, cancel = m_cancel, phase] {
+        return MathomScan::acquire(options, cancel, {},
+                                  [phase](MathomScan::DiagnosticStage stage) {
+                                      phase->store(stage, std::memory_order_relaxed);
+                                  });
     }));
     traceScanEvent(QStringLiteral("SCAN_ACQUISITION_BEGIN"),
                    {{QStringLiteral("dpi"), options.dpi},
