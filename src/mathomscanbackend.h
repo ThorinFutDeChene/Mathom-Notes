@@ -46,11 +46,33 @@ struct Result {
     bool canceled = false;
 };
 
+// Purely diagnostic SANE phases: observers must not touch the UI or files.
+// Mathom Scan uses atomic stores so these callbacks cannot block a backend.
+enum class DiagnosticStage {
+    Idle,
+    WaitingForSaneLock,
+    SaneInit,
+    SaneGetDevices,
+    EnumeratingDevices,
+    SaneOpen,
+    ReadingCapabilities,
+    ConfiguringScan,
+    SaneStart,
+    SaneRead,
+    WritingPage,
+    Completed
+};
+using DiagnosticObserver = std::function<void(DiagnosticStage)>;
+
 // SANE is used directly, without spawning scanimage or linking GTK/Vala.
 // Calls are serialized because many SANE backends are not thread-safe.
-BASKET_EXPORT QList<Device> discover(QString *error = nullptr);
-BASKET_EXPORT Capabilities inspect(const QString &deviceId);
-BASKET_EXPORT Result acquire(const Options &options,
-               const std::shared_ptr<std::atomic_bool> &cancel,
-               const std::function<void(int)> &pageAvailable);
+BASKET_EXPORT QList<Device> discover(
+    QString *error = nullptr, const DiagnosticObserver &observer = {});
+BASKET_EXPORT Capabilities inspect(
+    const QString &deviceId, const DiagnosticObserver &observer = {});
+BASKET_EXPORT Result acquire(
+    const Options &options,
+    const std::shared_ptr<std::atomic_bool> &cancel,
+    const std::function<void(int)> &pageAvailable,
+    const DiagnosticObserver &observer = {});
 }
