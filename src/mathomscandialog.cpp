@@ -86,6 +86,26 @@ QIcon addPageIcon()
     painter.drawText(pixmap.rect(), Qt::AlignCenter, QStringLiteral("+"));
     return QIcon(pixmap);
 }
+
+QString diagnosticPhaseName(MathomScan::DiagnosticStage stage)
+{
+    using Stage = MathomScan::DiagnosticStage;
+    switch (stage) {
+    case Stage::Idle: return QStringLiteral("idle");
+    case Stage::WaitingForSaneLock: return QStringLiteral("waiting_for_sane_lock");
+    case Stage::SaneInit: return QStringLiteral("sane_init");
+    case Stage::SaneGetDevices: return QStringLiteral("sane_get_devices");
+    case Stage::EnumeratingDevices: return QStringLiteral("reading_device_list");
+    case Stage::SaneOpen: return QStringLiteral("sane_open");
+    case Stage::ReadingCapabilities: return QStringLiteral("reading_sane_options");
+    case Stage::ConfiguringScan: return QStringLiteral("configuring_sane");
+    case Stage::SaneStart: return QStringLiteral("sane_start");
+    case Stage::SaneRead: return QStringLiteral("sane_read");
+    case Stage::WritingPage: return QStringLiteral("writing_temporary_page");
+    case Stage::Completed: return QStringLiteral("finishing");
+    }
+    return QStringLiteral("unknown");
+}
 } // namespace
 
 MathomScanDialog::MathomScanDialog(QWidget *parent)
