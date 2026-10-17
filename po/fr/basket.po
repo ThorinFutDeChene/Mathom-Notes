@@ -6900,3 +6900,68 @@ msgid "Saved %1 file in your configured folder."
 msgid_plural "Saved %1 files in your configured folder."
 msgstr[0] "%1 fichier enregistré dans le dossier configuré."
 msgstr[1] "%1 fichiers enregistrés dans le dossier configuré."
+
+#: src/mathomscandialog.cpp
+msgid "Printed document"
+msgstr "Document avec caractères imprimés"
+
+#: src/mathomscandialog.cpp
+msgid "Handwritten document"
+msgstr "Document manuscrit"
+
+#: src/mathomscandialog.cpp
+msgid "Document with images"
+msgstr "Document avec images"
+
+#: src/mathomscandialog.cpp
+msgid "Photograph"
+msgstr "Photographie"
+
+#: src/mathomscandialog.cpp
+msgid "Scan profile:"
+msgstr "Type de numérisation :"
+
+#: src/mathomscandialog.cpp
+msgid "Scan profile description"
+msgstr "Description du type de numérisation"
+
+#: src/mathomscandialog.cpp
+msgid "Handwritten notes and notebooks, suitable for later transcription. Saved as a PDF."
+msgstr "Pour les notes manuscrites et les cahiers, en vue d’une transcription ultérieure. Enregistrement au format PDF."
+
+#: src/mathomscandialog.cpp
+msgid "Documents containing text, illustrations, diagrams or charts. Saved as a PDF."
+msgstr "Pour les documents mêlant du texte, des illustrations, des schémas ou des graphiques. Enregistrement au format PDF."
+
+#: src/mathomscandialog.cpp
+msgid "Photographs and detailed pictures. Saved as JPEG images."
+msgstr "Pour les photographies et les images détaillées. Enregistrement au format JPEG."
+
+#: src/mathomscandialog.cpp
+msgid "Printed documents, letters and invoices. Saved as a PDF."
+msgstr "Pour les documents imprimés, courriers et factures. Enregistrement au format PDF."
+
+#: src/mathomscandialog.cpp
+msgid " No compatible resolution at or below 600 dpi is available."
+msgstr " Ce scanner ne propose aucune résolution compatible ne dépassant pas 600 ppp."
+
+#: src/mathomscandialog.cpp
+msgid " The scanner controls the resolution automatically."
+msgstr " Le scanner gère automatiquement la résolution."
+
+#: src/mathomscandialog.cpp
+#, kde-format
+msgid " Resolution automatically adjusted to %1 dpi for this scanner."
+msgstr " Résolution automatiquement adaptée à %1 ppp pour ce scanner."
+
+#: src/mathomscandialog.cpp
+msgid "No compatible scan resolution is available."
+msgstr "Aucune résolution compatible n’est disponible pour ce scanner."
+
+#: src/mathomscandialog.cpp
+msgid "The scanned page exceeds the memory safety limit."
+msgstr "La page numérisée dépasse la limite de mémoire autorisée."
+
+#: src/mathomscandialog.cpp
+msgid "The scanner refused the resolution required for this profile."
+msgstr "Le scanner a refusé la résolution demandée pour ce profil."
