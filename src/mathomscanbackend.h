@@ -21,6 +21,7 @@ struct Capabilities {
     QStringList sources;
     QStringList modes;
     QList<int> resolutions;
+    bool hasResolutionControl = false;
     bool hasSourceOption = false;
     bool duplex = false;
     bool canScanA3 = false;
