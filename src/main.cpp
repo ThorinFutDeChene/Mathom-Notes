@@ -27,6 +27,7 @@
 #include "global.h"
 #include "diagnosticmanager.h"
 #include "mainwindow.h"
+#include "mathomscanpreloader.h"
 #ifdef DEBUG_PIPE
 #include "debugwindow.h"
 #endif
@@ -194,6 +195,12 @@ int main(int argc, char *argv[])
         Global::bnpView->enableDebugMode();
 
     win->show();
+
+    // Start probing connected scanners as soon as the main window is shown,
+    // without waiting for the user to open Mathom Scan.
+    QTimer::singleShot(0, win, [] {
+        MathomScanPreloader::instance().start();
+    });
 
     QTimer::singleShot(0, win, [win]() {
         DiagnosticManager::instance().showPendingReportDialog(win);

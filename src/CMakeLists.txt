@@ -148,6 +148,7 @@ set(basket_SRCS
     mainwindow.cpp mainwindow.h
     advancedsettingsdialog.cpp advancedsettingsdialog.h
     mathomscandialog.cpp mathomscandialog.h
+    mathomscanpreloader.cpp mathomscanpreloader.h
     mathomscanexport.cpp mathomscanexport.h
     application.cpp application.h
     basket.qrc

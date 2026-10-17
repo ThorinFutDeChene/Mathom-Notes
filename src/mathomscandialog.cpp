@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "mathomscandialog.h"
+#include "mathomscanpreloader.h"
 #include "diagnosticmanager.h"
 
 #include <KLocalizedString>
@@ -285,49 +286,47 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
                              && m_capabilities.duplex);
     });
 
-    connect(&m_discovery, &QFutureWatcher<QList<MathomScan::Device>>::finished,
+    // Preloading lives for the whole application, not just this window.
+    // Closing Mathom Scan never destroys a running SANE discovery worker.
+    auto &preloader = MathomScanPreloader::instance();
+    preloader.registerDialog();
+    connect(&preloader, &MathomScanPreloader::discoveryStarted,
             this, [this] {
-        const auto devices = m_discovery.result();
+        if (m_busy)
+            return;
+        m_scanButton->setEnabled(false);
+        m_refreshButton->setEnabled(false);
+        m_scanners->setEnabled(false);
+        m_status->setText(i18n("Searching for scanners..."));
+        traceScanEvent(QStringLiteral("SCAN_DISCOVERY_BEGIN"));
+    });
+    connect(&preloader, &MathomScanPreloader::devicesReady,
+            this, [this, &preloader] {
+        if (m_busy)
+            return;
+        const auto &devices = preloader.devices();
         traceScanEvent(QStringLiteral("SCAN_DISCOVERY_END"),
                        {{QStringLiteral("device_count"), int(devices.size())}});
-        if (m_closePending) {
-            finishDeferredClose();
-            return;
-        }
-        QSignalBlocker blocker(m_scanners);
-        m_scanners->clear();
-        const bool hasPreference = !m_preferences.deviceId.isEmpty();
-        bool matched = false;
-        for (const auto &device : devices) {
-            if (hasPreference && device.id == m_preferences.deviceId)
-                matched = true;
-        }
-        for (const auto &device : devices) {
-            const bool mustMatch = m_preferences.mode == MathomScanPreferences::Required
-                || (m_preferences.mode == MathomScanPreferences::Preferred && matched);
-            if (!mustMatch || device.id == m_preferences.deviceId)
-                m_scanners->addItem(device.label, device.id);
-        }
-        if (m_scanners->count()) {
-            int index = m_scanners->findData(m_preferences.deviceId);
-            m_scanners->setCurrentIndex(index >= 0 ? index : 0);
-        }
-        m_refreshButton->setEnabled(true);
-        m_status->setText(m_scanners->count()
-            ? i18np("%1 scanner available", "%1 scanners available", m_scanners->count())
-            : i18n("No matching scanner found. Turn it on, connect it, then search again."));
-        selectScanner();
+        displayDevices(devices);
     });
-    connect(&m_inspection, &QFutureWatcher<MathomScan::Capabilities>::finished,
-            this, [this] {
-        const auto capabilities = m_inspection.result();
+    connect(&preloader, &MathomScanPreloader::inspectionStarted,
+            this, [this](const QString &deviceId) {
+        if (m_busy || m_scanners->currentData().toString() != deviceId)
+            return;
+        m_scanButton->setEnabled(false);
+        m_status->setText(i18n("Reading scanner capabilities..."));
+        traceScanEvent(QStringLiteral("SCAN_INSPECTION_BEGIN"));
+    });
+    connect(&preloader, &MathomScanPreloader::capabilitiesReady,
+            this, [this, &preloader](const QString &deviceId) {
+        if (m_busy || m_scanners->currentData().toString() != deviceId)
+            return;
+        MathomScan::Capabilities capabilities;
+        if (!preloader.capabilityFor(deviceId, &capabilities))
+            return;
         traceScanEvent(QStringLiteral("SCAN_INSPECTION_END"),
                        {{QStringLiteral("failed"), !capabilities.error.isEmpty()},
                         {QStringLiteral("source_count"), int(capabilities.sources.size())}});
-        if (m_closePending) {
-            finishDeferredClose();
-            return;
-        }
         updateCapabilities(capabilities);
     });
     connect(&m_acquisition, &QFutureWatcher<MathomScan::Result>::finished,
@@ -389,7 +388,8 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     diagnosticHeartbeat->setInterval(5000);
     connect(diagnosticHeartbeat, &QTimer::timeout, this, [this] {
         // Avoid growing logs while Mathom Scan is idle for long periods.
-        if (m_discovery.isRunning() || m_inspection.isRunning()
+        if (MathomScanPreloader::instance().discoveryRunning()
+            || MathomScanPreloader::instance().inspectionRunning()
             || m_acquisition.isRunning() || m_export.isRunning())
             traceScanEvent(QStringLiteral("SCAN_STATE"));
     });
@@ -398,9 +398,18 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     updateScanProfile();
     refreshPages();
     traceScanEvent(QStringLiteral("SCAN_DIALOG_OPEN"));
-    // Discover devices immediately. The recovery question must not delay
-    // SANE detection, even if the user keeps the question open.
-    searchDevices();
+    if (preloader.hasDeviceList()) {
+        // The usual path: use the scanner list and capabilities collected
+        // since Mathom Notes started, without repeating discovery.
+        displayDevices(preloader.devices());
+    } else {
+        m_scanButton->setEnabled(false);
+        m_refreshButton->setEnabled(false);
+        m_scanners->setEnabled(false);
+        m_status->setText(i18n("Searching for scanners..."));
+        // Covers opening the dialog before the startup QTimer has fired.
+        preloader.start();
+    }
     // Defer the potentially modal recovery prompt until after the dialog's
     // constructor returns, keeping initialization free of nested event loops.
     QTimer::singleShot(0, this, &MathomScanDialog::loadRecoveredSession);
@@ -409,24 +418,26 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
 MathomScanDialog::~MathomScanDialog()
 {
     traceScanEvent(QStringLiteral("SCAN_DIALOG_DESTROYED"));
+    MathomScanPreloader::instance().unregisterDialog();
 }
 
 QVariantMap MathomScanDialog::diagnosticState() const
 {
     // Never include device IDs, IP addresses, document paths or page contents.
+    const auto &preloader = MathomScanPreloader::instance();
     return {
-        {QStringLiteral("discovery_running"), m_discovery.isRunning()},
-        {QStringLiteral("inspection_running"), m_inspection.isRunning()},
+        {QStringLiteral("discovery_running"), preloader.discoveryRunning()},
+        {QStringLiteral("inspection_running"), preloader.inspectionRunning()},
         {QStringLiteral("acquisition_running"), m_acquisition.isRunning()},
         {QStringLiteral("export_running"), m_export.isRunning()},
         {QStringLiteral("discovery_phase"),
-            diagnosticPhaseName(m_discoveryPhase->load(std::memory_order_relaxed))},
+            diagnosticPhaseName(preloader.discoveryStage())},
         {QStringLiteral("inspection_phase"),
-            diagnosticPhaseName(m_inspectionPhase->load(std::memory_order_relaxed))},
+            diagnosticPhaseName(preloader.inspectionStage())},
         {QStringLiteral("acquisition_phase"),
             diagnosticPhaseName(m_acquisitionPhase->load(std::memory_order_relaxed))},
         {QStringLiteral("busy"), m_busy},
-        {QStringLiteral("close_pending"), m_closePending},
+        {QStringLiteral("close_pending"), false},
         {QStringLiteral("page_count"), int(m_pages.size())}
     };
 }
@@ -450,12 +461,15 @@ void MathomScanDialog::setBusy(bool busy, const QString &message)
 {
     m_busy = busy;
     m_status->setText(message);
+    const auto &preloader = MathomScanPreloader::instance();
     m_scanButton->setEnabled(!busy && !m_scanners->currentData().toString().isEmpty()
-                             && !m_discovery.isRunning() && !m_inspection.isRunning()
+                             && preloader.hasDeviceList()
+                             && !preloader.discoveryRunning()
                              && m_capabilities.error.isEmpty() && selectedDpi() >= 0);
-    m_refreshButton->setEnabled(!busy && !m_discovery.isRunning());
+    m_refreshButton->setEnabled(!busy && !preloader.discoveryRunning());
     m_saveButton->setEnabled(!busy && !m_pages.isEmpty());
-    m_scanners->setEnabled(!busy);
+    m_scanners->setEnabled(!busy && preloader.hasDeviceList()
+                            && !preloader.discoveryRunning());
     m_sources->setEnabled(!busy);
     m_duplex->setEnabled(!busy && feederSource(m_sources->currentData().toString())
                          && m_capabilities.duplex);
@@ -477,59 +491,84 @@ void MathomScanDialog::setBusy(bool busy, const QString &message)
     m_moveRight->setEnabled(!busy && selected && m_selected + 1 < m_pages.size());
 }
 
-void MathomScanDialog::finishDeferredClose()
+void MathomScanDialog::displayDevices(const QList<MathomScan::Device> &devices)
 {
-    if (!m_closePending || m_busy || m_discovery.isRunning()
-        || m_inspection.isRunning() || m_acquisition.isRunning()
-        || m_export.isRunning())
+    if (m_busy)
         return;
-    // Defer until after the watcher finishes delivering its callbacks.
-    // The QObject context drops this callback if the window was destroyed.
-    QTimer::singleShot(0, this, [this] {
-        if (!m_closePending || m_busy || m_discovery.isRunning()
-            || m_inspection.isRunning() || m_acquisition.isRunning()
-            || m_export.isRunning())
-            return;
-        traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_RESUMED"));
-        close();
-    });
+
+    const QString previouslySelected = m_scanners->currentData().toString();
+    {
+        QSignalBlocker blocker(m_scanners);
+        m_scanners->clear();
+        const bool hasPreference = !m_preferences.deviceId.isEmpty();
+        bool matched = false;
+        for (const auto &device : devices)
+            if (hasPreference && device.id == m_preferences.deviceId)
+                matched = true;
+        for (const auto &device : devices) {
+            const bool mustMatch = m_preferences.mode == MathomScanPreferences::Required
+                || (m_preferences.mode == MathomScanPreferences::Preferred && matched);
+            if (!mustMatch || device.id == m_preferences.deviceId)
+                m_scanners->addItem(device.label, device.id);
+        }
+        if (m_scanners->count()) {
+            int index = m_scanners->findData(previouslySelected);
+            if (index < 0)
+                index = m_scanners->findData(m_preferences.deviceId);
+            m_scanners->setCurrentIndex(index >= 0 ? index : 0);
+        }
+    }
+
+    m_capabilities = {};
+    m_capabilities.error = QStringLiteral("Scanner capabilities not yet available");
+    m_refreshButton->setEnabled(true);
+    m_scanners->setEnabled(m_scanners->count() > 0);
+    m_scanButton->setEnabled(false);
+    if (m_scanners->count()) {
+        m_status->setText(i18np("%1 scanner available", "%1 scanners available",
+                                 m_scanners->count()));
+        selectScanner();
+    } else {
+        setBusy(false, i18n("No matching scanner found. Turn it on, connect it, then search again."));
+    }
 }
 
 void MathomScanDialog::searchDevices()
 {
-    if (m_closePending || m_busy || m_discovery.isRunning() || m_inspection.isRunning())
+    if (m_busy || MathomScanPreloader::instance().discoveryRunning())
         return;
     m_refreshButton->setEnabled(false);
     m_scanButton->setEnabled(false);
     m_status->setText(i18n("Searching for scanners..."));
-    auto phase = m_discoveryPhase;
-    phase->store(MathomScan::DiagnosticStage::Idle, std::memory_order_relaxed);
-    m_discovery.setFuture(QtConcurrent::run([phase] {
-        return MathomScan::discover(nullptr, [phase](MathomScan::DiagnosticStage stage) {
-            phase->store(stage, std::memory_order_relaxed);
-        });
-    }));
-    traceScanEvent(QStringLiteral("SCAN_DISCOVERY_BEGIN"));
+    MathomScanPreloader::instance().refresh();
 }
 
 void MathomScanDialog::selectScanner()
 {
-    if (m_closePending || m_discovery.isRunning() || m_busy || m_inspection.isRunning())
+    auto &preloader = MathomScanPreloader::instance();
+    if (m_busy || !preloader.hasDeviceList() || preloader.discoveryRunning())
         return;
     const QString id = m_scanners->currentData().toString();
     if (id.isEmpty()) {
+        m_capabilities = {};
+        m_capabilities.error = QStringLiteral("No scanner selected");
         setBusy(false, i18n("No scanner selected."));
         return;
     }
+
+    MathomScan::Capabilities capabilities;
+    if (preloader.capabilityFor(id, &capabilities)) {
+        // Cached on application startup: no SANE call or waiting required.
+        updateCapabilities(capabilities);
+        return;
+    }
+
+    // Clear the old device's settings while asynchronous inspection runs.
+    m_capabilities = {};
+    m_capabilities.error = QStringLiteral("Scanner capabilities not yet available");
     m_scanButton->setEnabled(false);
     m_status->setText(i18n("Reading scanner capabilities..."));
-    auto phase = m_inspectionPhase;
-    phase->store(MathomScan::DiagnosticStage::Idle, std::memory_order_relaxed);
-    m_inspection.setFuture(QtConcurrent::run([id, phase] {
-        return MathomScan::inspect(id, [phase](MathomScan::DiagnosticStage stage) {
-            phase->store(stage, std::memory_order_relaxed);
-        });
-    }));
+    preloader.requestCapabilities(id);
     traceScanEvent(QStringLiteral("SCAN_INSPECTION_BEGIN"));
 }
 
@@ -599,8 +638,9 @@ void MathomScanDialog::updateScanProfile()
     }
     m_profileInfo->setText(description);
     m_profile->setToolTip(description);
-    m_scanButton->setEnabled(!m_busy && !m_discovery.isRunning()
-                             && !m_inspection.isRunning()
+    m_scanButton->setEnabled(!m_busy
+                             && MathomScanPreloader::instance().hasDeviceList()
+                             && !MathomScanPreloader::instance().discoveryRunning()
                              && !m_scanners->currentData().toString().isEmpty()
                              && m_capabilities.error.isEmpty() && dpi >= 0);
 }
@@ -657,8 +697,10 @@ void MathomScanDialog::updateCapabilities(const MathomScan::Capabilities &capabi
 
 void MathomScanDialog::startAcquisition()
 {
-    if (m_busy || m_closePending || m_discovery.isRunning()
-        || m_inspection.isRunning() || m_scanners->currentData().toString().isEmpty())
+    if (m_busy || MathomScanPreloader::instance().discoveryRunning()
+        || !MathomScanPreloader::instance().hasDeviceList()
+        || !m_capabilities.error.isEmpty()
+        || m_scanners->currentData().toString().isEmpty())
         return;
     const int dpi = selectedDpi();
     if (dpi < 0) {
@@ -938,16 +980,7 @@ void MathomScanDialog::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
-    if (m_discovery.isRunning() || m_inspection.isRunning()) {
-        if (!m_closePending) {
-            m_closePending = true;
-            traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_DEFERRED"));
-        }
-        m_status->setText(i18n("Waiting for scanner detection to finish before closing..."));
-        event->ignore();
-        return;
-    }
-    m_closePending = false;
+    // Preloading outlives this dialog, so closing while searching is safe.
     if (m_allowClose || m_pages.isEmpty()) {
         traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_ACCEPTED"));
         event->accept();

@@ -38,6 +38,7 @@ private:
     QVariantMap diagnosticState() const;
     void traceScanEvent(const QString &event, const QVariantMap &details = {}) const;
     void searchDevices();
+    void displayDevices(const QList<MathomScan::Device> &devices);
     void selectScanner();
     void updateCapabilities(const MathomScan::Capabilities &capabilities);
     void updateScanProfile();
@@ -54,7 +55,6 @@ private:
     void redoRotation();
     QString sessionsRoot() const;
     void setBusy(bool busy, const QString &message);
-    void finishDeferredClose();
 
     MathomScanPreferences m_preferences;
     QComboBox *m_scanners = nullptr;
@@ -79,8 +79,6 @@ private:
     QLabel *m_status = nullptr;
     QLabel *m_profileInfo = nullptr;
 
-    QFutureWatcher<QList<MathomScan::Device>> m_discovery;
-    QFutureWatcher<MathomScan::Capabilities> m_inspection;
     QFutureWatcher<MathomScan::Result> m_acquisition;
     QFutureWatcher<MathomScanExport::Output> m_export;
     std::shared_ptr<std::atomic_bool> m_cancel =
@@ -88,10 +86,6 @@ private:
 
     using DiagnosticPhase = MathomScan::DiagnosticStage;
     using PhaseAtomic = std::atomic<DiagnosticPhase>;
-    std::shared_ptr<PhaseAtomic> m_discoveryPhase =
-        std::make_shared<PhaseAtomic>(DiagnosticPhase::Idle);
-    std::shared_ptr<PhaseAtomic> m_inspectionPhase =
-        std::make_shared<PhaseAtomic>(DiagnosticPhase::Idle);
     std::shared_ptr<PhaseAtomic> m_acquisitionPhase =
         std::make_shared<PhaseAtomic>(DiagnosticPhase::Idle);
 
@@ -101,7 +95,6 @@ private:
     int m_selected = -1;
     int m_nextPageNumber = 1;
     bool m_busy = false;
-    bool m_closePending = false;
     MathomScan::Capabilities m_capabilities;
     QSet<QString> m_ignored;
     QList<QPair<QString, int>> m_rotationUndo;
