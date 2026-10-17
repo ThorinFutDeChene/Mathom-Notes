@@ -362,8 +362,8 @@ msgstr "&Emblème :"
 #. i18n: ectx: Menu (basket)
 #: rc.cpp:144
 #, kde-format
-msgid "&Mathom-House"
-msgstr "&Mathom-House"
+msgid "&File"
+msgstr "&Fichier"
 
 #. i18n: file: src/mathomui.rc:11
 #. i18n: ectx: Menu

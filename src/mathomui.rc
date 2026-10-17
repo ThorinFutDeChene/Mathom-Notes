@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE kpartgui SYSTEM "kpartgui.dtd">
-<gui name="basket" version="16">
+<gui name="basket" version="17">
  <MenuBar noMerge="1" >
   <Menu name="basket" >
-   <text>&amp;Mathom-House</text>
+   <text>&amp;File</text>
    <Action name="basket_properties" />
    <Menu icon="document-export" >
     <text>&amp;Export</text>
@@ -23,6 +23,7 @@
     <Action name="basket_import_text_file" />
     <Action name="basket_import_pdf_file" />
    </Menu>
+   <Action name="insert_scan_document" />
    <Action name="basket_backup_restore" />
    <Separator/>
    <Action name="check_cleanup" />
@@ -86,7 +87,6 @@
    <Separator/>
    <Action name="insert_screen_capture" />
    <Action name="insert_screen_color" />
-   <Action name="insert_scan_document" />
    <Separator/>
    <Action name="insert_from_file" />
    <Action name="insert_kmenu" />
