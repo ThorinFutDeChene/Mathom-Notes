@@ -355,6 +355,10 @@ QString humanEventName(const QString &event)
         return QStringLiteral("fermeture de Mathom Scan demandee");
     if (event == QStringLiteral("SCAN_DIALOG_CLOSE_BLOCKED"))
         return QStringLiteral("fermeture de Mathom Scan refusee");
+    if (event == QStringLiteral("SCAN_DIALOG_CLOSE_DEFERRED"))
+        return QStringLiteral("fermeture differee jusqu'a la fin de la detection");
+    if (event == QStringLiteral("SCAN_DIALOG_CLOSE_RESUMED"))
+        return QStringLiteral("fermeture reprise apres detection");
     if (event == QStringLiteral("SCAN_DIALOG_CLOSE_CANCELLED"))
         return QStringLiteral("fermeture de Mathom Scan annulee");
     if (event == QStringLiteral("SCAN_DIALOG_CLOSE_SAVE_REQUEST"))

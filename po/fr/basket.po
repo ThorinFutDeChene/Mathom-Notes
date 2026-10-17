@@ -6786,6 +6786,10 @@ msgid "An operation is in progress. Wait for it to finish."
 msgstr "Une opération est en cours. Attendez sa fin."
 
 #: src/mathomscan*
+msgid "Waiting for scanner detection to finish before closing..."
+msgstr "Fermeture en attente de la fin de la recherche du scanner…"
+
+#: src/mathomscan*
 msgid "Unfinished scan"
 msgstr "Numérisation non enregistrée"
 

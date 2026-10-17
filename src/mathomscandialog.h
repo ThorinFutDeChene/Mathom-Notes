@@ -52,6 +52,7 @@ private:
     void redoRotation();
     QString sessionsRoot() const;
     void setBusy(bool busy, const QString &message);
+    void finishDeferredClose();
 
     MathomScanPreferences m_preferences;
     QComboBox *m_scanners = nullptr;
@@ -98,6 +99,7 @@ private:
     int m_selected = -1;
     int m_nextPageNumber = 1;
     bool m_busy = false;
+    bool m_closePending = false;
     MathomScan::Capabilities m_capabilities;
     QSet<QString> m_ignored;
     QList<QPair<QString, int>> m_rotationUndo;

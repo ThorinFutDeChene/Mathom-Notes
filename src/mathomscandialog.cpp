@@ -283,6 +283,10 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
         const auto devices = m_discovery.result();
         traceScanEvent(QStringLiteral("SCAN_DISCOVERY_END"),
                        {{QStringLiteral("device_count"), int(devices.size())}});
+        if (m_closePending) {
+            finishDeferredClose();
+            return;
+        }
         QSignalBlocker blocker(m_scanners);
         m_scanners->clear();
         const bool hasPreference = !m_preferences.deviceId.isEmpty();
@@ -313,6 +317,10 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
         traceScanEvent(QStringLiteral("SCAN_INSPECTION_END"),
                        {{QStringLiteral("failed"), !capabilities.error.isEmpty()},
                         {QStringLiteral("source_count"), int(capabilities.sources.size())}});
+        if (m_closePending) {
+            finishDeferredClose();
+            return;
+        }
         updateCapabilities(capabilities);
     });
     connect(&m_acquisition, &QFutureWatcher<MathomScan::Result>::finished,
@@ -405,6 +413,7 @@ QVariantMap MathomScanDialog::diagnosticState() const
         {QStringLiteral("acquisition_phase"),
             diagnosticPhaseName(m_acquisitionPhase->load(std::memory_order_relaxed))},
         {QStringLiteral("busy"), m_busy},
+        {QStringLiteral("close_pending"), m_closePending},
         {QStringLiteral("page_count"), int(m_pages.size())}
     };
 }
@@ -454,9 +463,27 @@ void MathomScanDialog::setBusy(bool busy, const QString &message)
     m_moveRight->setEnabled(!busy && selected && m_selected + 1 < m_pages.size());
 }
 
+void MathomScanDialog::finishDeferredClose()
+{
+    if (!m_closePending || m_busy || m_discovery.isRunning()
+        || m_inspection.isRunning() || m_acquisition.isRunning()
+        || m_export.isRunning())
+        return;
+    // Defer until after the watcher finishes delivering its callbacks.
+    // The QObject context drops this callback if the window was destroyed.
+    QTimer::singleShot(0, this, [this] {
+        if (!m_closePending || m_busy || m_discovery.isRunning()
+            || m_inspection.isRunning() || m_acquisition.isRunning()
+            || m_export.isRunning())
+            return;
+        traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_RESUMED"));
+        close();
+    });
+}
+
 void MathomScanDialog::searchDevices()
 {
-    if (m_busy || m_discovery.isRunning() || m_inspection.isRunning())
+    if (m_closePending || m_busy || m_discovery.isRunning() || m_inspection.isRunning())
         return;
     m_refreshButton->setEnabled(false);
     m_scanButton->setEnabled(false);
@@ -473,7 +500,7 @@ void MathomScanDialog::searchDevices()
 
 void MathomScanDialog::selectScanner()
 {
-    if (m_discovery.isRunning() || m_busy || m_inspection.isRunning())
+    if (m_closePending || m_discovery.isRunning() || m_busy || m_inspection.isRunning())
         return;
     const QString id = m_scanners->currentData().toString();
     if (id.isEmpty()) {
@@ -548,7 +575,8 @@ void MathomScanDialog::updateCapabilities(const MathomScan::Capabilities &capabi
 
 void MathomScanDialog::startAcquisition()
 {
-    if (m_busy || m_scanners->currentData().toString().isEmpty())
+    if (m_busy || m_closePending || m_discovery.isRunning()
+        || m_inspection.isRunning() || m_scanners->currentData().toString().isEmpty())
         return;
     if (m_sessionDir.isEmpty()) {
         QDir().mkpath(sessionsRoot());
@@ -821,6 +849,16 @@ void MathomScanDialog::closeEvent(QCloseEvent *event)
         event->ignore();
         return;
     }
+    if (m_discovery.isRunning() || m_inspection.isRunning()) {
+        if (!m_closePending) {
+            m_closePending = true;
+            traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_DEFERRED"));
+        }
+        m_status->setText(i18n("Waiting for scanner detection to finish before closing..."));
+        event->ignore();
+        return;
+    }
+    m_closePending = false;
     if (m_allowClose || m_pages.isEmpty()) {
         traceScanEvent(QStringLiteral("SCAN_DIALOG_CLOSE_ACCEPTED"));
         event->accept();
