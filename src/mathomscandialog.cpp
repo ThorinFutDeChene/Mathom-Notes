@@ -135,12 +135,15 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     m_sources->setSizeAdjustPolicy(QComboBox::AdjustToMinimumContentsLengthWithIcon);
     m_duplex = new QCheckBox(i18n("Duplex"), this);
     m_color = new QComboBox(this);
-    m_dpi = new QComboBox(this);
+    m_profile = new QComboBox(this);
+    m_profile->setMinimumContentsLength(23);
+    m_profile->addItem(i18n("Printed document"), 0);
+    m_profile->addItem(i18n("Handwritten document"), 1);
+    m_profile->addItem(i18n("Document with images"), 2);
+    m_profile->addItem(i18n("Photograph"), 3);
     m_paper = new QComboBox(this);
-    m_output = new QComboBox(this);
     m_paper->addItems({QStringLiteral("A5"), QStringLiteral("A4"), QStringLiteral("A3")});
     m_paper->setCurrentText(QStringLiteral("A4"));
-    m_output->addItems({QStringLiteral("PDF"), QStringLiteral("JPEG")});
     m_scanButton = new QPushButton(i18n("Scan"), this);
     m_scanButton->setIcon(QIcon::fromTheme(QStringLiteral("scanner")));
     m_cancelButton = new QPushButton(i18n("Stop scan"), this);
@@ -157,16 +160,18 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     layout->addLayout(acquisitionControls);
 
     auto *scanOptions = new QHBoxLayout;
+    scanOptions->addWidget(new QLabel(i18n("Scan profile:"), this));
+    scanOptions->addWidget(m_profile, 2);
     scanOptions->addWidget(new QLabel(i18n("Color:"), this));
     scanOptions->addWidget(m_color);
-    scanOptions->addWidget(new QLabel(i18n("Resolution:"), this));
-    scanOptions->addWidget(m_dpi);
     scanOptions->addWidget(new QLabel(i18n("Page size:"), this));
     scanOptions->addWidget(m_paper);
-    scanOptions->addWidget(new QLabel(i18n("File type:"), this));
-    scanOptions->addWidget(m_output);
     scanOptions->addStretch(1);
     layout->addLayout(scanOptions);
+    m_profileInfo = new QLabel(this);
+    m_profileInfo->setWordWrap(true);
+    m_profileInfo->setAccessibleName(i18n("Scan profile description"));
+    layout->addWidget(m_profileInfo);
 
     m_status = new QLabel(i18n("Connect your scanner, then choose it."), this);
     m_status->setWordWrap(true);
@@ -231,6 +236,8 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
             this, &MathomScanDialog::selectScanner);
     connect(m_scanButton, &QPushButton::clicked,
             this, &MathomScanDialog::startAcquisition);
+    connect(m_profile, qOverload<int>(&QComboBox::currentIndexChanged),
+            this, &MathomScanDialog::updateScanProfile);
     auto activatePreview = [this](QListWidgetItem *item) {
         const int row = m_preview->row(item);
         if (row == m_pages.size()) {
@@ -344,10 +351,15 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
         saveManifest();
         m_selected = m_pages.isEmpty() ? -1 : int(m_pages.size()) - 1;
         refreshPages();
+        QString errorText = result.error;
+        if (errorText == QStringLiteral("Page exceeds safe memory limit"))
+            errorText = i18n("The scanned page exceeds the memory safety limit.");
+        else if (errorText == QStringLiteral("Scanner refused the selected resolution"))
+            errorText = i18n("The scanner refused the resolution required for this profile.");
         setBusy(false, result.error.isEmpty()
             ? i18np("%1 new page scanned", "%1 new pages scanned", result.paths.size())
             : i18n("Scanner error: %1. Previously scanned pages are preserved.",
-                   result.error));
+                   errorText));
     });
     connect(&m_export, &QFutureWatcher<MathomScanExport::Output>::finished,
             this, [this] {
@@ -383,6 +395,7 @@ MathomScanDialog::MathomScanDialog(QWidget *parent)
     });
     diagnosticHeartbeat->start();
 
+    updateScanProfile();
     refreshPages();
     traceScanEvent(QStringLiteral("SCAN_DIALOG_OPEN"));
     // Discover devices immediately. The recovery question must not delay
@@ -437,7 +450,9 @@ void MathomScanDialog::setBusy(bool busy, const QString &message)
 {
     m_busy = busy;
     m_status->setText(message);
-    m_scanButton->setEnabled(!busy && !m_scanners->currentData().toString().isEmpty());
+    m_scanButton->setEnabled(!busy && !m_scanners->currentData().toString().isEmpty()
+                             && !m_discovery.isRunning() && !m_inspection.isRunning()
+                             && m_capabilities.error.isEmpty() && selectedDpi() >= 0);
     m_refreshButton->setEnabled(!busy && !m_discovery.isRunning());
     m_saveButton->setEnabled(!busy && !m_pages.isEmpty());
     m_scanners->setEnabled(!busy);
@@ -448,9 +463,8 @@ void MathomScanDialog::setBusy(bool busy, const QString &message)
     if (m_cancelButton->isVisible())
         m_cancelButton->setEnabled(true);
     m_color->setEnabled(!busy);
-    m_dpi->setEnabled(!busy);
+    m_profile->setEnabled(!busy);
     m_paper->setEnabled(!busy);
-    m_output->setEnabled(!busy);
     m_preview->setEnabled(!busy);
     const bool selected = m_selected >= 0 && m_selected < m_pages.size();
     m_rotateLeft->setEnabled(!busy && selected);
@@ -519,6 +533,78 @@ void MathomScanDialog::selectScanner()
     traceScanEvent(QStringLiteral("SCAN_INSPECTION_BEGIN"));
 }
 
+int MathomScanDialog::selectedDpi() const
+{
+    // A backend without a writable SANE resolution option uses its own default.
+    if (!m_capabilities.hasResolutionControl)
+        return 0;
+    const int profile = m_profile->currentData().toInt();
+    const int target = profile == 0 ? 300 : profile == 3 ? 600 : 400;
+    int lower = -1;
+    int higher = -1;
+    for (int dpi : m_capabilities.resolutions) {
+        if (dpi <= 0 || dpi > 600)
+            continue;
+        if (dpi <= target)
+            lower = std::max(lower, dpi);
+        else if (higher < 0 || dpi < higher)
+            higher = dpi;
+    }
+    return lower >= 0 ? lower : higher;
+}
+
+void MathomScanDialog::updateScanProfile()
+{
+    const int profile = m_profile->currentData().toInt();
+    QString description;
+    switch (profile) {
+    case 1:
+        description = i18n("Handwritten notes and notebooks, suitable for later transcription. Saved as a PDF.");
+        break;
+    case 2:
+        description = i18n("Documents containing text, illustrations, diagrams or charts. Saved as a PDF.");
+        break;
+    case 3:
+        description = i18n("Photographs and detailed pictures. Saved as JPEG images.");
+        break;
+    default:
+        description = i18n("Printed documents, letters and invoices. Saved as a PDF.");
+        break;
+    }
+
+    // Profile-dependent default; the user can still change the color mode.
+    const bool preferColor = profile >= 2;
+    for (int index = 0; index < m_color->count(); ++index) {
+        const QString mode = m_color->itemData(index).toString().toLower();
+        const bool color = mode.contains(QStringLiteral("color"))
+            || mode.contains(QStringLiteral("colour"));
+        const bool gray = mode.contains(QStringLiteral("gray"))
+            || mode.contains(QStringLiteral("grey"));
+        if ((preferColor && color) || (!preferColor && gray)) {
+            m_color->setCurrentIndex(index);
+            break;
+        }
+    }
+
+    const int dpi = selectedDpi();
+    if (!m_scanners->currentData().toString().isEmpty()
+        && m_capabilities.error.isEmpty()) {
+        const int target = profile == 0 ? 300 : profile == 3 ? 600 : 400;
+        if (dpi < 0)
+            description += i18n(" No compatible resolution at or below 600 dpi is available.");
+        else if (!m_capabilities.hasResolutionControl)
+            description += i18n(" The scanner controls the resolution automatically.");
+        else if (dpi != target)
+            description += i18n(" Resolution automatically adjusted to %1 dpi for this scanner.", dpi);
+    }
+    m_profileInfo->setText(description);
+    m_profile->setToolTip(description);
+    m_scanButton->setEnabled(!m_busy && !m_discovery.isRunning()
+                             && !m_inspection.isRunning()
+                             && !m_scanners->currentData().toString().isEmpty()
+                             && m_capabilities.error.isEmpty() && dpi >= 0);
+}
+
 void MathomScanDialog::updateCapabilities(const MathomScan::Capabilities &capabilities)
 {
     m_capabilities = capabilities;
@@ -548,11 +634,7 @@ void MathomScanDialog::updateCapabilities(const MathomScan::Capabilities &capabi
     else
         for (const QString &value : capabilities.modes)
             m_color->addItem(localizedMode(value), value);
-    m_dpi->clear();
-    for (int dpi : capabilities.resolutions)
-        m_dpi->addItem(i18n("%1 dpi", dpi), dpi);
-    const int preferredDpi = m_dpi->findData(300);
-    m_dpi->setCurrentIndex(preferredDpi >= 0 ? preferredDpi : 0);
+    updateScanProfile();
 
     if (auto *model = qobject_cast<QStandardItemModel *>(m_paper->model())) {
         for (int i = 0; i < m_paper->count(); ++i) {
@@ -578,6 +660,11 @@ void MathomScanDialog::startAcquisition()
     if (m_busy || m_closePending || m_discovery.isRunning()
         || m_inspection.isRunning() || m_scanners->currentData().toString().isEmpty())
         return;
+    const int dpi = selectedDpi();
+    if (dpi < 0) {
+        m_status->setText(i18n("No compatible scan resolution is available."));
+        return;
+    }
     if (m_sessionDir.isEmpty()) {
         QDir().mkpath(sessionsRoot());
         QFile::setPermissions(sessionsRoot(),
@@ -594,7 +681,7 @@ void MathomScanDialog::startAcquisition()
     options.source = m_sources->currentData().toString();
     options.duplex = m_duplex->isChecked();
     options.mode = m_color->currentData().toString();
-    options.dpi = m_dpi->currentData().toInt();
+    options.dpi = dpi;
     options.paper = m_paper->currentText();
     options.sessionDirectory = m_sessionDir;
     options.nextImageNumber = m_nextPageNumber;
@@ -610,6 +697,7 @@ void MathomScanDialog::startAcquisition()
     }));
     traceScanEvent(QStringLiteral("SCAN_ACQUISITION_BEGIN"),
                    {{QStringLiteral("dpi"), options.dpi},
+                    {QStringLiteral("profile"), m_profile->currentData().toInt()},
                     {QStringLiteral("duplex"), options.duplex},
                     {QStringLiteral("paper"), options.paper}});
     m_cancelButton->setVisible(true);
@@ -825,7 +913,8 @@ void MathomScanDialog::saveDocument()
     if (m_busy || m_pages.isEmpty())
         return;
     const auto pages = m_pages;
-    const QString format = m_output->currentText();
+    const QString format = m_profile->currentData().toInt() == 3
+        ? QStringLiteral("JPEG") : QStringLiteral("PDF");
     const QString paper = m_paper->currentText();
     const QString destination = m_preferences.outputDirectory;
     const QDateTime scanTime = m_scanTime;
