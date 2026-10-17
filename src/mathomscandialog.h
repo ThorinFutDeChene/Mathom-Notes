@@ -40,6 +40,8 @@ private:
     void searchDevices();
     void selectScanner();
     void updateCapabilities(const MathomScan::Capabilities &capabilities);
+    void updateScanProfile();
+    int selectedDpi() const;
     void startAcquisition();
     void refreshPages();
     void selectPage(int index);
@@ -58,9 +60,8 @@ private:
     QComboBox *m_scanners = nullptr;
     QComboBox *m_sources = nullptr;
     QComboBox *m_color = nullptr;
-    QComboBox *m_dpi = nullptr;
+    QComboBox *m_profile = nullptr;
     QComboBox *m_paper = nullptr;
-    QComboBox *m_output = nullptr;
     QCheckBox *m_duplex = nullptr;
     QListWidget *m_preview = nullptr;
     QPushButton *m_scanButton = nullptr;
@@ -76,6 +77,7 @@ private:
     QPushButton *m_undo = nullptr;
     QPushButton *m_redo = nullptr;
     QLabel *m_status = nullptr;
+    QLabel *m_profileInfo = nullptr;
 
     QFutureWatcher<QList<MathomScan::Device>> m_discovery;
     QFutureWatcher<MathomScan::Capabilities> m_inspection;
