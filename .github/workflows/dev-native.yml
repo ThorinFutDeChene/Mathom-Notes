@@ -3,7 +3,7 @@ name: Native DEV build and verification
 on:
   push:
     branches:
-      - ci/5.0.2-priorites-fichiers
+      - ci/5.0.2-point1-test-archives
   workflow_dispatch:
     inputs:
       source_commit:
@@ -26,9 +26,9 @@ concurrency:
 
 env:
   # Infrastructure stays on the CI branch. Set this to the exact reviewed commit
-  # on fix/5.0.2-priorites-fichiers before pushing the CI branch for execution.
+  # on fix/5.0.2-point1-test-archives before pushing the CI branch for execution.
   # An empty value deliberately stops before building or publishing anything.
-  MATHOM_SOURCE_COMMIT: 'ff4f48b6c9ca52e9923d5755b7571c496ba1b89c'
+  MATHOM_SOURCE_COMMIT: '7257127369f65bc0bfd1cc79fea9fa0bdeb984aa'
   # Publication is enabled for this reviewed candidate. Compilation, regression
   # tests and native package checks must all succeed before the release step.
   PUBLISH_DEV: 'true'
@@ -38,7 +38,7 @@ env:
 
 jobs:
   native-dev:
-    if: github.repository == 'ThorinFutDeChene/Mathom-Notes' && github.ref == 'refs/heads/ci/5.0.2-priorites-fichiers'
+    if: github.repository == 'ThorinFutDeChene/Mathom-Notes' && github.ref == 'refs/heads/ci/5.0.2-point1-test-archives'
     runs-on: ubuntu-24.04
     container: ubuntu:26.04
     timeout-minutes: 60
@@ -83,8 +83,17 @@ jobs:
           APPLICATION_COMMIT: ${{ steps.source.outputs.commit }}
         run: |
           test "$(git -C source rev-parse HEAD)" = "$APPLICATION_COMMIT"
-          git -C source merge-base --is-ancestor "$APPLICATION_COMMIT" origin/fix/5.0.2-priorites-fichiers
+          git -C source merge-base --is-ancestor "$APPLICATION_COMMIT" origin/fix/5.0.2-point1-test-archives
           git -C source diff --exit-code origin/main "$APPLICATION_COMMIT" -- .github/workflows
+          # Whitelist exactly one test file and the DEV version declaration.
+          # Any application production-code change must stop this isolated DEV.
+          changed_paths="$(git -C source diff --name-only origin/main "$APPLICATION_COMMIT")"
+          expected_paths="$(printf 'VERSION\\nsrc/tests/archivetest.cpp')"
+          if [[ "$changed_paths" != "$expected_paths" ]]; then
+            printf 'Unexpected application files in point-1 branch:\\n%s\\n' "$changed_paths" >&2
+            exit 1
+          fi
+          test "$(tr -d '[:space:]' < source/VERSION)" = '5.0.2-dev2'
           git -C source diff --check
           cmake -S source -B source/build-tests -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
