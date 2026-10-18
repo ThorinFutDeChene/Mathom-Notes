@@ -1,0 +1,156 @@
+name: Native DEV build and verification
+
+on:
+  push:
+    branches:
+      - ci/5.0.2-priorites-fichiers
+  workflow_dispatch:
+    inputs:
+      source_commit:
+        description: Application commit SHA; defaults to the reviewed constant below
+        type: string
+        default: ''
+      publish:
+        description: Publish a new immutable DEV, then verify the downloaded package
+        type: boolean
+        default: false
+
+# Publishing uses the ordinary repository token. No personal token is required
+# or searched for. Repository policy can still refuse workflow/release changes.
+permissions:
+  contents: write
+
+concurrency:
+  group: native-dev-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Infrastructure stays on the CI branch. Set this to the exact reviewed commit
+  # on fix/5.0.2-priorites-fichiers before pushing the CI branch for execution.
+  # An empty value deliberately stops before building or publishing anything.
+  MATHOM_SOURCE_COMMIT: '38b4423e98275aa096c9e412cf7f4c7f08d50e19'
+  # Keep the first push build-only. Change this in a reviewed publication commit
+  # once the code and package have passed their checks, or use the manual input.
+  PUBLISH_DEV: 'false'
+  DEBIAN_FRONTEND: noninteractive
+  CMAKE_BUILD_PARALLEL_LEVEL: '2'
+  CTEST_PARALLEL_LEVEL: '1'
+
+jobs:
+  native-dev:
+    if: github.repository == 'ThorinFutDeChene/Mathom-Notes' && github.ref == 'refs/heads/ci/5.0.2-priorites-fichiers'
+    runs-on: ubuntu-24.04
+    container: ubuntu:26.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Bootstrap the Ubuntu container
+        run: |
+          apt-get update -o Acquire::Retries=3
+          apt-get install -y --no-install-recommends ca-certificates git coreutils-from-gnu
+
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Select the exact application commit
+        id: source
+        env:
+          REQUESTED_SOURCE_COMMIT: ${{ inputs.source_commit || env.MATHOM_SOURCE_COMMIT }}
+        run: |
+          if [[ ! "$REQUESTED_SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'Set MATHOM_SOURCE_COMMIT to the reviewed 40-character application commit SHA.' >&2
+            exit 1
+          fi
+          printf 'commit=%s\n' "$REQUESTED_SOURCE_COMMIT" >> "$GITHUB_OUTPUT"
+
+      - name: Check out application sources separately from CI infrastructure
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ steps.source.outputs.commit }}
+          path: source
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install native build and test dependencies
+        run: bash scripts/ci/install-native-dependencies.sh
+
+      - name: Check the source and configure tests
+        env:
+          APPLICATION_COMMIT: ${{ steps.source.outputs.commit }}
+        run: |
+          test "$(git -C source rev-parse HEAD)" = "$APPLICATION_COMMIT"
+          git -C source merge-base --is-ancestor "$APPLICATION_COMMIT" origin/fix/5.0.2-priorites-fichiers
+          git -C source diff --exit-code origin/main "$APPLICATION_COMMIT" -- .github/workflows
+          git -C source diff --check
+          cmake -S source -B source/build-tests -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DBUILD_TESTING=ON \
+            -DBUILD_DEVTOOLS=OFF \
+            -DENABLE_GPG=OFF \
+            -DENABLE_GIT=ON \
+            -DCMAKE_DISABLE_FIND_PACKAGE_KF6DocTools=TRUE
+
+      - name: Compile and run regression tests
+        run: |
+          cmake --build source/build-tests
+          bash scripts/ci/test-native.sh source/build-tests source source
+
+      - name: Build the official native Debian package
+        id: package
+        run: |
+          bash source/scripts/build-mathom-native-deb.sh
+          version="$(tr -d '[:space:]' < source/VERSION)"
+          if [[ "$version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-dev([0-9]+)$ ]]; then
+            deb_version="${BASH_REMATCH[1]}-0dev${BASH_REMATCH[2]}"
+          elif [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            deb_version="$version-1"
+          else
+            echo 'Invalid VERSION' >&2
+            exit 1
+          fi
+          package="mathom_${deb_version}_$(dpkg --print-architecture).deb"
+          (cd source/packaging && sha256sum "$package" > "$package.sha256")
+          printf 'version=%s\npackage=%s\n' "$version" "$package" >> "$GITHUB_OUTPUT"
+
+      - name: Publish the new DEV
+        id: publish
+        if: env.PUBLISH_DEV == 'true' || (github.event_name == 'workflow_dispatch' && inputs.publish)
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPLICATION_COMMIT: ${{ steps.source.outputs.commit }}
+        run: PUBLISH_DEV=true bash scripts/ci/publish-dev.sh source "source/packaging/${{ steps.package.outputs.package }}" "$APPLICATION_COMMIT"
+
+      - name: Download, install and test the published DEV
+        if: steps.publish.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MATHOM_DEV_VERSION: ${{ steps.package.outputs.version }}
+          MATHOM_DEB_FILENAME: ${{ steps.package.outputs.package }}
+        run: |
+          download="$GITHUB_WORKSPACE/packaging/published-download"
+          mkdir -p "$download"
+          gh release download "v$MATHOM_DEV_VERSION" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$MATHOM_DEB_FILENAME" --pattern "$MATHOM_DEB_FILENAME.sha256" --dir "$download"
+          (cd "$download" && sha256sum --check "$MATHOM_DEB_FILENAME.sha256")
+          cmp "source/packaging/$MATHOM_DEB_FILENAME" "$download/$MATHOM_DEB_FILENAME"
+          apt-get install -y --no-install-recommends "$download/$MATHOM_DEB_FILENAME"
+          bash scripts/ci/test-native.sh source/build-tests published source
+
+      - name: Retain the package and verification results
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-dev-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            source/packaging/mathom_*.deb
+            source/packaging/mathom_*.deb.sha256
+            packaging/ci-results/
+            source/packaging/dpkg-shlibdeps-native.log
+            source/build-tests/Testing/Temporary/LastTest.log
