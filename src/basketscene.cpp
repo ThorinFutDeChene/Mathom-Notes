@@ -4596,7 +4596,8 @@ void BasketScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         NoteSelection *selection = selectedNotes();
         if (selection->firstStacked()) {
             QDrag *d = NoteDrag::dragObject(selection, /*cutting=*/false, /*source=*/m_view); // d will be deleted by QT
-            /*bool shouldRemove = */ d->exec();
+            if (d)
+                /*bool shouldRemove = */ d->exec();
             //      delete selection;
 
             // Never delete because URL is dragged and the file must be available for the extern application
@@ -6856,6 +6857,21 @@ void BasketScene::noteDeleteWithoutConfirmation(bool deleteFilesToo)
     save();
 }
 
+bool BasketScene::saveNoteForFileTransfer(Note *note)
+{
+    if (!note || note->basket() != this || !note->content())
+        return false;
+
+    if (m_editor && m_editor->note() == note) {
+        // Synchronize without closing the editor or changing the selection.
+        // autoSave records a failed write on the current NoteContent owner.
+        m_editor->autoSave(/*toFileToo=*/true);
+        return !PendingSave::hasPendingSaves(note);
+    }
+
+    return PendingSave::retryPendingSaves(note);
+}
+
 void BasketScene::doCopy(CopyMode copyMode)
 {
     QClipboard *cb = QApplication::clipboard();
@@ -6865,6 +6881,8 @@ void BasketScene::doCopy(CopyMode copyMode)
     int countCopied = countSelecteds();
     if (selection->firstStacked()) {
         QDrag *d = NoteDrag::dragObject(selection, copyMode == CutToClipboard, /*source=*/nullptr); // d will be deleted by QT
+        if (!d)
+            return;
 
         cb->setMimeData(d->mimeData(), mode);
 
@@ -7372,9 +7390,13 @@ void BasketScene::slotCopyingDone2(KIO::Job *job, const QUrl & /*from*/, const Q
     Note *note = noteForFullPath(to.path());
     DEBUG_WIN << QStringLiteral("Copy finished, load note: ") + to.path() + (note ? QString() : QStringLiteral(" --- NO CORRESPONDING NOTE"));
     if (note != nullptr) {
-        note->content()->loadFromFile(/*lazyLoad=*/false);
-        if (isEncrypted())
-            note->content()->saveToFile();
+        // The user may have edited this note while the asynchronous copy was
+        // running. Keep its current model until the failed save can be retried.
+        if (!note->content()->hasPendingSave()) {
+            note->content()->loadFromFile(/*lazyLoad=*/false);
+            if (isEncrypted())
+                note->content()->saveToFile();
+        }
         if (m_focusedNote == note) // When inserting a new note we ensure it visible
             ensureNoteVisible(note); //  But after loading it has certainly grown and if it was
     } //  on bottom of the basket it's not visible entirely anymore

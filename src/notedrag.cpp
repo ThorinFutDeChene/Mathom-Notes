@@ -20,14 +20,72 @@
 
 #include <KIO/CopyJob>
 #include <KIO/Paste>
+#include <KLocalizedString>
 
 #include "basketscene.h"
+#include "bnpview.h"
 #include "global.h"
 #include "notefactory.h"
 #include "noteselection.h"
 #include "tools.h"
 
 #include <basket_debug.h>
+
+namespace {
+bool prepareFileTransfers(const QList<Note *> &notes)
+{
+    for (Note *note : notes) {
+        if (!note->content() || !note->content()->shouldSerializeFile())
+            continue;
+        if (!note->basket()->saveNoteForFileTransfer(note)) {
+            if (Global::bnpView)
+                Q_EMIT Global::bnpView->showErrorMessage(
+                    i18n("Some selected mathoms could not be saved. Wait until they are saved before copying, cutting or moving them."));
+            return false;
+        }
+    }
+    return true;
+}
+
+// A clipboard can outlive its source notes. Inspect the native stream before
+// changing either basket, and find still-live file owners by their paths instead
+// of dereferencing the old pointer values stored in that stream.
+bool collectTransferNotes(QDataStream &stream, BasketScene *basket, QList<Note *> &notes)
+{
+    while (stream.status() == QDataStream::Ok) {
+        quint64 pointer = 0;
+        stream >> pointer;
+        if (stream.status() != QDataStream::Ok)
+            return false;
+        if (pointer == 0)
+            return true;
+
+        quint64 type = 0, width = 0;
+        stream >> type >> width;
+        if (type == NoteType::Group) {
+            quint64 folded = 0;
+            stream >> folded;
+            if (!collectTransferNotes(stream, basket, notes))
+                return false;
+        } else {
+            QString fileName, fullPath;
+            QDateTime added, modified;
+            stream >> fileName >> fullPath >> added >> modified;
+            if (!fullPath.isEmpty()) {
+                Note *note = basket->noteForFullPath(fullPath);
+                if (note && !notes.contains(note))
+                    notes.append(note);
+            }
+            NoteFactory::consumeContent(stream, static_cast<NoteType::Id>(type));
+            quint64 state = 0;
+            do {
+                stream >> state;
+            } while (state && stream.status() == QDataStream::Ok);
+        }
+    }
+    return false;
+}
+}
 
 /** NoteDrag */
 
@@ -43,7 +101,13 @@ void NoteDrag::createAndEmptyCuttingTmpFolder()
 
 QDrag *NoteDrag::dragObject(NoteSelection *noteList, bool cutting, QWidget *source)
 {
-    if (noteList->count() <= 0)
+    if (!noteList || noteList->count() <= 0)
+        return nullptr;
+
+    QList<Note *> notes;
+    for (NoteSelection *node = noteList->firstStacked(); node; node = node->nextStacked())
+        notes.append(node->note);
+    if (!prepareFileTransfers(notes))
         return nullptr;
 
     auto *multipleDrag = new QDrag(source);
@@ -407,9 +471,21 @@ Note *NoteDrag::decode(const QMimeData *source, BasketScene *parent, bool moveFi
     if (buffer.open(QIODevice::ReadOnly)) {
         QDataStream stream(&buffer);
         // Get the parent basket:
-        quint64 basketPointer;
+        quint64 basketPointer = 0;
         stream >> (quint64 &)basketPointer;
         auto *basket = (BasketScene *)basketPointer;
+        if (stream.status() != QDataStream::Ok || !Global::bnpView
+            || !Global::bnpView->findChildren<BasketScene *>().contains(basket)) {
+            if (Global::bnpView)
+                Q_EMIT Global::bnpView->showErrorMessage(i18n("The source Mathom-House is no longer available. Copy the mathoms again before pasting or moving them."));
+            return nullptr;
+        }
+        const qint64 hierarchyPosition = buffer.pos();
+        QList<Note *> notes;
+        if (!collectTransferNotes(stream, basket, notes) || !prepareFileTransfers(notes))
+            return nullptr;
+        if (!buffer.seek(hierarchyPosition))
+            return nullptr;
         // Decode the note hierarchy:
         Note *hierarchy = decodeHierarchy(stream, parent, moveFiles, moveNotes, basket);
         // In case we moved notes from one basket to another, save the source basket where notes were removed:

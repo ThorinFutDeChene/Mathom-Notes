@@ -386,6 +386,9 @@ public:
     bool setProtection(int type, QString key);
     bool saveAgain();
     bool hasEditorChanges() const { return m_inactivityAutoSaveTimer.isActive(); }
+    // Synchronize the selected note's editor and make one save attempt before
+    // native copy/cut/drag operations read or move its backing file.
+    bool saveNoteForFileTransfer(Note *note);
 
 private:
     PendingSave m_pendingSave{this, [this] { save(); }};
