@@ -1140,7 +1140,7 @@ bool BasketScene::save()
     stream.writeEndDocument();
 
     // Write to Disk:
-    if (!FileStorage::saveToFile(fullPath() + QStringLiteral(".basket"), data, isEncrypted())) {
+    if (!m_pendingSave.recordResult(FileStorage::saveToFile(fullPath() + QStringLiteral(".basket"), data, isEncrypted()))) {
         DEBUG_WIN << QStringLiteral("Basket[") + folderName() + QStringLiteral("]: <font color=red>FAILED to save</font>!");
         DiagnosticManager::instance().logEvent(
             QStringLiteral("SHELF_SAVE_FAILED"),
@@ -2862,6 +2862,8 @@ void BasketScene::aboutToBeActivated()
 void BasketScene::reload()
 {
     closeEditor();
+    if (!PendingSave::retryPendingSaves(this))
+        return;
     unbufferizeAll(); // Keep the memory footprint low
 
     m_firstNote = nullptr;
@@ -6372,6 +6374,8 @@ bool BasketScene::closeEditor(bool deleteEmptyNote /* =true*/)
     m_editorHeight = -1;
     m_inactivityAutoSaveTimer.stop();
 
+    Global::bnpView->setUnsavedStatus(false);
+
     // An empty editor must not create an empty Page.
     // The Page is created only once the new Mathom contains real content.
     if (!isEmpty
@@ -7391,6 +7395,7 @@ Note *BasketScene::noteForFullPath(const QString &path)
 
 void BasketScene::deleteFiles()
 {
+    PendingSave::cancelPendingSaves(this);
     m_watcher->stopScan();
     Tools::deleteRecursively(fullPath());
 }
@@ -7874,6 +7879,8 @@ void BasketScene::watchedFileModified(const QString &fullPath)
 void BasketScene::watchedFileDeleted(const QString &fullPath)
 {
     Note *note = noteForFullPath(fullPath);
+    if (note && note->content() && note->content()->hasPendingSave())
+        return;
     removeWatchedFile(fullPath);
     if (note) {
         NoteSelection *selection = selectedNotes();
@@ -7891,7 +7898,7 @@ void BasketScene::updateModifiedNotes()
 {
     for (QList<QString>::iterator it = m_modifiedFiles.begin(); it != m_modifiedFiles.end(); ++it) {
         Note *note = noteForFullPath(*it);
-        if (note)
+        if (note && !note->content()->hasPendingSave())
             note->content()->loadFromFile(/*lazyLoad=*/false);
     }
     m_modifiedFiles.clear();
@@ -7969,6 +7976,8 @@ void BasketScene::lock()
 {
 #ifdef HAVE_LIBGPGME
     closeEditor();
+    if (!PendingSave::retryPendingSaves(this))
+        return;
     m_gpg->clearCache();
     m_locked = true;
     enableActions();

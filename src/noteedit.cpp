@@ -733,11 +733,21 @@ FileEditor::~FileEditor() = default;
 
 void FileEditor::autoSave(bool toFileToo)
 {
-    // FIXME: How to detect cancel?
-    if (toFileToo && !lineEdit()->text().isEmpty() && m_fileContent->trySetFileName(lineEdit()->text())) {
-        m_fileContent->setFileName(lineEdit()->text());
-        m_fileContent->setEdited();
+    if (!toFileToo || lineEdit()->text().isEmpty())
+        return;
+
+    QString errorMessage;
+    if (!m_fileContent->trySetFileName(lineEdit()->text(), &errorMessage)) {
+        if (!errorMessage.isEmpty() && Global::bnpView)
+            Q_EMIT Global::bnpView->showErrorMessage(errorMessage);
+        return;
     }
+
+    // A collision may have selected a different name. Keep it in the editor too,
+    // without starting a second autosave for this programmatic correction.
+    const QSignalBlocker blocker(lineEdit());
+    lineEdit()->setText(m_fileContent->fileName());
+    m_fileContent->setEdited();
 }
 
 void FileEditor::validate()

@@ -197,6 +197,7 @@ const int NoteContent::FEEDBACK_DARKING = 105;
 
 NoteContent::NoteContent(Note *parent, const NoteType::Id type, const QString &fileName)
     : m_type(type)
+    , m_pendingSave(parent, [this]() { saveToFile(); })
     , m_note(parent)
     , m_minWidth(0.0)
 {
@@ -233,16 +234,58 @@ void NoteContent::setFileName(const QString &fileName)
     m_fileName = fileName;
 }
 
-bool NoteContent::trySetFileName(const QString &fileName)
+QString NoteContent::renameFileOnDisk(const QString &sourcePath, const QString &wantedFileName, QString *errorMessage)
 {
-    if (useFile() && fileName != m_fileName) {
-        QString newFileName = Tools::fileNameForNewFile(fileName, basket()->fullPath());
-        QDir dir;
-        dir.rename(fullPath(), basket()->fullPathForFileName(newFileName));
-        return true;
+    if (errorMessage)
+        errorMessage->clear();
+
+    // A filename editor must not move an attachment outside its containing folder.
+    if (wantedFileName.isEmpty() || wantedFileName == QLatin1String(".") || wantedFileName == QLatin1String("..")
+        || wantedFileName.contains(QLatin1Char('/')) || wantedFileName.contains(QChar::Null)
+        || QDir::isAbsolutePath(wantedFileName)) {
+        if (errorMessage)
+            *errorMessage = i18n("Enter a file name without a folder path.");
+        return {};
     }
 
-    return false; // !useFile() or unsuccessful rename
+    const QFileInfo sourceInfo(sourcePath);
+    if (sourcePath.isEmpty() || (!sourceInfo.exists() && !sourceInfo.isSymLink())) {
+        if (errorMessage)
+            *errorMessage = i18n("Could not rename \"%1\": the file no longer exists.", sourceInfo.fileName());
+        return {};
+    }
+
+    if (wantedFileName == sourceInfo.fileName())
+        return wantedFileName;
+
+    const QDir sourceDirectory = sourceInfo.absoluteDir();
+    const QString newFileName = Tools::fileNameForNewFile(wantedFileName, sourceDirectory.absolutePath() + QLatin1Char('/'));
+    if (!QDir().rename(sourceInfo.absoluteFilePath(), sourceDirectory.filePath(newFileName))) {
+        if (errorMessage)
+            *errorMessage = i18n("Could not rename \"%1\" to \"%2\". The file name was not changed.", sourceInfo.fileName(), newFileName);
+        return {};
+    }
+
+    return newFileName;
+}
+
+bool NoteContent::trySetFileName(const QString &fileName, QString *errorMessage)
+{
+    if (errorMessage)
+        errorMessage->clear();
+
+    if (!useFile() || fileName == m_fileName || !basket())
+        return false;
+
+    const QString oldPath = fullPath();
+    const QString newFileName = renameFileOnDisk(oldPath, fileName, errorMessage);
+    if (newFileName.isEmpty())
+        return false;
+
+    basket()->removeWatchedFile(oldPath);
+    setFileName(newFileName);
+    basket()->addWatchedFile(fullPath());
+    return true;
 }
 
 QString NoteContent::fullPath()
@@ -1000,7 +1043,7 @@ bool TextContent::finishLazyLoad()
 
 bool TextContent::saveToFile()
 {
-    return FileStorage::saveToFile(fullPath(), text());
+    return m_pendingSave.recordResult(FileStorage::saveToFile(fullPath(), text()));
 }
 
 QString TextContent::linkAt(const QPointF & /*pos*/)
@@ -1126,7 +1169,7 @@ bool HtmlContent::finishLazyLoad()
 
 bool HtmlContent::saveToFile()
 {
-    return FileStorage::saveToFile(fullPath(), html());
+    return m_pendingSave.recordResult(FileStorage::saveToFile(fullPath(), html()));
 }
 
 QString HtmlContent::linkAt(const QPointF &pos)
@@ -1267,17 +1310,17 @@ bool ImageContent::saveToFile()
     QBuffer buffer(&ba);
 
     if (!buffer.open(QIODevice::WriteOnly))
-        return false;
+        return m_pendingSave.recordResult(false);
 
     if (!m_pixmapItem.pixmap().save(
             &buffer,
             m_format.constData())) {
-        return false;
+        return m_pendingSave.recordResult(false);
     }
 
     buffer.close();
 
-    return FileStorage::saveToFile(fullPath(), ba);
+    return m_pendingSave.recordResult(FileStorage::saveToFile(fullPath(), ba));
 }
 
 QMap<QString, QString> ImageContent::toolTipInfos()
@@ -1727,6 +1770,8 @@ void SoundContent::setFileName(const QString &fileName)
 {
     NoteContent::setFileName(fileName);
     QUrl url = QUrl::fromLocalFile(fullPath());
+    if (music && music->source() != url)
+        music->setSource(url);
     if (SoundContent::linkLook()->previewEnabled()) {
         m_linkDisplayItem.linkDisplay().setLink(fileName,
                                                 NoteFactory::iconForURL(url),

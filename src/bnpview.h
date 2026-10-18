@@ -12,6 +12,7 @@
 #include <QtGui/QClipboard>
 
 #include "basket_export.h"
+#include "pendingsave.h"
 
 class QDomElement;
 
@@ -57,6 +58,11 @@ public:
     /// CONSTRUCTOR AND DESTRUCTOR:
     BNPView(QWidget *parent, KXMLGUIClient *aGUIClient, KActionCollection *actionCollection, BasketStatusBar *bar);
     ~BNPView() override;
+
+private:
+    PendingSave m_pendingSave{this, [this] { save(); }};
+
+public:
     /// MANAGE CONFIGURATION EVENTS!:
     void setTreePlacement(bool onLeft);
     void relayoutAllBaskets();
@@ -401,7 +407,7 @@ protected:
     void hideMainWindow();
 
 private:
-    BasketTreeListView *m_tree;
+    BasketTreeListView *m_tree = nullptr;
     QWidget *m_treePanel = nullptr;
     QToolButton *m_treeAddButton = nullptr;
     QToolButton *m_treeRemoveButton = nullptr;

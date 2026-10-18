@@ -50,7 +50,7 @@ private:
     static QString binaryPath;
 };
 
-class BackupThread : public QThread
+class BASKET_EXPORT BackupThread : public QThread
 {
 public:
     BackupThread(const QString &backupFile, const QString &folderToBackup);
@@ -75,7 +75,7 @@ private:
     bool m_success = false;
 };
 
-class RestoreThread : public QThread
+class BASKET_EXPORT RestoreThread : public QThread
 {
 public:
     RestoreThread(const QString &backupFile, const QString &stagingFolder);

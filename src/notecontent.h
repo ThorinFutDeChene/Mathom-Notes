@@ -14,6 +14,7 @@
 
 #include "basket_export.h"
 #include "linklabel.h"
+#include "pendingsave.h"
 
 class QBuffer;
 class QColor;
@@ -231,8 +232,17 @@ public:
       /// users in the setting (choice to use a custom app or not, and which app).
     // Common File Management:                                            ///    (and do save changes) and optionally hide the toolbar.
     virtual void setFileName(const QString &fileName); /// << Set the filename. Reimplement it if you eg. want to update the view when the filename is changed.
-    bool
-    trySetFileName(const QString &fileName); /// << Set the new filename and return true. Can fail and return false if a file with this fileName already exists.
+    /** Rename the stored file, choosing a free name when the requested name already exists.
+     * Update the content and file watcher only after a successful rename. fileName() then
+     * contains the name actually used. Return false without changing them on failure or
+     * when no rename is needed; errorMessage is empty in the latter case.
+     */
+    bool trySetFileName(const QString &fileName, QString *errorMessage = nullptr);
+    /** Rename a file or attached directory within its current parent directory.
+     * Return its actual new name, or an empty string on failure. This filesystem operation
+     * does not update a NoteContent; callers managing a note should use trySetFileName().
+     */
+    static QString renameFileOnDisk(const QString &sourcePath, const QString &wantedFileName, QString *errorMessage = nullptr);
     QString fullPath(); /// << Get the absolute path of the file where this content is stored on disk.
     QUrl fullPathUrl(); /// << Get the absolute path of the file where this content is stored on disk as QUrl
     QString fileName() const
@@ -252,10 +262,19 @@ public:
 
 public:
     void setEdited(); /// << Mark the note as edited NOW: change the "last modification time and time" AND save the basket to XML file.
+    bool hasPendingSave() const
+    {
+        return m_pendingSave.isPending();
+    }
+    void cancelPendingSave()
+    {
+        m_pendingSave.cancel();
+    }
 protected:
     void contentChanged(qreal newMinWidth); /// << When the content has changed, inherited classes should call this to specify its new minimum size and trigger
                                             /// a basket relayout.
     NoteType::Id m_type = NoteType::Unknown;
+    PendingSave m_pendingSave;
 
 private:
     Note *m_note;
@@ -560,7 +579,7 @@ public:
     {
         return LinkLook::soundLook;
     }
-    QMediaPlayer *music;
+    QMediaPlayer *music = nullptr;
 private Q_SLOTS:
     void stateChanged(int);
 };

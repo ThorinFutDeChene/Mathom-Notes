@@ -2044,47 +2044,50 @@ bool copyFileAtomically(
         if (errorString) {
             *errorString =
                 QStringLiteral(
-                    "Cannot open automatic backup source");
+                    "Cannot open backup source");
         }
         return false;
     }
 
     QSaveFile destination(
         destinationPath);
+    // Never fall back to truncating an existing backup in place.
+    destination.setDirectWriteFallback(false);
 
     if (!destination.open(
             QIODevice::WriteOnly)) {
         if (errorString) {
             *errorString =
                 QStringLiteral(
-                    "Cannot create automatic backup destination");
+                    "Cannot create backup destination");
         }
         return false;
     }
 
-    while (!source.atEnd()) {
+    while (true) {
         const QByteArray data =
             source.read(
                 1024 * 1024);
 
-        if (data.isEmpty()
-            && source.error()
-                != QFileDevice::NoError) {
+        if (source.error() != QFileDevice::NoError) {
             if (errorString) {
                 *errorString =
                     QStringLiteral(
-                        "Cannot read automatic backup source");
+                        "Cannot read backup source");
             }
             destination.cancelWriting();
             return false;
         }
+
+        if (data.isEmpty())
+            break;
 
         if (destination.write(data)
             != data.size()) {
             if (errorString) {
                 *errorString =
                     QStringLiteral(
-                        "Cannot write automatic backup destination");
+                        "Cannot write backup destination");
             }
             destination.cancelWriting();
             return false;
@@ -2095,7 +2098,7 @@ bool copyFileAtomically(
         if (errorString) {
             *errorString =
                 QStringLiteral(
-                    "Cannot finalize automatic backup");
+                    "Cannot finalize backup");
         }
         return false;
     }
@@ -2364,6 +2367,13 @@ void BackupDialog::backup()
             ->save();
     }
 
+    if (!PendingSave::retryPendingSaves()) {
+        KMessageBox::error(this,
+                          i18n("Some changes could not be saved. Wait until they are saved before creating a backup."),
+                          i18n("Backup Not Created"));
+        return;
+    }
+
     Settings::saveConfig();
 
     if (Global::config())
@@ -2411,8 +2421,6 @@ void BackupDialog::backup()
     qApp->processEvents();
 
     if (!thread.success()) {
-        QFile::remove(destination);
-
         DiagnosticManager::instance()
             .logEvent(
                 QStringLiteral(
@@ -2650,6 +2658,13 @@ void BackupDialog::restore()
 
     KSharedConfig::openConfig()->sync();
 
+    if (!PendingSave::retryPendingSaves()) {
+        KMessageBox::error(this,
+                          i18n("Some changes could not be saved. Wait until they are saved before restoring a backup."),
+                          i18n("Restore Aborted"));
+        return;
+    }
+
     const QString safetyBackup =
         Backup::newSafetyBackupPath();
 
@@ -2822,6 +2837,15 @@ void Backup::setFolderAndRestart(
     const QString &folder,
     const QString &message)
 {
+    if (Global::bnpView)
+        Global::bnpView->closeAllEditors();
+    if (!PendingSave::retryPendingSaves()) {
+        KMessageBox::error(nullptr,
+                          i18n("Some changes could not be saved. Mathom Notes will stay open and retry automatically. Restart it after the changes have been saved."),
+                          i18n("Changes Not Saved"));
+        return;
+    }
+
     Settings::setDataFolder(
         folder);
 
@@ -2994,6 +3018,13 @@ void Backup::startAutomaticBackupIfDue()
     Settings::saveConfig();
     Global::config()->sync();
 
+    if (!PendingSave::retryPendingSaves()) {
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("AUTO_BACKUP_FAIL"),
+            {{QStringLiteral("phase"), QStringLiteral("pending-save")}});
+        return;
+    }
+
     const QString pendingFile =
         QDir(directory)
             .filePath(
@@ -3033,9 +3064,6 @@ void Backup::startAutomaticBackupIfDue()
          dueLevels,
          today]() {
             if (!thread->success()) {
-                QFile::remove(
-                    pendingFile);
-
                 DiagnosticManager::
                     instance()
                     .logEvent(
@@ -3191,15 +3219,16 @@ void BackupThread::run()
         return;
     }
 
-    QFile::remove(
-        m_backupFile);
+    // Keep all unfinished data in our private temporary directory. The previous
+    // backup must remain available until its replacement has been validated.
+    const QString stagedBackup =
+        snapshot.filePath(
+            QStringLiteral("backup.mathom-backup"));
 
     if (!createTarFromSnapshot(
             snapshotRoot,
-            m_backupFile,
+            stagedBackup,
             &m_errorString)) {
-        QFile::remove(
-            m_backupFile);
         return;
     }
 
@@ -3209,25 +3238,24 @@ void BackupThread::run()
         m_errorString =
             QStringLiteral(
                 "Cannot create backup validation area");
-        QFile::remove(
-            m_backupFile);
         return;
     }
 
     if (!extractFullBackup(
-            m_backupFile,
+            stagedBackup,
             validation.path(),
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             &m_errorString)) {
-        QFile::remove(
-            m_backupFile);
         return;
     }
 
-    m_success = true;
+    m_success = copyFileAtomically(
+        stagedBackup,
+        m_backupFile,
+        &m_errorString);
 }
 
 RestoreThread::RestoreThread(

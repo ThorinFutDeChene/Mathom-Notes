@@ -28,6 +28,8 @@
 #include <KMessageBox>
 
 #include "settings.h"
+#include "bnpview.h"
+#include "global.h"
 
 namespace
 {
@@ -468,6 +470,16 @@ void UpdateChecker::installUpdate(
                     QMessageBox::Yes);
 
             if (answer == QMessageBox::Yes) {
+                if (Global::bnpView)
+                    Global::bnpView->closeAllEditors();
+                if (!PendingSave::retryPendingSaves()) {
+                    KMessageBox::error(
+                        m_parentWidget,
+                        i18n("Some changes could not be saved. Mathom Notes will stay open and retry automatically. Restart it after the changes have been saved."),
+                        i18n("Changes Not Saved"));
+                    deleteLater();
+                    return;
+                }
                 // Wait until this Mathom process has fully exited before
                 // starting the new one.  Mathom is a KDBusService::Unique
                 // application: starting too early would activate this old

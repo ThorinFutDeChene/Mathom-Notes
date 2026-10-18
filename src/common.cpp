@@ -5,15 +5,12 @@
 
 #include "common.h"
 
-#include <QApplication>
 #include <QByteArray>
 #include <QFile>
 #include <QSaveFile>
 #include <QString>
 
 #include <KLocalizedString>
-
-#include <algorithm>
 
 #include "bnpview.h"
 #include "global.h"
@@ -124,38 +121,22 @@ bool FileStorage::saveToFile(const QString &fullPath, const QByteArray &array, b
  */
 bool FileStorage::safelySaveToFile(const QString &fullPath, const QByteArray &array)
 {
-    // Modulus operandi:
-    // 1. Use QSaveFile to try and save the file
-    // 2. Show a modal dialog (with the error) when bad things happen
-    // 3. We keep trying (at increasing intervals, up until every minute)
-    //    until we finally save the file.
-
-    // The error dialog is static to make sure we never show the dialog twice,
-    static const uint maxDelay = 60 * 1000; // ms
-    uint retryDelay = 1000; // ms
-    bool success = false;
-    do {
-        QSaveFile saveFile(fullPath);
-        if (saveFile.open(QIODevice::WriteOnly)) {
-            saveFile.write(array);
+    // One atomic attempt. Persistent model owners arrange timed retries with
+    // PendingSave; temporary exports/imports must propagate the failure.
+    QSaveFile saveFile(fullPath);
+    saveFile.setDirectWriteFallback(false);
+    if (saveFile.open(QIODevice::WriteOnly)) {
+        if (saveFile.write(array) == array.size()) {
             if (saveFile.commit())
-                success = true;
+                return true;
+        } else {
+            saveFile.cancelWriting();
         }
+    }
 
-        if (!success) {
-            Q_EMIT Global::bnpView->showErrorMessage(i18n("Error while saving: ") + saveFile.errorString());
-
-            static const uint sleepDelay = 50; // ms
-            for (uint i = 0; i < retryDelay / sleepDelay; ++i) {
-                qApp->processEvents();
-            }
-
-            // Double the retry delay, but don't go over the max.
-            retryDelay = std::min(maxDelay, retryDelay * 2); // ms
-        }
-    } while (!success);
-
-    return true; // Guess we can't really return a fail
+    if (Global::bnpView)
+        Q_EMIT Global::bnpView->showErrorMessage(i18n("Error while saving: ") + saveFile.errorString());
+    return false;
 }
 
 bool FileStorage::safelySaveToFile(const QString &fullPath, const QString &string)

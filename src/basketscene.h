@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "note.h" // For Note::Zone
+#include "pendingsave.h"
 
 class QFrame;
 class QMenu;
@@ -54,7 +55,7 @@ class KGpgMe;
 /**
  * @author Sébastien Laoût
  */
-class BasketScene : public QGraphicsScene
+class BASKET_EXPORT BasketScene : public QGraphicsScene
 {
     Q_OBJECT
 public:
@@ -384,6 +385,12 @@ public:
     };
     bool setProtection(int type, QString key);
     bool saveAgain();
+    bool hasEditorChanges() const { return m_inactivityAutoSaveTimer.isActive(); }
+
+private:
+    PendingSave m_pendingSave{this, [this] { save(); }};
+
+public:
 
     /// BACKGROUND:
 private:

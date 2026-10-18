@@ -4,6 +4,21 @@ Ce fichier résume les principales versions propres au fork Mathom.
 
 Le journal de développement détaillé reste la référence technique complète du projet.
 
+## 5.0.2-dev1
+
+### Fiabilité des fichiers
+
+- vérification du contenu des archives fichier par fichier, avec tests de différences binaires et de métadonnées cachées ;
+- construction et validation des sauvegardes complètes avant remplacement atomique de la destination ;
+- écriture commune des archives Mathom et contrôle explicite des erreurs de lecture, d'écriture, de fermeture et d'extraction ;
+- conservation de la compatibilité des archives BasKet et remplacement d'un dossier extrait seulement après validation complète ;
+- renommage des pièces jointes avec le nom effectivement disponible, mise à jour du modèle et du suivi des fichiers après réussite ;
+- reprise des sauvegardes par temporisation, avec le contenu courant en mémoire, sans boucle de traitement d'événements ;
+- état non enregistré conservé en cas d'échec et fermeture/redémarrage empêchés tant que ces modifications ne peuvent pas être sauvegardées ;
+- export, sauvegarde complète et restauration interrompus lorsque des données restent en attente d'écriture.
+
+Cette DEV corrective doit être validée avant toute promotion en version stable.
+
 ## 3.12.0
 
 ### Added

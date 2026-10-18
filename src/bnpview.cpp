@@ -1391,7 +1391,10 @@ void BNPView::save()
     stream.writeEndDocument();
 
     // Write to Disk:
-    FileStorage::safelySaveToFile(Global::basketsFolder() + QStringLiteral("baskets.xml"), data);
+    if (!m_pendingSave.recordResult(FileStorage::safelySaveToFile(Global::basketsFolder() + QStringLiteral("baskets.xml"), data))) {
+        DiagnosticManager::instance().logEvent(QStringLiteral("TREE_SAVE_FAILED"));
+        return;
+    }
 
     GitWrapper::commitBasketView();
     DiagnosticManager::instance().logEvent(QStringLiteral("TREE_SAVE_OK"));
@@ -4329,10 +4332,15 @@ void BNPView::saveAsArchive()
         {{QStringLiteral("scope"), QStringLiteral("current-house")},
          {QStringLiteral("folder"), basket->folderName()}});
 
-    Archive::save(
-        basket,
-        true,
-        destination);
+    QString errorMessage;
+    if (!Archive::save(basket, true, destination, &errorMessage)) {
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("EXPORT_MATHOM_FAILED"),
+            {{QStringLiteral("scope"), QStringLiteral("current-house")},
+             {QStringLiteral("folder"), basket->folderName()}});
+        KMessageBox::error(this, errorMessage, i18n("Archive Export Failed"));
+        return;
+    }
 
     DiagnosticManager::instance().logEvent(
         QStringLiteral("EXPORT_MATHOM_OK"),
@@ -4419,7 +4427,14 @@ void BNPView::saveAllAsArchive()
         QStringLiteral("EXPORT_MATHOM_BEGIN"),
         {{QStringLiteral("scope"), QStringLiteral("all-houses")}});
 
-    Archive::saveAll(destination);
+    QString errorMessage;
+    if (!Archive::saveAll(destination, &errorMessage)) {
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("EXPORT_MATHOM_FAILED"),
+            {{QStringLiteral("scope"), QStringLiteral("all-houses")}});
+        KMessageBox::error(this, errorMessage, i18n("Archive Export Failed"));
+        return;
+    }
 
     DiagnosticManager::instance().logEvent(
         QStringLiteral("EXPORT_MATHOM_OK"),
@@ -4639,6 +4654,17 @@ void BNPView::setStatusBarHint(const QString &hint)
 
 void BNPView::setUnsavedStatus(bool isUnsaved)
 {
+    if (!m_statusbar)
+        return;
+    isUnsaved = isUnsaved || PendingSave::hasPendingSaves();
+    if (m_tree) {
+        QTreeWidgetItemIterator it(m_tree);
+        while (!isUnsaved && *it) {
+            auto *item = static_cast<BasketListViewItem *>(*it);
+            isUnsaved = item->basket()->hasEditorChanges();
+            ++it;
+        }
+    }
     m_statusbar->setUnsavedStatus(isUnsaved);
 }
 

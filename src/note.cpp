@@ -322,6 +322,7 @@ void Note::deleteSelectedNotes(bool deleteFilesToo, QSet<Note *> *notesToBeDelet
         if (isSelected()) {
             basket()->unplugNote(this);
             if (deleteFilesToo && content()->useFile()) {
+                content()->cancelPendingSave();
                 Tools::deleteRecursively(fullPath()); // basket()->deleteFiles(fullPath()); // Also delete the folder if it's a folder
             }
             if (notesToBeDeleted) {
@@ -2762,9 +2763,15 @@ bool Note::convertTexts()
             QStringLiteral(
                 "<html><head><meta http-equiv=\"content-type\" content=\"text/html; charset=utf-8\"><meta name=\"qrichtext\" content=\"1\" /></head><body>")
             + Tools::textToHTMLWithoutP(text) + QStringLiteral("</body></html>");
-        FileStorage::saveToFile(fullPath(), html);
-        setContent(new HtmlContent(this, content()->fileName()));
-        convertedNotes = true;
+        if (FileStorage::saveToFile(fullPath(), html)) {
+            NoteContent *oldContent = content();
+            const QString fileName = oldContent->fileName();
+            oldContent->cancelPendingSave();
+            setContent(nullptr);
+            delete oldContent;
+            new HtmlContent(this, fileName);
+            convertedNotes = true;
+        }
     }
 
     FOR_EACH_CHILD(child)

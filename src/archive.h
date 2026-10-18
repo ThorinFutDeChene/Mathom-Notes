@@ -28,8 +28,10 @@ class KTar;
 class Archive
 {
 public:
-    static void save(BasketScene *basket, bool withSubBaskets, const QString &destination);
-    static void saveAll(const QString &destination);
+    // Return true only after the complete archive has been committed.
+    // On failure, errorMessage receives a translated diagnostic if supplied.
+    static bool save(BasketScene *basket, bool withSubBaskets, const QString &destination, QString *errorMessage = nullptr);
+    static bool saveAll(const QString &destination, QString *errorMessage = nullptr);
     static void open(const QString &path);
 
     /**
@@ -51,7 +53,7 @@ public:
      * @param destination into which the basket archive should be extracted
      * @param protectDestination decides whether the destination will be replaced if it has been present
      * \todo protectDestination likely should be an enum, too, to be more descriptive
-     * @return NoError indicates a successful extraction. All other enum states indicate something went wrong
+     * @return NoError or PossiblyCompatibleBasketVersion after complete extraction; otherwise a failure code.
      */
     BASKET_EXPORT static IOErrorCode extractArchive(const QString &path, const QString &destination, const bool protectDestination = true);
 
@@ -63,9 +65,9 @@ public:
      *
      * @param sourcePath specifies the directory to be encoded
      * @param previewImage specifies an optional .png image
-     * @param destination specifies where the encoded .basket file should be saved
+     * @param destination specifies where the encoded .mathom file should be saved
      * @param protectDestination decides whether the destination will be replaced if it has been present
-     * @return NoError indicates a successful extraction. All other enum states indicate something went wrong
+     * @return NoError only after the complete archive has been committed. Other codes indicate failure.
      */
     BASKET_EXPORT static IOErrorCode createArchiveFromSource(const QString &sourcePath,
                                                              const QString &previewImage,
@@ -74,18 +76,24 @@ public:
 
 private:
     // Convenient Methods for Saving:
-    static void
-    saveBasketToArchive(BasketScene *basket, bool recursive, KTar *tar, QStringList &backgrounds, const QString &tempFolder, QProgressDialog *progress);
+    static bool saveBaskets(const QList<BasketScene *> &baskets, bool recursive, const QString &destination, bool allBaskets, QString *errorMessage);
+    static bool saveBasketToArchive(BasketScene *basket,
+                                    bool recursive,
+                                    KTar *tar,
+                                    QStringList &backgrounds,
+                                    const QString &tempFolder,
+                                    QProgressDialog *progress,
+                                    QString *errorMessage);
     static void listUsedTags(BasketScene *basket, bool recursive, QList<Tag *> &list);
     // Convenient Methods for Loading:
-    static void renameBasketFolders(const QString &extractionFolder, QMap<QString, QString> &mergedStates);
-    static void
+    static bool renameBasketFolders(const QString &extractionFolder, QMap<QString, QString> &mergedStates);
+    static bool
     renameBasketFolder(const QString &extractionFolder, QDomNode &basketNode, QMap<QString, QString> &folderMap, QMap<QString, QString> &mergedStates);
-    static void renameMergedStatesAndBasketIcon(const QString &fullPath, QMap<QString, QString> &mergedStates, const QString &extractionFolder);
+    static bool renameMergedStatesAndBasketIcon(const QString &fullPath, QMap<QString, QString> &mergedStates, const QString &extractionFolder);
     static void renameMergedStates(QDomNode notes, QMap<QString, QString> &mergedStates);
     static void importBasketIcon(QDomElement properties, const QString &extractionFolder);
     static void loadExtractedBaskets(const QString &extractionFolder, QDomNode &basketNode, QMap<QString, QString> &folderMap, BasketScene *parent);
-    static void importTagEmblems(const QString &extractionFolder);
+    static bool importTagEmblems(const QString &extractionFolder);
     static void importArchivedBackgroundImages(const QString &extractionFolder);
 };
 
