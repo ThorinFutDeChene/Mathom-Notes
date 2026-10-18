@@ -4,7 +4,9 @@
  */
 
 #include <KTar>
+#include <KCompressionDevice>
 
+#include <QBuffer>
 #include <QCryptographicHash>
 #include <QDir>
 #include <QDirIterator>
@@ -33,6 +35,21 @@ QByteArray readFile(const QString &path)
     if (!file.open(QIODevice::ReadOnly))
         return QByteArray();
     return file.readAll();
+}
+
+QByteArray gzipData(const QByteArray &contents)
+{
+    QBuffer output;
+    KCompressionDevice gzip(&output, false, KCompressionDevice::GZip);
+    if (!gzip.open(QIODevice::WriteOnly) || gzip.write(contents) != contents.size())
+        return {};
+    gzip.close();
+    return gzip.error() == QFileDevice::NoError ? output.data() : QByteArray();
+}
+
+QByteArray archiveEnvelope(const QByteArray &payload)
+{
+    return QByteArray("MathomNotes:archive\nversion:1.0\narchive*:") + QByteArray::number(payload.size()) + '\n' + payload;
 }
 
 #ifdef Q_OS_UNIX
@@ -95,6 +112,8 @@ private Q_SLOTS:
     void testCompatibleHeaders();
     void testCreateFailuresPreserveDestination();
     void testEmptyPreview();
+    void testEmptyArchive();
+    void testArchiveWithoutEndBlocks();
     void testArchiveWriteFailurePreservesDestination();
     void testExtractionWriteFailurePreservesDestination();
 
@@ -236,6 +255,46 @@ void ArchiveTest::testExtractCorruption_data()
     QTest::newRow("duplicate-preview") << legacy + "preview*:0\n";
     legacy.chop(1);
     QTest::newRow("truncated-real-archive") << legacy;
+
+    QBuffer rawTar;
+    KTar tar(&rawTar);
+    const QByteArray fileContents("Complete file contents");
+    QVERIFY(tar.open(QIODevice::WriteOnly));
+    QVERIFY(tar.writeFile(QStringLiteral("note.txt"), fileContents));
+    QVERIFY(tar.close());
+    const QByteArray validTar = rawTar.data() + QByteArray(1024, '\0');
+    QVERIFY(validTar.size() >= 2048);
+    const QByteArray validGzip = gzipData(validTar);
+    QVERIFY(!validGzip.isEmpty());
+
+    QTest::newRow("incomplete-tar-header") << archiveEnvelope(gzipData(validTar.left(511)));
+    QTest::newRow("incomplete-tar-content") << archiveEnvelope(gzipData(validTar.left(517)));
+    QTest::newRow("incomplete-tar-end-blocks") << archiveEnvelope(gzipData(validTar.left(1536)));
+    QByteArray badHeader = validTar;
+    badHeader[0] = char(badHeader.at(0) ^ 1); // Keep ustar magic, invalidate the header checksum.
+    QTest::newRow("incorrect-tar-checksum") << archiveEnvelope(gzipData(badHeader));
+
+    // This is a valid GNU numeric encoding, but KTar reads its size as zero.
+    // Leading zero content then looks like the tar end and can hide the loss.
+    QByteArray base256Tar = validTar;
+    base256Tar.replace(124, 12, QByteArray(12, '\0'));
+    base256Tar[124] = char(0x80);
+    base256Tar[135] = char(fileContents.size());
+    base256Tar.replace(512, 512, QByteArray(512, '\0'));
+    base256Tar.replace(148, 8, QByteArray(8, ' '));
+    quint32 checksum = 0;
+    for (int i = 0; i < 512; ++i)
+        checksum += static_cast<unsigned char>(base256Tar.at(i));
+    const QByteArray checksumField = QByteArray::number(checksum, 8).rightJustified(6, '0') + '\0' + ' ';
+    base256Tar.replace(148, 8, checksumField);
+    QTest::newRow("unsupported-base-256-size") << archiveEnvelope(gzipData(base256Tar));
+
+    // Advertise the actual shorter gzip size, so these cases must be rejected
+    // by the compressed stream validation rather than the envelope length.
+    QTest::newRow("truncated-gzip-footer") << archiveEnvelope(validGzip.chopped(1));
+    QByteArray badGzip = validGzip;
+    badGzip[badGzip.size() - 8] = char(badGzip.at(badGzip.size() - 8) ^ 1);
+    QTest::newRow("incorrect-gzip-checksum") << archiveEnvelope(badGzip);
 }
 
 void ArchiveTest::testExtractCorruption()
@@ -365,6 +424,45 @@ void ArchiveTest::testEmptyPreview()
     QVERIFY(compareDirHashes(extracted, source));
 }
 
+void ArchiveTest::testEmptyArchive()
+{
+    QTemporaryDir temporary;
+    QVERIFY(temporary.isValid());
+    QBuffer rawTar;
+    KTar tar(&rawTar);
+    QVERIFY(tar.open(QIODevice::WriteOnly));
+    QVERIFY(tar.close());
+    const QByteArray payload = gzipData(rawTar.data() + QByteArray(1024, '\0'));
+    QVERIFY(!payload.isEmpty());
+    const QString archivePath = temporary.filePath(QStringLiteral("empty.mathom"));
+    const QString extracted = temporary.filePath(QStringLiteral("extracted"));
+    QVERIFY(writeFile(archivePath, archiveEnvelope(payload)));
+    QCOMPARE(Archive::extractArchive(archivePath, extracted), Archive::IOErrorCode::NoError);
+    QVERIFY(QDir(extracted).exists());
+    QVERIFY(QDir(extracted).entryList(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden).isEmpty());
+}
+
+void ArchiveTest::testArchiveWithoutEndBlocks()
+{
+    QTemporaryDir temporary;
+    QVERIFY(temporary.isValid());
+    QBuffer rawTar;
+    KTar tar(&rawTar);
+    const QByteArray contents("Legacy KTar file contents");
+    QVERIFY(tar.open(QIODevice::WriteOnly));
+    QVERIFY(tar.writeFile(QStringLiteral("note.txt"), contents));
+    QVERIFY(tar.close());
+    // KTar versions used by Mathom can end immediately after the last complete
+    // member. Their gzip footer still validates all of that member's data.
+    const QByteArray payload = gzipData(rawTar.data().left(1024));
+    QVERIFY(!payload.isEmpty());
+    const QString archivePath = temporary.filePath(QStringLiteral("without-end-blocks.mathom"));
+    const QString extracted = temporary.filePath(QStringLiteral("extracted"));
+    QVERIFY(writeFile(archivePath, archiveEnvelope(payload)));
+    QCOMPARE(Archive::extractArchive(archivePath, extracted), Archive::IOErrorCode::NoError);
+    QCOMPARE(readFile(QDir(extracted).filePath(QStringLiteral("note.txt"))), contents);
+}
+
 void ArchiveTest::testArchiveWriteFailurePreservesDestination()
 {
 #ifndef Q_OS_UNIX
@@ -413,7 +511,8 @@ void ArchiveTest::testExtractionWriteFailurePreservesDestination()
     {
         ScopedFileSizeLimit limit(8192);
         QVERIFY(limit.isActive());
-        // The compressed staging file fits, but its extracted file cannot.
+        // The compressed staging file fits. Reading/validating the tar uses no
+        // uncompressed temporary, so only the extracted large.txt can hit this limit.
         QCOMPARE(Archive::extractArchive(archivePath, destination, false), Archive::IOErrorCode::FailedToOpenResource);
     }
     QCOMPARE(readFile(sentinel), previous);

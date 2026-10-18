@@ -31,6 +31,7 @@
 #include <KAboutData>
 #include <KArchiveDirectory>
 #include <KArchiveFile>
+#include <KCompressionDevice>
 #include <KIconLoader>
 #include <KLocalizedString>
 #include <KMainWindow> //For Global::MainWindow()
@@ -53,6 +54,7 @@
 
 #include <algorithm>
 #include <array>
+#include <limits>
 #include <memory>
 #include <utility>
 
@@ -60,6 +62,7 @@
 
 namespace {
 constexpr qint64 copyBufferSize = 64 * 1024;
+constexpr std::array<char, 1024> tarEndBlocks{};
 
 bool failWithMessage(QString *errorMessage, const QString &message)
 {
@@ -85,6 +88,86 @@ bool copyExactly(QIODevice &source, QIODevice &destination, qint64 size, bool *r
         size -= count;
     }
     return size == 0;
+}
+
+bool tarNumber(const char *data, qsizetype length, qint64 &value)
+{
+    // KTar reads sizes as octal and can silently turn GNU base-256 sizes into
+    // zero-length files. Refuse that unsupported representation before import.
+    if (static_cast<unsigned char>(data[0]) & 0x80)
+        return false;
+    const QByteArray field = QByteArray(data, length).replace('\0', ' ').trimmed();
+    if (field.isEmpty()) {
+        value = 0;
+        return true;
+    }
+    if (!std::all_of(field.cbegin(), field.cend(), [](char byte) { return byte >= '0' && byte <= '7'; }))
+        return false;
+    bool valid = false;
+    value = field.toLongLong(&valid, 8);
+    return valid && value >= 0;
+}
+
+// KTar accepts short final headers, skips some checksums and can stop before
+// gzip's trailer. Validate the complete stream without creating an uncompressed
+// temporary file, including empty tar archives with their two zero end blocks.
+bool validateTarStream(KCompressionDevice &input)
+{
+    constexpr qint64 blockSize = 512;
+    std::array<char, blockSize> header{};
+    std::array<char, copyBufferSize> buffer{};
+    bool hasEntry = false;
+    const auto allZero = [](const char *data, qint64 size) {
+        return std::all_of(data, data + size, [](char byte) { return byte == 0; });
+    };
+    while (true) {
+        const qint64 headerSize = input.read(header.data(), blockSize);
+        // Older KTar writers omit end blocks. An EOF at a complete member
+        // boundary is compatible, but only after the gzip footer was verified.
+        if (headerSize == 0)
+            return hasEntry && input.atEnd() && input.error() == QFileDevice::NoError;
+        if (headerSize != blockSize)
+            return false;
+        if (allZero(header.data(), blockSize)) {
+            if (input.read(header.data(), blockSize) != blockSize || !allZero(header.data(), blockSize))
+                return false;
+            // Consume padding and the gzip footer so truncated streams and bad
+            // CRCs cannot be mistaken for a successful end of the tar archive.
+            qint64 count = 0;
+            qint64 padding = 0;
+            while ((count = input.read(buffer.data(), buffer.size())) > 0) {
+                if (!allZero(buffer.data(), count))
+                    return false;
+                padding = (padding + count) % blockSize;
+            }
+            return count == 0 && padding == 0 && input.atEnd() && input.error() == QFileDevice::NoError;
+        }
+
+        qint64 checksum = 0, size = 0;
+        if (!tarNumber(header.data() + 148, 8, checksum) || !tarNumber(header.data() + 124, 12, size))
+            return false;
+        qint64 unsignedChecksum = 8 * ' ', signedChecksum = 8 * ' ';
+        for (qint64 i = 0; i < blockSize; ++i) {
+            if (i >= 148 && i < 156)
+                continue;
+            unsignedChecksum += static_cast<unsigned char>(header[i]);
+            signedChecksum += static_cast<signed char>(header[i]);
+        }
+        // Some old tar writers used signed bytes for their checksum.
+        if (checksum != unsignedChecksum && checksum != signedChecksum)
+            return false;
+        hasEntry = true;
+        const qint64 padding = (blockSize - size % blockSize) % blockSize;
+        if (size > std::numeric_limits<qint64>::max() - padding)
+            return false;
+        qint64 remaining = size + padding;
+        while (remaining > 0) {
+            const qint64 count = input.read(buffer.data(), std::min<qint64>(buffer.size(), remaining));
+            if (count <= 0)
+                return false;
+            remaining -= count;
+        }
+    }
 }
 
 mode_t archivePermissions(const QFileInfo &info, bool directory)
@@ -382,7 +465,7 @@ bool Archive::saveBaskets(const QList<BasketScene *> &baskets,
             }
         }
     }
-    if (!tar.close())
+    if (!tar.writeData(tarEndBlocks.data(), tarEndBlocks.size()) || !tar.close())
         return failWithMessage(errorMessage, i18n("Could not finish the temporary archive: %1", tar.errorString()));
 
     const QString previewPath = temporary.filePath(QStringLiteral("preview.png"));
@@ -645,7 +728,24 @@ Archive::IOErrorCode Archive::extractArchive(const QString &path, const QString 
                     return IOErrorCode::FailedToOpenResource;
                 archiveFile.close();
 
-                KTar tar(archivePath, QStringLiteral("application/x-gzip"));
+                QFile compressedArchive(archivePath);
+                if (!compressedArchive.open(QIODevice::ReadOnly))
+                    return IOErrorCode::FailedToOpenResource;
+                // KGzipFilter otherwise treats non-gzip input as plain bytes.
+                if (compressedArchive.peek(3) != QByteArray("\x1f\x8b\x08", 3))
+                    return IOErrorCode::CorruptedBasketArchive;
+                // Both devices are stack-owned. Passing the stream to KTar
+                // avoids its hidden uncompressed temporary file and allows a
+                // failed extracted-file write to retain its actual error code.
+                KCompressionDevice tarStream(&compressedArchive, false, KCompressionDevice::GZip);
+                if (!tarStream.open(QIODevice::ReadOnly))
+                    return IOErrorCode::FailedToOpenResource;
+                if (!validateTarStream(tarStream))
+                    return compressedArchive.error() == QFileDevice::NoError ? IOErrorCode::CorruptedBasketArchive
+                                                                            : IOErrorCode::FailedToOpenResource;
+                if (!tarStream.seek(0))
+                    return IOErrorCode::FailedToOpenResource;
+                KTar tar(&tarStream);
                 if (!tar.open(QIODevice::ReadOnly) || !tar.directory())
                     return IOErrorCode::CorruptedBasketArchive;
                 const IOErrorCode extractionResult = extractDirectory(*tar.directory(), extractedPath);
@@ -718,7 +818,7 @@ Archive::createArchiveFromSource(const QString &sourcePath, const QString &previ
         if (!added)
             return IOErrorCode::FailedToOpenResource;
     }
-    if (!archive.close())
+    if (!archive.writeData(tarEndBlocks.data(), tarEndBlocks.size()) || !archive.close())
         return IOErrorCode::FailedToOpenResource;
 
     // An omitted preview uses the application icon; an explicitly supplied
