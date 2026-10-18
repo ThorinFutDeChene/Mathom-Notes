@@ -16,7 +16,7 @@ concurrency:
 
 env:
   # Infrastructure stays on the CI branch. Set this to the exact reviewed commit
-  # already merged into main, never on the rejected stable branch.
+  # already merged into main, never on the rejected 5.0.2-dev1 branch.
   # An empty value deliberately stops before building or publishing anything.
   MATHOM_SOURCE_COMMIT: '7f1ccbecde88171004be5e67953ed18f7388faef'
   # Publication is enabled for this reviewed candidate. Compilation, regression
@@ -80,7 +80,7 @@ jobs:
           changed_paths="$(git -C source diff --name-only v5.0.1 "$APPLICATION_COMMIT")"
           expected_paths="$(printf 'VERSION\nsrc/tests/archivetest.cpp')"
           if [[ "$changed_paths" != "$expected_paths" ]]; then
-            printf 'Unexpected application files in point-1 branch:\\n%s\\n' "$changed_paths" >&2
+            printf 'Unexpected application files in point-1 branch:\n%s\n' "$changed_paths" >&2
             exit 1
           fi
           test "$(tr -d '[:space:]' < source/VERSION)" = '5.0.2'
@@ -89,7 +89,7 @@ jobs:
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_INSTALL_PREFIX=/usr \
             -DBUILD_TESTING=ON \
-            -DBUILD_stableTOOLS=OFF \
+            -DBUILD_DEVTOOLS=OFF \
             -DENABLE_GPG=OFF \
             -DENABLE_GIT=ON \
             -DCMAKE_DISABLE_FIND_PACKAGE_KF6DocTools=TRUE
