@@ -6,7 +6,7 @@ if [[ "${GITHUB_ACTIONS:-false}" != true || "${PUBLISH_DEV:-false}" != true ]]; 
     exit 1
 fi
 if [[ "${GITHUB_REPOSITORY:-}" != ThorinFutDeChene/Mathom-Notes \
-    || "${GITHUB_REF:-}" != refs/heads/ci/5.0.2-priorites-fichiers ]]; then
+    || "${GITHUB_REF:-}" != refs/heads/ci/5.0.2-point1-test-archives ]]; then
     echo 'DEV publication is limited to the reviewed native CI branch.' >&2
     exit 1
 fi
@@ -29,7 +29,7 @@ deb_version="${BASH_REMATCH[1]}-0dev${BASH_REMATCH[2]}"
 tag="v$version"
 checksum="$package.sha256"
 test "$(git rev-parse HEAD)" = "$source_commit"
-git merge-base --is-ancestor "$source_commit" origin/fix/5.0.2-priorites-fichiers
+git merge-base --is-ancestor "$source_commit" origin/fix/5.0.2-point1-test-archives
 # The source commit is selected before CI runs and contains only the application
 # change. Never publish the infrastructure commit or rewrite a refused target.
 git diff --exit-code origin/main "$source_commit" -- .github/workflows
@@ -51,22 +51,30 @@ fi
 results="$root/packaging/ci-results/publication"
 mkdir -p "$results"
 cat > "$results/release-notes.txt" <<EOF
-DEV corrective des cinq priorités de fiabilité des fichiers :
+DEV de validation du POINT 1 UNIQUEMENT, repartie de Mathom Notes v5.0.1 :
 
-- vérification réelle du contenu des archives ;
-- conservation d'une sauvegarde précédente en cas d'échec ;
-- remontée des erreurs de création et d'extraction d'archives ;
-- renommage cohérent des pièces jointes, y compris en cas de collision ;
-- reprise temporisée des sauvegardes sans boucle bloquant l'interface.
+- correction du comparateur d'integrite des tests d'archives ;
+- comparaison des chemins relatifs, des fichiers caches et des repertoires ;
+- comparaison SHA-256 de chaque fichier avec son equivalent de reference ;
+- cas de regression pour modifications, fichiers manquants ou ajoutes,
+  renommages, changements de type, repertoires vides et lectures impossibles.
 
-Paquet Debian natif pour Ubuntu 26.04 amd64, construit avec le script officiel.
-Compilation et tests de régression exécutés avant publication.
+AUCUNE modification du moteur d'archives, ni de l'exportation ou
+de l'importation des Mathom-Houses. Les quatre autres points de l'audit
+ne font PAS partie de cette DEV.
+La 5.0.2-dev1 precedente a ete invalidee ; ce nouveau candidat est
+derive directement de la stable 5.0.1, pas de cette ancienne DEV.
+
+Paquet Debian natif Ubuntu 26.04 amd64.
+Compilation, tests automatises et installation du paquet publie verifies par CI.
 Commit applicatif : $source_commit
-Commit de l'infrastructure CI : $GITHUB_SHA
-Résultats de la recette du paquet retéléchargé :
+Commit CI : $GITHUB_SHA
+Resultats :
 $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
 
-La validation interactive reste à effectuer avant toute version stable.
+Validation interactive du vrai parcours export/import encore requise.
+La branche main et la stable 5.0.1 ne sont pas modifiees.
+
 EOF
 
 # Ordinary GitHub permissions apply. If repository policy or workflow-write
