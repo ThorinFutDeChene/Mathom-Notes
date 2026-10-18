@@ -5,14 +5,24 @@
 
 #include <KTar>
 
+#include <QCryptographicHash>
 #include <QDir>
+#include <QDirIterator>
+#include <QFile>
+#include <QFileInfo>
 #include <QObject>
 #include <QTemporaryDir>
 #include <QtTest/QtTest>
 
-#include <algorithm>
 #include <archive.h>
-#include <memory>
+
+namespace {
+bool writeFile(const QString &path, const QByteArray &bytes)
+{
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly) && file.write(bytes) == bytes.size() && file.flush();
+}
+}
 
 class ArchiveTest : public QObject
 {
@@ -22,14 +32,16 @@ private Q_SLOTS:
 
     void testExtractArchive();
     void testCreateArchive();
+    void testContentComparison_data();
+    void testContentComparison();
+    void testUnreadableContent();
 
     void cleanupTestCase();
 
 private:
     bool compareDirTree(const QString &toTestPath, const QString &referencePath);
     bool compareDirHashes(const QString &toTestPath, const QString &referencePath);
-    QStringList createDirTree(const QString &path, bool returnRelativePaths);
-    //    QByteArray fileHash(const QString &path, QCryptographicHash::Algorithm hashAlgorithm);
+    QStringList createDirTree(const QString &path);
 
     QTemporaryDir m_sampleSourceDir;
 };
@@ -100,6 +112,7 @@ void ArchiveTest::testCreateArchive()
     ioCode = Archive::extractArchive(testArchive, extractedPath, false);
     QVERIFY2(ioCode == Archive::IOErrorCode::NoError, "The newly created .mathom archive could not be read back");
     QVERIFY2(compareDirTree(extractedPath, testSourcePath), "Extracted .mathom archive is not identical with the source");
+    QVERIFY2(compareDirHashes(extractedPath, testSourcePath), "Extracted .mathom archive content differs from the source");
 
     /// \todo find a simple way to compare created archive. KTar could write specific meta data...
 
@@ -107,6 +120,80 @@ void ArchiveTest::testCreateArchive()
     //    auto hashTest = fileHash(testArchive, QCryptographicHash::Sha256);
 
     //    QVERIFY2(hashRef == hashTest, "Created .baskets archive is not identical with the reference (hashes different)");
+}
+
+void ArchiveTest::testContentComparison_data()
+{
+    QTest::addColumn<QString>("change");
+    QTest::addColumn<bool>("matches");
+
+    QTest::newRow("identical") << QString() << true;
+    QTest::newRow("one-byte-changed") << QStringLiteral("byte") << false;
+    QTest::newRow("missing-file") << QStringLiteral("missing") << false;
+    QTest::newRow("extra-file") << QStringLiteral("extra") << false;
+    QTest::newRow("renamed-file") << QStringLiteral("rename") << false;
+    QTest::newRow("hidden-file-changed") << QStringLiteral("hidden") << false;
+    QTest::newRow("same-concatenation-different-boundaries") << QStringLiteral("boundaries") << false;
+    QTest::newRow("extra-empty-directory") << QStringLiteral("empty-directory") << false;
+    QTest::newRow("file-became-directory") << QStringLiteral("type-change") << false;
+}
+
+void ArchiveTest::testContentComparison()
+{
+    QFETCH(QString, change);
+    QFETCH(bool, matches);
+
+    QTemporaryDir reference;
+    QTemporaryDir actual;
+    QVERIFY(reference.isValid());
+    QVERIFY(actual.isValid());
+
+    for (const QString &root : {reference.path(), actual.path()}) {
+        QVERIFY(writeFile(QDir(root).filePath(QStringLiteral("a.txt")), QByteArray("ab")));
+        QVERIFY(writeFile(QDir(root).filePath(QStringLiteral("b.txt")), QByteArray("c")));
+        QVERIFY(writeFile(QDir(root).filePath(QStringLiteral(".basket")), QByteArray("metadata")));
+        QVERIFY(QDir().mkpath(QDir(root).filePath(QStringLiteral("empty-directory"))));
+    }
+
+    if (change == QStringLiteral("byte"))
+        QVERIFY(writeFile(actual.filePath(QStringLiteral("a.txt")), QByteArray("ac")));
+    else if (change == QStringLiteral("missing"))
+        QVERIFY(QFile::remove(actual.filePath(QStringLiteral("a.txt"))));
+    else if (change == QStringLiteral("extra"))
+        QVERIFY(writeFile(actual.filePath(QStringLiteral("extra.txt")), QByteArray("extra")));
+    else if (change == QStringLiteral("rename"))
+        QVERIFY(QFile::rename(actual.filePath(QStringLiteral("a.txt")), actual.filePath(QStringLiteral("renamed.txt"))));
+    else if (change == QStringLiteral("hidden"))
+        QVERIFY(writeFile(actual.filePath(QStringLiteral(".basket")), QByteArray("changed!")));
+    else if (change == QStringLiteral("boundaries")) {
+        // Same concatenated bytes ("abc"), but different content in each file.
+        QVERIFY(writeFile(actual.filePath(QStringLiteral("a.txt")), QByteArray("a")));
+        QVERIFY(writeFile(actual.filePath(QStringLiteral("b.txt")), QByteArray("bc")));
+    } else if (change == QStringLiteral("empty-directory"))
+        QVERIFY(QDir().mkpath(actual.filePath(QStringLiteral("another-empty-directory"))));
+    else if (change == QStringLiteral("type-change")) {
+        QVERIFY(QFile::remove(actual.filePath(QStringLiteral("a.txt"))));
+        QVERIFY(QDir().mkpath(actual.filePath(QStringLiteral("a.txt"))));
+    }
+
+    QCOMPARE(compareDirHashes(actual.path(), reference.path()), matches);
+    QVERIFY(!compareDirHashes(actual.filePath(QStringLiteral("nonexistent")), reference.filePath(QStringLiteral("nonexistent"))));
+}
+
+void ArchiveTest::testUnreadableContent()
+{
+#ifndef Q_OS_UNIX
+    QSKIP("This test requires a dangling symbolic link.");
+#else
+    QTemporaryDir reference;
+    QTemporaryDir actual;
+    QVERIFY(reference.isValid());
+    QVERIFY(actual.isValid());
+    QVERIFY(writeFile(reference.filePath(QStringLiteral("note.txt")), QByteArray("content")));
+    QVERIFY(QFile::link(actual.filePath(QStringLiteral("missing")), actual.filePath(QStringLiteral("note.txt"))));
+    QVERIFY(compareDirTree(actual.path(), reference.path()));
+    QVERIFY(!compareDirHashes(actual.path(), reference.path()));
+#endif
 }
 
 void ArchiveTest::initTestCase()
@@ -120,102 +207,71 @@ void ArchiveTest::initTestCase()
     // Open the archive
     QVERIFY(archive.open(QIODevice::ReadOnly));
     QString destination = m_sampleSourceDir.path();
-    archive.directory()->copyTo(destination, true);
-    archive.close();
+    QVERIFY(archive.directory()->copyTo(destination, true));
+    QVERIFY(archive.close());
 }
 
 void ArchiveTest::cleanupTestCase()
 {
 }
 
-bool ArchiveTest::compareDirTree(const QString &toTestPath, const QString &referencePath)
+QStringList ArchiveTest::createDirTree(const QString &path)
 {
-    const auto testPathDirTree = createDirTree(toTestPath, true);
-    const auto referencePathDirTree = createDirTree(referencePath, true);
-
-    if (testPathDirTree.size() != referencePathDirTree.size()) {
-        return false;
-    }
-
-    // until C++14, this test is required for using std::mismatch
-    if (testPathDirTree.size() > referencePathDirTree.size()) {
-        return false;
-    }
-
-    auto mismatched = std::mismatch(testPathDirTree.begin(), testPathDirTree.end(), referencePathDirTree.begin());
-
-    return !(mismatched.first != testPathDirTree.end() || mismatched.second != referencePathDirTree.end());
+    QStringList relativePaths;
+    const QDir root(path);
+    QDirIterator it(root.absolutePath(),
+                    QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System,
+                    QDirIterator::Subdirectories);
+    while (it.hasNext())
+        relativePaths.append(root.relativeFilePath(it.next()));
+    relativePaths.sort();
+    return relativePaths;
 }
 
-QStringList ArchiveTest::createDirTree(const QString &path, const bool returnRelativePaths)
+bool ArchiveTest::compareDirTree(const QString &toTestPath, const QString &referencePath)
 {
-    QStringList dirTree;
-    QDir dir(path);
-
-    QDirIterator it(dir.absolutePath(), QDir::Files, QDirIterator::Subdirectories);
-
-    if (returnRelativePaths) {
-        while (it.hasNext()) {
-            dirTree.append(dir.relativeFilePath(it.next()));
-        }
-    } else {
-        while (it.hasNext()) {
-            dirTree.append(it.next());
-        }
-    }
-
-    dirTree.sort();
-
-    return dirTree;
+    // Two missing roots must never be accepted as two identical empty archives.
+    return QDir(toTestPath).exists() && QDir(referencePath).exists()
+        && createDirTree(toTestPath) == createDirTree(referencePath);
 }
 
 bool ArchiveTest::compareDirHashes(const QString &toTestPath, const QString &referencePath)
 {
-    const auto testPathDirTree = createDirTree(toTestPath, false);
-    const auto referencePathDirTree = createDirTree(referencePath, false);
-
-    if (testPathDirTree.size() != referencePathDirTree.size()) {
+    if (!compareDirTree(toTestPath, referencePath))
         return false;
+
+    const QDir actualDir(toTestPath);
+    const QDir referenceDir(referencePath);
+    for (const QString &relativePath : createDirTree(referencePath)) {
+        const QFileInfo actualInfo(actualDir.filePath(relativePath));
+        const QFileInfo referenceInfo(referenceDir.filePath(relativePath));
+
+        // Do not report an unsupported or unreadable symlink as identical.
+        if (actualInfo.isSymLink() || referenceInfo.isSymLink())
+            return false;
+        if (actualInfo.isDir() != referenceInfo.isDir())
+            return false;
+        if (actualInfo.isDir())
+            continue;
+        if (!actualInfo.isFile() || !referenceInfo.isFile())
+            return false;
+
+        QFile actual(actualInfo.absoluteFilePath());
+        QFile reference(referenceInfo.absoluteFilePath());
+        if (!actual.open(QIODevice::ReadOnly) || !reference.open(QIODevice::ReadOnly))
+            return false;
+
+        // Hash every corresponding file separately: aggregating all bytes
+        // could miss content moved across file boundaries.
+        QCryptographicHash actualHash(QCryptographicHash::Sha256);
+        QCryptographicHash referenceHash(QCryptographicHash::Sha256);
+        if (!actualHash.addData(&actual) || !referenceHash.addData(&reference)
+            || actual.error() != QFileDevice::NoError || reference.error() != QFileDevice::NoError
+            || actualHash.result() != referenceHash.result())
+            return false;
     }
-
-    // until C++14, this test is required for using std::mismatch
-    if (testPathDirTree.size() > referencePathDirTree.size()) {
-        return false;
-    }
-
-    QCryptographicHash hashTest(QCryptographicHash::Sha256);
-    QCryptographicHash hashReference(QCryptographicHash::Sha256);
-
-    std::for_each(testPathDirTree.begin(), testPathDirTree.end(), [&](const QString &path) {
-        QFile file(path);
-        if (!file.open(QIODevice::ReadOnly)) {
-            hashTest.addData(&file);
-            file.close();
-        }
-    });
-
-    std::for_each(referencePathDirTree.begin(), referencePathDirTree.end(), [&](const QString &path) {
-        QFile file(path);
-        if (!file.open(QIODevice::ReadOnly)) {
-            hashTest.addData(&file);
-            file.close();
-        }
-    });
-
-    return hashTest.result() == hashReference.result();
+    return true;
 }
-
-// QByteArray ArchiveTest::fileHash(const QString &path, QCryptographicHash::Algorithm hashAlgorithm)
-//{
-//    QFile file(path);
-//    if (file.open(QFile::ReadOnly)) {
-//        QCryptographicHash hash(hashAlgorithm);
-//        if (hash.addData(&file)) {
-//            return hash.result();
-//        }
-//    }
-//    return QByteArray();
-//}
 
 #include "archivetest.moc"
 /* vim: set et sts=4 sw=4 ts=8 tw=0 : */
