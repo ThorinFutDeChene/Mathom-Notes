@@ -177,7 +177,7 @@ void NoteContentRenameTest::modelAndWatcherUseActualName()
     Global::basketConfig = KSharedConfig::openConfig(profile.filePath(QStringLiteral("mathomrc")), KConfig::SimpleConfig);
 
     QStatusBar statusBar;
-    KActionCollection actions(nullptr);
+    KActionCollection actions(static_cast<QObject *>(nullptr));
     BNPView view(nullptr, nullptr, &actions, new BasketStatusBar(&statusBar));
     BasketScene basket(nullptr, QStringLiteral("rename-test"));
     QVERIFY(QDir().mkpath(basket.fullPath()));

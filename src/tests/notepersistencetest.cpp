@@ -76,7 +76,7 @@ void NotePersistenceTest::failedSaveRetainsLatestContent()
 {
     QFETCH(bool, richText);
     QStatusBar statusBar;
-    KActionCollection actions(nullptr);
+    KActionCollection actions(static_cast<QObject *>(nullptr));
     BNPView view(nullptr, nullptr, &actions, new BasketStatusBar(&statusBar));
     const QString folderName = richText ? QStringLiteral("pending-html") : QStringLiteral("pending-text");
     BasketScene *basket = view.loadBasket(folderName);
@@ -152,7 +152,7 @@ void NotePersistenceTest::failedSaveRetainsLatestContent()
 void NotePersistenceTest::fileTransfersWaitForPendingContent()
 {
     QStatusBar statusBar;
-    KActionCollection actions(nullptr);
+    KActionCollection actions(static_cast<QObject *>(nullptr));
     BNPView view(nullptr, nullptr, &actions, new BasketStatusBar(&statusBar));
     BasketScene *basket = view.loadBasket(QStringLiteral("pending-transfer"));
     QVERIFY(basket);
