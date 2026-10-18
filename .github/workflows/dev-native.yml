@@ -28,10 +28,10 @@ env:
   # Infrastructure stays on the CI branch. Set this to the exact reviewed commit
   # on fix/5.0.2-priorites-fichiers before pushing the CI branch for execution.
   # An empty value deliberately stops before building or publishing anything.
-  MATHOM_SOURCE_COMMIT: '38b4423e98275aa096c9e412cf7f4c7f08d50e19'
-  # Keep the first push build-only. Change this in a reviewed publication commit
-  # once the code and package have passed their checks, or use the manual input.
-  PUBLISH_DEV: 'false'
+  MATHOM_SOURCE_COMMIT: '9cd7977b1e2f0498630000b656323ca883781a96'
+  # Publication is enabled for this reviewed candidate. Compilation, regression
+  # tests and native package checks must all succeed before the release step.
+  PUBLISH_DEV: 'true'
   DEBIAN_FRONTEND: noninteractive
   CMAKE_BUILD_PARALLEL_LEVEL: '2'
   CTEST_PARALLEL_LEVEL: '1'

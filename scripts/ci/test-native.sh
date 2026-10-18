@@ -62,17 +62,45 @@ if [[ "$phase" == published ]]; then
 
     # The regression executables were built before publication, but they must now
     # load the library installed from the freshly downloaded release asset.
-    : > "$results/loaded-libraries.txt"
-    for test_binary in "$build"/src/tests/*test; do
+    library_log="$results/loaded-libraries.txt"
+    printf 'Expected packaged LibBasket: %s\n' "$installed_library" | tee "$library_log"
+    inspected_test_count=0
+    linked_test_count=0
+    declare -A linked_tests=()
+    for test_binary in "$build"/bin/*test; do
         [[ -x "$test_binary" && -f "$test_binary" ]] || continue
         dependencies="$(ldd "$test_binary")"
-        printf '%s\n%s\n' "$test_binary" "$dependencies" >> "$results/loaded-libraries.txt"
+        ((inspected_test_count += 1))
+        printf '\n%s\n%s\n' "$test_binary" "$dependencies" >> "$library_log"
         loaded_library="$(printf '%s\n' "$dependencies" | awk '$1 ~ /^libLibBasket\.so/ {print $3}')"
-        if [[ -n "$loaded_library" && "$(realpath -- "$loaded_library")" != "$installed_library" ]]; then
-            echo "Test still loads a library outside the installed package: $test_binary" >&2
+        if [[ -n "$loaded_library" ]]; then
+            if [[ "$(realpath -- "$loaded_library")" != "$installed_library" ]]; then
+                echo "Test still loads a library outside the installed package: $test_binary" \
+                    | tee -a "$library_log" >&2
+                exit 1
+            fi
+            ((linked_test_count += 1))
+            linked_tests["${test_binary##*/}"]=1
+            printf 'Verified packaged LibBasket: %s\n' "${test_binary##*/}" | tee -a "$library_log"
+        else
+            printf 'Inspected without a LibBasket dependency: %s\n' "${test_binary##*/}" | tee -a "$library_log"
+        fi
+    done
+    printf 'Inspected %d test executables; %d load the packaged LibBasket.\n' \
+        "$inspected_test_count" "$linked_test_count" | tee -a "$library_log"
+    if [[ "$inspected_test_count" == 0 || "$linked_test_count" == 0 ]]; then
+        echo "No test executable loading the packaged LibBasket was verified in $build/bin." \
+            | tee -a "$library_log" >&2
+        exit 1
+    fi
+    for priority_test in archivetest backuptest notecontentrenametest pendingsavetest notepersistencetest; do
+        if [[ "${linked_tests[$priority_test]:-0}" != 1 ]]; then
+            echo "Priority suite was not verified against the packaged LibBasket: $priority_test" \
+                | tee -a "$library_log" >&2
             exit 1
         fi
     done
+    printf 'All five priority suites load the packaged LibBasket.\n' | tee -a "$library_log"
 fi
 
 timeout --signal=TERM --kill-after=10s 20m \
