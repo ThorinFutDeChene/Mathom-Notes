@@ -88,7 +88,7 @@ jobs:
           # Whitelist exactly one test file and the DEV version declaration.
           # Any application production-code change must stop this isolated DEV.
           changed_paths="$(git -C source diff --name-only origin/main "$APPLICATION_COMMIT")"
-          expected_paths="$(printf 'VERSION\\nsrc/tests/archivetest.cpp')"
+          expected_paths="$(printf 'VERSION\nsrc/tests/archivetest.cpp')"
           if [[ "$changed_paths" != "$expected_paths" ]]; then
             printf 'Unexpected application files in point-1 branch:\\n%s\\n' "$changed_paths" >&2
             exit 1
