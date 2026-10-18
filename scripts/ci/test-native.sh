@@ -17,10 +17,41 @@ export XDG_DATA_HOME="$test_profile/data"
 export XDG_CACHE_HOME="$test_profile/cache"
 export XDG_STATE_HOME="$test_profile/state"
 export XDG_RUNTIME_DIR="$test_profile/runtime"
-mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_RUNTIME_DIR"
+export TMPDIR="$test_profile/tmp"
+mkdir -p "$XDG_CONFIG_HOME" "$XDG_DATA_HOME" "$XDG_CACHE_HOME" "$XDG_STATE_HOME" "$XDG_RUNTIME_DIR" "$TMPDIR"
 chmod 700 "$XDG_RUNTIME_DIR"
 export QT_QPA_PLATFORM=xcb
 export QT_LOGGING_RULES='qt.multimedia.*=false'
+
+# Permission-failure tests need an ordinary UID: root would bypass read-only
+# destination directories and skip that regression. setpriv preserves the
+# existing environment, including HOME, while changing the real/effective IDs.
+test_command_prefix=()
+if [[ "$(id -u)" == 0 ]]; then
+    if ! command -v setpriv >/dev/null 2>&1; then
+        echo 'Root CI requires setpriv from util-linux to run unprivileged tests.' >&2
+        exit 1
+    fi
+    test_uid="$(id -u nobody)"
+    test_gid="$(id -g nobody)"
+    [[ "$test_uid" != 0 ]] || { echo 'The test account must have a non-root UID.' >&2; exit 1; }
+    test_command_prefix=(setpriv --reuid "$test_uid" --regid "$test_gid" --clear-groups --no-new-privs)
+
+    # Only disposable output directories become writable by the test user.
+    # Sources, binaries, build metadata and their parent directories keep their
+    # existing ownership and permissions.
+    mkdir -p "$build/Testing/Temporary"
+    chown -R -- "$test_uid:$test_gid" "$test_profile" "$results" "$build/Testing"
+fi
+
+# Refuse an inaccessible checkout rather than broadening permissions on it.
+for required_file in "$build/CTestTestfile.cmake" "$source_root/CMakeLists.txt"; do
+    if ! "${test_command_prefix[@]}" test -r "$required_file"; then
+        echo "The test UID cannot read $required_file; use a traversable CI checkout." >&2
+        exit 1
+    fi
+done
+"${test_command_prefix[@]}" id | tee "$results/test-identity.txt"
 
 if [[ "$phase" == published ]]; then
     test -x /usr/bin/mathom
@@ -45,7 +76,7 @@ if [[ "$phase" == published ]]; then
 fi
 
 timeout --signal=TERM --kill-after=10s 20m \
-    xvfb-run --auto-servernum dbus-run-session -- \
+    "${test_command_prefix[@]}" xvfb-run --auto-servernum dbus-run-session -- \
     ctest --test-dir "$build" --output-on-failure --no-tests=error \
     --timeout 120 --parallel 1 --output-junit "$results/ctest.xml" \
     2>&1 | tee "$results/ctest.log"
@@ -53,7 +84,7 @@ timeout --signal=TERM --kill-after=10s 20m \
 if [[ "$phase" == published ]]; then
     version="$(tr -d '[:space:]' < "$source_root/VERSION")"
     timeout --signal=TERM --kill-after=5s 30s \
-        xvfb-run --auto-servernum dbus-run-session -- /usr/bin/mathom --version \
+        "${test_command_prefix[@]}" xvfb-run --auto-servernum dbus-run-session -- /usr/bin/mathom --version \
         > "$results/version.log" 2>&1
     cat "$results/version.log"
     grep -F -- "$version" "$results/version.log"
@@ -61,7 +92,7 @@ if [[ "$phase" == published ]]; then
     # This is a bounded startup check, not a substitute for the interactive recipe.
     # A healthy GUI stays alive until timeout; a crash or early exit is a failure.
     if timeout --signal=TERM --kill-after=5s 20s \
-        xvfb-run --auto-servernum dbus-run-session -- \
+        "${test_command_prefix[@]}" xvfb-run --auto-servernum dbus-run-session -- \
         /usr/bin/mathom --data-folder "$test_profile/application" \
         > "$results/startup.log" 2>&1; then
         echo 'The published application exited before the startup observation ended.' >&2
