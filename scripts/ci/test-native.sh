@@ -93,14 +93,16 @@ if [[ "$phase" == published ]]; then
             | tee -a "$library_log" >&2
         exit 1
     fi
-    for priority_test in archivetest backuptest notecontentrenametest pendingsavetest notepersistencetest; do
+    # This DEV changes only archivetest: the other four priority suites are
+    # intentionally not introduced from the rejected five-fix branch.
+    for priority_test in archivetest; do
         if [[ "${linked_tests[$priority_test]:-0}" != 1 ]]; then
             echo "Priority suite was not verified against the packaged LibBasket: $priority_test" \
                 | tee -a "$library_log" >&2
             exit 1
         fi
     done
-    printf 'All five priority suites load the packaged LibBasket.\n' | tee -a "$library_log"
+    printf 'The point-1 archive regression suite loads the packaged LibBasket.\n' | tee -a "$library_log"
 fi
 
 timeout --signal=TERM --kill-after=10s 20m \
