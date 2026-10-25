@@ -657,187 +657,154 @@ void Archive::open(const QString &path)
 
 Archive::IOErrorCode Archive::extractArchive(const QString &path, const QString &destination, const bool protectDestination)
 {
-    IOErrorCode retCode = IOErrorCode::NoError;
-
-    QString l_destination;
-
-    // derive name of the extraction directory
+    QString extractionPath;
     if (destination.isEmpty()) {
-        // have the decoded baskets the same name as the archive
-        l_destination = QFileInfo(path).path() + QDir::separator() + QFileInfo(path).baseName() + QStringLiteral("-source");
+        extractionPath = QFileInfo(path).path() + QDir::separator()
+            + QFileInfo(path).baseName() + QStringLiteral("-source");
     } else {
-        l_destination = QDir::cleanPath(destination);
+        extractionPath = QDir::cleanPath(destination);
     }
 
-    QDir dir(l_destination);
-
-    // do nothing when writeProtected
-    if (dir.exists() && protectDestination) {
-        return IOErrorCode::DestinationExists;
-    }
-
-    // Create directory and delete its content in case it was not empty
-    if (!dir.removeRecursively()) {
-        return IOErrorCode::FailedToOpenResource;
-    }
-    dir.mkpath(QStringLiteral("."));
-
-    const qint64 BUFFER_SIZE = 1024;
-
+    QDir dir(extractionPath);
     QFile file(path);
-    if (file.open(QIODevice::ReadOnly)) {
-        QTextStream stream(&file);
-        // stream.setEncoding(QStringConverter::Latin1);
-        QString line = stream.readLine();
-        const bool nativeMathomArchive =
-            line == QStringLiteral("MathomNotes:archive");
-        const bool legacyBasketArchive =
-            line == QStringLiteral("BasKetNP:archive");
+    // Do not delete an extraction folder just because the input is missing.
+    if (!file.open(QIODevice::ReadOnly))
+        return IOErrorCode::FailedToOpenResource;
 
-        if (!nativeMathomArchive && !legacyBasketArchive) {
-            file.close();
-            dir.removeRecursively();
-            return IOErrorCode::NotABasketArchive;
-        }
+    if (dir.exists() && protectDestination)
+        return IOErrorCode::DestinationExists;
 
-        const QString expectedVersion =
-            nativeMathomArchive
-                ? QStringLiteral("1.0")
-                : QStringLiteral("0.6.1");
+    if (!dir.removeRecursively() || !dir.mkpath(QStringLiteral(".")))
+        return IOErrorCode::FailedToOpenResource;
 
-        QString version;
-        QStringList readCompatibleVersions;
-        QStringList writeCompatibleVersions;
-        while (!stream.atEnd()) {
-            // Get Key/Value Pair From the Line to Read:
-            line = stream.readLine();
-            int index = line.indexOf(QLatin1Char(':'));
-            QString key;
-            QString value;
-            if (index >= 0) {
-                key = line.left(index);
-                value = line.right(line.length() - index - 1);
-            } else {
-                key = line;
-                value = QString();
-            }
-            if (key == QStringLiteral("version")) {
-                version = value;
-            } else if (key == QStringLiteral("read-compatible")) {
-                readCompatibleVersions = value.split(QLatin1Char(';'));
-            } else if (key == QStringLiteral("write-compatible")) {
-                writeCompatibleVersions = value.split(QLatin1Char(';'));
-            } else if (key == QStringLiteral("preview*")) {
-                bool ok;
-                const qint64 size = value.toULong(&ok);
-                if (!ok) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::CorruptedBasketArchive;
-                }
-                // Get the preview file:
-                QFile previewFile(dir.absolutePath() + QDir::separator() + QStringLiteral("preview.png"));
-                if (previewFile.open(QIODevice::WriteOnly)) {
-                    std::array<char, BUFFER_SIZE> buffer{};
-                    qint64 remainingBytes = size;
-                    qint64 sizeRead = 0;
-                    file.seek(stream.pos());
-
-                    while ((sizeRead = file.read(buffer.data(), std::min(BUFFER_SIZE, remainingBytes))) > 0) {
-                        previewFile.write(buffer.data(), sizeRead);
-                        remainingBytes -= sizeRead;
-                    }
-                    previewFile.close();
-                }
-                stream.seek(stream.pos() + size);
-            } else if (key == QStringLiteral("archive*")) {
-                if (version != expectedVersion && readCompatibleVersions.contains(expectedVersion)
-                    && !writeCompatibleVersions.contains(expectedVersion)) {
-                    retCode = IOErrorCode::PossiblyCompatibleBasketVersion;
-                }
-                if (version != expectedVersion && !readCompatibleVersions.contains(expectedVersion)
-                    && !writeCompatibleVersions.contains(expectedVersion)) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::IncompatibleBasketVersion;
-                }
-
-                bool ok;
-                qint64 size = value.toULong(&ok);
-                if (!ok) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::CorruptedBasketArchive;
-                }
-
-                // Get the archive file and extract it to destination:
-                QTemporaryDir tempDir;
-                if (!tempDir.isValid()) {
-                    return IOErrorCode::FailedToOpenResource;
-                }
-                QString tempArchive = tempDir.path() + QDir::separator() + QStringLiteral("temp-archive.tar.gz");
-                QFile archiveFile(tempArchive);
-                file.seek(stream.pos());
-
-                if (!archiveFile.open(QIODevice::WriteOnly)) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::FailedToOpenResource;
-                }
-
-                char *buffer = new char[BUFFER_SIZE];
-                qint64 sizeRead;
-
-                while ((sizeRead = file.read(
-                            buffer,
-                            std::min(BUFFER_SIZE, size))) > 0) {
-                    archiveFile.write(buffer, sizeRead);
-                    size -= sizeRead;
-                }
-
-                archiveFile.close();
-                delete[] buffer;
-
-                KTar tar(
-                    tempArchive,
-                    QStringLiteral("application/x-gzip"));
-
-                if (!tar.open(QIODevice::ReadOnly)) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::CorruptedBasketArchive;
-                }
-
-                tar.directory()->copyTo(l_destination);
-                tar.close();
-
-                stream.seek(file.pos());
-            } else if (key.endsWith(QLatin1Char('*'))) {
-                // We do not know what it is, but we should read the embedded-file in
-                // order to discard it:
-                bool ok;
-                qint64 size = value.toULong(&ok);
-                if (!ok) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::CorruptedBasketArchive;
-                }
-                // Get the archive file:
-                char *buffer = new char[BUFFER_SIZE];
-                qint64 sizeRead;
-                while ((sizeRead = file.read(buffer, std::min(BUFFER_SIZE, size))) > 0) {
-                    size -= sizeRead;
-                }
-                delete[] buffer;
-            } else {
-                // We do not know what it is, and we do not care.
-            }
-            // Analyze the Value, if Understood:
-        }
+    // All failures after creating an extraction directory remove the partial
+    // contents, so no caller can mistake an incomplete extraction for success.
+    const auto fail = [&](IOErrorCode code) {
         file.close();
+        dir.removeRecursively();
+        return code;
+    };
+
+    QTextStream stream(&file);
+    const QString magic = stream.readLine();
+    const bool native = magic == QStringLiteral("MathomNotes:archive");
+    const bool legacy = magic == QStringLiteral("BasKetNP:archive");
+    if (!native && !legacy)
+        return fail(IOErrorCode::NotABasketArchive);
+
+    const QString expectedVersion =
+        native ? QStringLiteral("1.0") : QStringLiteral("0.6.1");
+    QString version;
+    QStringList readCompatibleVersions;
+    QStringList writeCompatibleVersions;
+    IOErrorCode result = IOErrorCode::NoError;
+    bool extractedArchive = false;
+    constexpr qint64 bufferSize = 1024;
+
+    // Read exactly the number of payload bytes declared by the envelope.
+    // All stream positions are restored before parsing the following key.
+    const auto consumePayload = [&](qint64 size, QFile *output) {
+        const qint64 offset = stream.pos();
+        if (offset < 0 || size < 0 || size > file.size() - offset
+            || !file.seek(offset)) {
+            return false;
+        }
+        std::array<char, bufferSize> buffer{};
+        while (size > 0) {
+            const qint64 count =
+                file.read(buffer.data(), std::min(bufferSize, size));
+            if (count <= 0)
+                return false;
+            if (output && output->write(buffer.data(), count) != count)
+                return false;
+            size -= count;
+        }
+        if (output && !output->flush())
+            return false;
+        return stream.seek(file.pos())
+            && file.error() == QFileDevice::NoError;
+    };
+
+    while (!stream.atEnd()) {
+        const QString line = stream.readLine();
+        const int colon = line.indexOf(QLatin1Char(':'));
+        const QString key = colon < 0 ? line : line.left(colon);
+        const QString value = colon < 0 ? QString() : line.mid(colon + 1);
+
+        if (key == QStringLiteral("version")) {
+            version = value;
+        } else if (key == QStringLiteral("read-compatible")) {
+            readCompatibleVersions = value.split(QLatin1Char(';'));
+        } else if (key == QStringLiteral("write-compatible")) {
+            writeCompatibleVersions = value.split(QLatin1Char(';'));
+        } else if (key == QStringLiteral("preview*")) {
+            bool ok = false;
+            const qint64 size = value.toLongLong(&ok);
+            if (!ok || size < 0)
+                return fail(IOErrorCode::CorruptedBasketArchive);
+
+            QFile preview(dir.filePath(QStringLiteral("preview.png")));
+            if (!preview.open(QIODevice::WriteOnly))
+                return fail(IOErrorCode::FailedToOpenResource);
+            if (!consumePayload(size, &preview))
+                return fail(preview.error() == QFileDevice::NoError
+                                ? IOErrorCode::CorruptedBasketArchive
+                                : IOErrorCode::FailedToOpenResource);
+            preview.close();
+        } else if (key == QStringLiteral("archive*")) {
+            if (version != expectedVersion
+                && readCompatibleVersions.contains(expectedVersion)
+                && !writeCompatibleVersions.contains(expectedVersion)) {
+                result = IOErrorCode::PossiblyCompatibleBasketVersion;
+            } else if (version != expectedVersion
+                       && !readCompatibleVersions.contains(expectedVersion)
+                       && !writeCompatibleVersions.contains(expectedVersion)) {
+                return fail(IOErrorCode::IncompatibleBasketVersion);
+            }
+
+            bool ok = false;
+            const qint64 size = value.toLongLong(&ok);
+            if (!ok || size <= 0)
+                return fail(IOErrorCode::CorruptedBasketArchive);
+
+            QTemporaryDir temporary;
+            if (!temporary.isValid())
+                return fail(IOErrorCode::FailedToOpenResource);
+            const QString compressedPath =
+                temporary.filePath(QStringLiteral("temp-archive.tar.gz"));
+            QFile compressed(compressedPath);
+            if (!compressed.open(QIODevice::WriteOnly))
+                return fail(IOErrorCode::FailedToOpenResource);
+            if (!consumePayload(size, &compressed)) {
+                return fail(compressed.error() == QFileDevice::NoError
+                                ? IOErrorCode::CorruptedBasketArchive
+                                : IOErrorCode::FailedToOpenResource);
+            }
+            compressed.close();
+
+            KTar tar(compressedPath, QStringLiteral("application/x-gzip"));
+            if (!tar.open(QIODevice::ReadOnly))
+                return fail(IOErrorCode::CorruptedBasketArchive);
+            if (!tar.directory() || !tar.directory()->copyTo(extractionPath)) {
+                tar.close();
+                return fail(IOErrorCode::FailedToOpenResource);
+            }
+            if (!tar.close())
+                return fail(IOErrorCode::CorruptedBasketArchive);
+            extractedArchive = true;
+        } else if (key.endsWith(QLatin1Char('*'))) {
+            // Unknown binary extension: skip only when its declared size fits.
+            bool ok = false;
+            const qint64 size = value.toLongLong(&ok);
+            if (!ok || size < 0 || !consumePayload(size, nullptr))
+                return fail(IOErrorCode::CorruptedBasketArchive);
+        }
     }
 
-    return retCode;
+    if (!extractedArchive || file.error() != QFileDevice::NoError)
+        return fail(IOErrorCode::CorruptedBasketArchive);
+    file.close();
+    return result;
 }
 
 Archive::IOErrorCode
