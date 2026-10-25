@@ -1,9 +1,9 @@
-name: Native STABLE 5.0.2 build and verification
+name: Native STABLE 5.0.3 build and verification
 
 on:
   push:
     branches:
-      - ci/5.0.2-stable-point1-archives
+      - ci/5.0.3-stable-point2-sauvegardes
 
 # Publishing uses the ordinary repository token. No personal token is required
 # or searched for. Repository policy can still refuse workflow/release changes.
@@ -16,9 +16,9 @@ concurrency:
 
 env:
   # Infrastructure stays on the CI branch. Set this to the exact reviewed commit
-  # already merged into main, never on the rejected 5.0.2-dev1 branch.
+  # already merged into main, containing only the user-validated point-2 change.
   # An empty value deliberately stops before building or publishing anything.
-  MATHOM_SOURCE_COMMIT: '7f1ccbecde88171004be5e67953ed18f7388faef'
+  MATHOM_SOURCE_COMMIT: '1b377a316a65848b0cf4403d8c3f451055c77fb5'
   # Publication is enabled for this reviewed candidate. Compilation, regression
   # tests and native package checks must all succeed before the release step.
   PUBLISH_STABLE: 'true'
@@ -28,7 +28,7 @@ env:
 
 jobs:
   native-stable:
-    if: github.repository == 'ThorinFutDeChene/Mathom-Notes' && github.ref == 'refs/heads/ci/5.0.2-stable-point1-archives'
+    if: github.repository == 'ThorinFutDeChene/Mathom-Notes' && github.ref == 'refs/heads/ci/5.0.3-stable-point2-sauvegardes'
     runs-on: ubuntu-24.04
     container: ubuntu:26.04
     timeout-minutes: 60
@@ -74,16 +74,16 @@ jobs:
         run: |
           test "$(git -C source rev-parse HEAD)" = "$APPLICATION_COMMIT"
           test "$(git -C source rev-parse origin/main)" = "$APPLICATION_COMMIT"
-          git -C source diff --exit-code v5.0.1 "$APPLICATION_COMMIT" -- .github/workflows
-          # Whitelist exactly the point-1 test and stable version declaration.
-          # Any production-code change must stop this stable release.
-          changed_paths="$(git -C source diff --name-only v5.0.1 "$APPLICATION_COMMIT")"
-          expected_paths="$(printf 'VERSION\nsrc/tests/archivetest.cpp')"
+          git -C source diff --exit-code v5.0.2 "$APPLICATION_COMMIT" -- .github/workflows
+          # Whitelist only the validated point-2 backup fix, regression tests and
+          # stable version. Unrelated source changes must stop this release.
+          changed_paths="$(git -C source diff --name-only v5.0.2 "$APPLICATION_COMMIT")"
+          expected_paths="$(printf 'VERSION\nsrc/backup.cpp\nsrc/backup.h\nsrc/tests/CMakeLists.txt\nsrc/tests/backuptest.cpp')"
           if [[ "$changed_paths" != "$expected_paths" ]]; then
-            printf 'Unexpected application files in point-1 branch:\n%s\n' "$changed_paths" >&2
+            printf 'Unexpected application files in point-2 stable release:\n%s\n' "$changed_paths" >&2
             exit 1
           fi
-          test "$(tr -d '[:space:]' < source/VERSION)" = '5.0.2'
+          test "$(tr -d '[:space:]' < source/VERSION)" = '5.0.3'
           git -C source diff --check
           cmake -S source -B source/build-tests -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
@@ -116,7 +116,7 @@ jobs:
           (cd source/packaging && sha256sum "$package" > "$package.sha256")
           printf 'version=%s\npackage=%s\n' "$version" "$package" >> "$GITHUB_OUTPUT"
 
-      - name: Publish the stable release 5.0.2
+      - name: Publish the stable release 5.0.3
         id: publish
         if: env.PUBLISH_STABLE == 'true'
         env:
