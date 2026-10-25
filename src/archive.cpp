@@ -701,6 +701,15 @@ Archive::IOErrorCode Archive::extractArchive(const QString &path, const QString 
     if (dir.exists() && protectDestination)
         return IOErrorCode::DestinationExists;
 
+    // Reject a non-Mathom file before touching a pre-existing extraction
+    // directory (including when protectDestination is false).
+    QTextStream stream(&file);
+    const QString magic = stream.readLine();
+    const bool native = magic == QStringLiteral("MathomNotes:archive");
+    const bool legacy = magic == QStringLiteral("BasKetNP:archive");
+    if (!native && !legacy)
+        return IOErrorCode::NotABasketArchive;
+
     if (!dir.removeRecursively() || !dir.mkpath(QStringLiteral(".")))
         return IOErrorCode::FailedToOpenResource;
 
@@ -711,13 +720,6 @@ Archive::IOErrorCode Archive::extractArchive(const QString &path, const QString 
         dir.removeRecursively();
         return code;
     };
-
-    QTextStream stream(&file);
-    const QString magic = stream.readLine();
-    const bool native = magic == QStringLiteral("MathomNotes:archive");
-    const bool legacy = magic == QStringLiteral("BasKetNP:archive");
-    if (!native && !legacy)
-        return fail(IOErrorCode::NotABasketArchive);
 
     const QString expectedVersion =
         native ? QStringLiteral("1.0") : QStringLiteral("0.6.1");

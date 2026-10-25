@@ -33,6 +33,7 @@ private Q_SLOTS:
     void testExtractArchive();
     void testCreateArchive();
     void testMissingArchiveDoesNotEraseDestination();
+    void testInvalidMagicPreservesExistingDestination();
     void testRejectsEnvelopeWithoutArchive();
     void testRejectsTruncatedPreview();
     void testRejectsTruncatedArchive();
@@ -75,14 +76,14 @@ void ArchiveTest::testExtractArchive()
 
     // Test the Archive::extractArchive function with incompatible file
     testArchive = referencePath + QStringLiteral("notABasket.baskets");
-    testPath = QStringLiteral("notABasket/");
+    testPath = tempDir.filePath(QStringLiteral("notABasket"));
     ioCode = Archive::extractArchive(testArchive, testPath, false);
 
     QVERIFY2(ioCode == Archive::IOErrorCode::NotABasketArchive, ".baskets was not recoqnized as incompatible baskets file");
 
     // Test the Archive::extractArchive function with incompatible version
     testArchive = referencePath + QStringLiteral("incompatible.baskets");
-    testPath = QStringLiteral("incompatible/");
+    testPath = tempDir.filePath(QStringLiteral("incompatible"));
     ioCode = Archive::extractArchive(testArchive, testPath, false);
 
     QVERIFY2(ioCode == Archive::IOErrorCode::IncompatibleBasketVersion, ".baskets was not recoqnized as incompatible baskets file");
@@ -149,6 +150,24 @@ void ArchiveTest::testMissingArchiveDoesNotEraseDestination()
     QCOMPARE(saved.readAll(), QByteArrayLiteral("Do not erase old data"));
 }
 
+void ArchiveTest::testInvalidMagicPreservesExistingDestination()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString source = temp.filePath(QStringLiteral("invalid.mathom"));
+    const QString destination = temp.filePath(QStringLiteral("existing"));
+    QVERIFY(QDir().mkpath(destination));
+    const QString sentinel = QDir(destination).filePath(QStringLiteral("important.txt"));
+    QVERIFY(writeFile(sentinel, QByteArrayLiteral("Preserved even with protect=false")));
+    QVERIFY(writeFile(source, QByteArrayLiteral("Not an archive")));
+
+    QCOMPARE(Archive::extractArchive(source, destination, false),
+             Archive::IOErrorCode::NotABasketArchive);
+    QFile file(sentinel);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.readAll(), QByteArrayLiteral("Preserved even with protect=false"));
+}
+
 void ArchiveTest::testRejectsEnvelopeWithoutArchive()
 {
     QTemporaryDir temp;
@@ -157,7 +176,7 @@ void ArchiveTest::testRejectsEnvelopeWithoutArchive()
     const QString destination = temp.filePath(QStringLiteral("extracted"));
 
     QVERIFY(writeFile(source, QByteArrayLiteral(
-        "MathomNotes:archive\\nversion:1.0\\npreview*:0\\n")));
+        "MathomNotes:archive\nversion:1.0\npreview*:0\n")));
     QCOMPARE(Archive::extractArchive(source, destination),
              Archive::IOErrorCode::CorruptedBasketArchive);
     QVERIFY(!QDir(destination).exists());
@@ -171,7 +190,7 @@ void ArchiveTest::testRejectsTruncatedPreview()
     const QString destination = temp.filePath(QStringLiteral("extracted"));
 
     QVERIFY(writeFile(source, QByteArrayLiteral(
-        "MathomNotes:archive\\nversion:1.0\\npreview*:32\\nabc")));
+        "MathomNotes:archive\nversion:1.0\npreview*:32\nabc")));
     QCOMPARE(Archive::extractArchive(source, destination),
              Archive::IOErrorCode::CorruptedBasketArchive);
     QVERIFY(!QDir(destination).exists());
