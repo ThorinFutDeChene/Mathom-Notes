@@ -6,7 +6,7 @@ if [[ "${GITHUB_ACTIONS:-false}" != true || "${PUBLISH_STABLE:-false}" != true ]
     exit 1
 fi
 if [[ "${GITHUB_REPOSITORY:-}" != ThorinFutDeChene/Mathom-Notes \
-    || "${GITHUB_REF:-}" != refs/heads/ci/5.0.3-stable-point2-sauvegardes ]]; then
+    || "${GITHUB_REF:-}" != refs/heads/ci/5.0.4-stable-point3-erreurs-archives ]]; then
     echo 'Stable publication is limited to the reviewed native CI branch.' >&2
     exit 1
 fi
@@ -21,24 +21,24 @@ if [[ ! "$source_commit" =~ ^[0-9a-f]{40}$ ]]; then
 fi
 cd "$source_root"
 version="$(tr -d '[:space:]' < VERSION)"
-if [[ "$version" != 5.0.3 ]]; then
-    echo 'Only validated stable 5.0.3 can be published by this workflow.' >&2
+if [[ "$version" != 5.0.4 ]]; then
+    echo 'Only validated stable 5.0.4 can be published by this workflow.' >&2
     exit 1
 fi
-deb_version="5.0.3-1"
+deb_version="5.0.4-1"
 tag="v$version"
 checksum="$package.sha256"
 test "$(git rev-parse HEAD)" = "$source_commit"
 # Tag exactly the commit already promoted into main.
 test "$(git rev-parse origin/main)" = "$source_commit"
-# Only the approved point-2 backup fix, regression tests and VERSION may differ from v5.0.2.
-actual_paths="$(git diff --name-only v5.0.2 "$source_commit")"
-expected_paths="$(printf 'VERSION\nsrc/backup.cpp\nsrc/backup.h\nsrc/tests/CMakeLists.txt\nsrc/tests/backuptest.cpp')"
+# Only point-3 archive error fixes, translations, tests and VERSION may differ from v5.0.3.
+actual_paths="$(git diff --name-only v5.0.3 "$source_commit")"
+expected_paths="$(printf 'VERSION\npo/fr/basket.po\nsrc/archive.cpp\nsrc/archive.h\nsrc/bnpview.cpp\nsrc/tests/archivetest.cpp')"
 if [[ "$actual_paths" != "$expected_paths" ]]; then
     printf 'Unexpected stable source files:\n%s\n' "$actual_paths" >&2
     exit 1
 fi
-git diff --exit-code v5.0.2 "$source_commit" -- .github/workflows
+git diff --exit-code v5.0.3 "$source_commit" -- .github/workflows
 git diff --exit-code
 git diff --cached --exit-code
 test "$(dpkg-deb -f "$package" Package)" = mathom
@@ -57,37 +57,43 @@ fi
 results="$root/packaging/ci-results/publication"
 mkdir -p "$results"
 cat > "$results/release-notes.txt" <<EOF
-Mathom Notes 5.0.3 — VERSION STABLE
+Mathom Notes 5.0.4 — VERSION STABLE
 
-Cette version integre exclusivement le POINT 2 valide :
-la protection des sauvegardes precedentes lorsqu'une nouvelle
-sauvegarde echoue.
+Cette version integre exclusivement le POINT 3 valide :
+signalement fiable des echecs d'exportation et d'importation des
+archives Mathom-House.
 
-La sauvegarde complete est desormais creee et verifiee dans un
-emplacement temporaire avant le remplacement atomique via QSaveFile.
-Une erreur de creation, d'ecriture ou de validation ne supprime plus
-la sauvegarde precedente. Le dialogue de sauvegarde ne supprime plus
-la destination en cas d'echec. Messages d'erreur clarifies.
-La meme creation securisee est utilisee par les sauvegardes automatiques.
+- controles stricts des ouvertures, lectures et ecritures de fichiers ;
+- detection des blocs d'archives incomplets ou tronques ;
+- detection des echecs d'extraction et nettoyage des fichiers temporaires ;
+- controle des ajouts KTar, de la fermeture et de l'ecriture finale ;
+- publication atomique pour conserver l'archive precedente en cas d'echec ;
+- messages d'erreur traduits en francais ;
+- evenement EXPORT_MATHOM_OK uniquement en cas de succes,
+  EXPORT_MATHOM_FAILED sinon ;
+- tests de regression des erreurs, des fichiers inexistants et des
+  destinations protegees, en plus des tests d'integrite precedents.
 
-Tests ajoutes : echec de snapshot, echec reel d'ecriture d'archive,
-echec de promotion, destination inaccessible, remplacement valide
-avec restauration des donnees.
+Les formats .mathom et .baskets restent compatibles.
+Aucun changement des regles de renommage des pieces jointes (point 4),
+ni des reprises temporisees de sauvegarde (point 5).
+Les corrections des points 1 et 2 restent presentes via la stable 5.0.3.
+La DEV 5.0.2-dev1 invalidee n'est PAS incluse.
 
-La base est Mathom Notes 5.0.2 stable : le point 1 reste inclus.
-Les points 3, 4 et 5 de l'audit sont hors perimetre.
-La DEV 5.0.2-dev1 invalidee ne fait pas partie de cette version.
-
-Validation DEV 5.0.3-dev1 : compilation, publication, telechargement,
-installation et 12/12 suites de tests reussies en source et sur le
-paquet publie. Validation manuelle utilisateur : creation, remplacement,
-echec attendu et conservation integrale de la sauvegarde precedente
-(empreinte SHA-256 OK).
+Validation DEV 5.0.4-dev3 :
+compilation, publication, retelechargement, controle SHA-256,
+installation et 12/12 suites de tests reussies sur les sources
+et sur le paquet DEV publie.
+Validation interactive sur l'ordinateur utilisateur :
+export normal et signature correcte, erreur volontaire d'export
+correctement detectee, archive preexistante conservee SHA-256 OK,
+import valide dans un profil de test isole et refus d'importation
+d'une archive corrompue sans modification des donnees.
 
 Paquet Debian natif Ubuntu 26.04 amd64.
 Commit stable : $source_commit
 Infrastructure CI : $GITHUB_SHA
-Resultats de construction et validation :
+Resultats de construction et validation du paquet stable :
 $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
 
 EOF
