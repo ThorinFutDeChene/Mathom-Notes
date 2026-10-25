@@ -1,0 +1,160 @@
+name: Native DEV 5.0.4 point 3 archive errors build and verification
+
+on:
+  push:
+    branches:
+      - ci/5.0.4-point3-erreurs-archives
+
+# Publishing uses the ordinary repository token. No personal token is required
+# or searched for. Repository policy can still refuse workflow/release changes.
+permissions:
+  contents: write
+
+concurrency:
+  group: native-point3-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  # Infrastructure stays on the CI branch. Set this to the exact reviewed commit
+  # on the isolated point-3 branch, never on the rejected five-fix DEV branch.
+  # An empty value deliberately stops before building or publishing anything.
+  MATHOM_SOURCE_COMMIT: 'fa38f466fe92db5d1e411f06c907f4143bc1ab91'
+  # Publication is enabled for this reviewed candidate. Compilation, regression
+  # tests and native package checks must all succeed before the release step.
+  PUBLISH_POINT3_DEV: 'true'
+  DEBIAN_FRONTEND: noninteractive
+  CMAKE_BUILD_PARALLEL_LEVEL: '2'
+  CTEST_PARALLEL_LEVEL: '1'
+
+jobs:
+  native-point3:
+    if: github.repository == 'ThorinFutDeChene/Mathom-Notes' && github.ref == 'refs/heads/ci/5.0.4-point3-erreurs-archives'
+    runs-on: ubuntu-24.04
+    container: ubuntu:26.04
+    timeout-minutes: 60
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - name: Bootstrap the Ubuntu container
+        run: |
+          apt-get update -o Acquire::Retries=3
+          apt-get install -y --no-install-recommends ca-certificates git
+
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Select the exact application commit
+        id: source
+        env:
+          REQUESTED_SOURCE_COMMIT: ${{ env.MATHOM_SOURCE_COMMIT }}
+        run: |
+          if [[ ! "$REQUESTED_SOURCE_COMMIT" =~ ^[0-9a-f]{40}$ ]]; then
+            echo 'Set MATHOM_SOURCE_COMMIT to the reviewed 40-character application commit SHA.' >&2
+            exit 1
+          fi
+          printf 'commit=%s\n' "$REQUESTED_SOURCE_COMMIT" >> "$GITHUB_OUTPUT"
+
+      - name: Check out application sources separately from CI infrastructure
+        uses: actions/checkout@v7.0.1
+        with:
+          ref: ${{ steps.source.outputs.commit }}
+          path: source
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Install native build and test dependencies
+        run: bash scripts/ci/install-native-dependencies.sh
+
+      - name: Validate point-3 DEV publication script
+        run: |
+          bash -n scripts/ci/publish-point3-dev.sh
+          test "$(grep -Fxc -- 'EOF' scripts/ci/publish-point3-dev.sh)" = 1
+
+      - name: Check the source and configure tests
+        env:
+          APPLICATION_COMMIT: ${{ steps.source.outputs.commit }}
+        run: |
+          test "$(git -C source rev-parse HEAD)" = "$APPLICATION_COMMIT"
+          git -C source merge-base --is-ancestor "$APPLICATION_COMMIT" origin/fix/5.0.3-point2-sauvegardes
+          test "$(git -C source rev-parse origin/main)" = "1b377a316a65848b0cf4403d8c3f451055c77fb5"
+          git -C source diff --exit-code v5.0.3 "$APPLICATION_COMMIT" -- .github/workflows
+          # Whitelist only the archive error reporting and its new negative tests, and the DEV version declaration.
+          changed_paths="$(git -C source diff --name-only v5.0.3 "$APPLICATION_COMMIT")"
+          expected_paths="$(printf 'VERSION\nsrc/archive.cpp\nsrc/archive.h\nsrc/tests/archivetest.cpp')"
+          if [[ "$changed_paths" != "$expected_paths" ]]; then
+            printf 'Unexpected application files in point-3 DEV:\n%s\n' "$changed_paths" >&2
+            exit 1
+          fi
+          test "$(tr -d '[:space:]' < source/VERSION)" = '5.0.4-dev1'
+          git -C source diff --check
+          cmake -S source -B source/build-tests -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_INSTALL_PREFIX=/usr \
+            -DBUILD_TESTING=ON \
+            -DBUILD_DEVTOOLS=OFF \
+            -DENABLE_GPG=OFF \
+            -DENABLE_GIT=ON \
+            -DCMAKE_DISABLE_FIND_PACKAGE_KF6DocTools=TRUE
+
+      - name: Compile and run regression tests
+        run: |
+          cmake --build source/build-tests
+          bash scripts/ci/test-native.sh source/build-tests source source
+
+      - name: Build the official native Debian package
+        id: package
+        run: |
+          bash source/scripts/build-mathom-native-deb.sh
+          version="$(tr -d '[:space:]' < source/VERSION)"
+          if [[ "$version" =~ ^([0-9]+\.[0-9]+\.[0-9]+)-dev([0-9]+)$ ]]; then
+            deb_version="${BASH_REMATCH[1]}-0dev${BASH_REMATCH[2]}"
+          elif [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            deb_version="$version-1"
+          else
+            echo 'Invalid VERSION' >&2
+            exit 1
+          fi
+          package="mathom_${deb_version}_$(dpkg --print-architecture).deb"
+          (cd source/packaging && sha256sum "$package" > "$package.sha256")
+          printf 'version=%s\npackage=%s\n' "$version" "$package" >> "$GITHUB_OUTPUT"
+
+      - name: Publish new immutable point-3 DEV
+        id: publish
+        if: env.PUBLISH_POINT3_DEV == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APPLICATION_COMMIT: ${{ steps.source.outputs.commit }}
+        run: PUBLISH_POINT3_DEV=true bash scripts/ci/publish-point3-dev.sh source "source/packaging/${{ steps.package.outputs.package }}" "$APPLICATION_COMMIT"
+
+      - name: Download, install and test the published point-3 DEV
+        if: steps.publish.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          MATHOM_POINT3_VERSION: ${{ steps.package.outputs.version }}
+          MATHOM_DEB_FILENAME: ${{ steps.package.outputs.package }}
+        run: |
+          download="$GITHUB_WORKSPACE/packaging/published-download"
+          mkdir -p "$download"
+          gh release download "v$MATHOM_POINT3_VERSION" --repo "$GITHUB_REPOSITORY" \
+            --pattern "$MATHOM_DEB_FILENAME" --pattern "$MATHOM_DEB_FILENAME.sha256" --dir "$download"
+          (cd "$download" && sha256sum --check "$MATHOM_DEB_FILENAME.sha256")
+          cmp "source/packaging/$MATHOM_DEB_FILENAME" "$download/$MATHOM_DEB_FILENAME"
+          apt-get install -y --no-install-recommends "$download/$MATHOM_DEB_FILENAME"
+          bash scripts/ci/test-native.sh source/build-tests published source
+
+      - name: Retain the package and verification results
+        if: always()
+        uses: actions/upload-artifact@v7.0.2
+        with:
+          name: native-point3-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: warn
+          retention-days: 14
+          path: |
+            source/packaging/mathom_*.deb
+            source/packaging/mathom_*.deb.sha256
+            packaging/ci-results/
+            source/packaging/dpkg-shlibdeps-native.log
+            source/build-tests/Testing/Temporary/LastTest.log
