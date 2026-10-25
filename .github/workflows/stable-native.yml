@@ -68,6 +68,12 @@ jobs:
       - name: Install native build and test dependencies
         run: bash scripts/ci/install-native-dependencies.sh
 
+      - name: Validate stable release publication script
+        run: |
+          bash -n scripts/ci/publish-stable.sh
+          grep -Fxq -- 'EOF' scripts/ci/publish-stable.sh
+          test "$(grep -Fxc -- 'EOF' scripts/ci/publish-stable.sh)" = 1
+
       - name: Check the source and configure tests
         env:
           APPLICATION_COMMIT: ${{ steps.source.outputs.commit }}

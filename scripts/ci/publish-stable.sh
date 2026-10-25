@@ -90,7 +90,8 @@ Infrastructure CI : $GITHUB_SHA
 Resultats de construction et validation :
 $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
 
-EOF# Ordinary GitHub permissions apply. If repository policy or workflow-write
+EOF
+# Ordinary GitHub permissions apply. If repository policy or workflow-write
 # restrictions refuse either call, stop and report the error. Do not retry with
 # alternate credentials, rewrite the target commit, or remove the reserved tag.
 gh api --method POST "repos/$GITHUB_REPOSITORY/git/refs" \
