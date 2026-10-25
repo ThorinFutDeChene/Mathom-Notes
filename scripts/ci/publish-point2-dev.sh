@@ -33,7 +33,7 @@ git merge-base --is-ancestor "$source_commit" origin/fix/5.0.3-point2-sauvegarde
 # Reject accidental mixing of another change into this single-point DEV.
 test "$(git rev-parse origin/main)" = "7f1ccbecde88171004be5e67953ed18f7388faef"
 changed_paths="$(git diff --name-only v5.0.2 "$source_commit")"
-expected_paths="$(printf 'VERSION\nsrc/backup.cpp\nsrc/tests/CMakeLists.txt\nsrc/tests/backuptest.cpp')"
+expected_paths="$(printf 'VERSION\nsrc/backup.cpp\nsrc/backup.h\nsrc/tests/CMakeLists.txt\nsrc/tests/backuptest.cpp')"
 if [[ "$changed_paths" != "$expected_paths" ]]; then
     printf 'Unexpected point-2 source files:\n%s\n' "$changed_paths" >&2
     exit 1
