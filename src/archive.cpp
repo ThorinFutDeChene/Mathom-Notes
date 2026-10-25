@@ -163,7 +163,13 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
 
     // Copy the baskets data into the archive:
     QStringList backgrounds;
-    Archive::saveBasketToArchive(basket, withSubBaskets, &tar, backgrounds, tempFolder, &dialog);
+    if (!Archive::saveBasketToArchive(basket, withSubBaskets, &tar, backgrounds, tempFolder, &dialog)) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to add a Mathom-House to the archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
 
     // Create a Small baskets.xml Document:
     QString data;
@@ -301,13 +307,14 @@ void Archive::saveAll(const QString &destination)
         BasketListViewItem *item = Global::bnpView->topLevelItem(i);
         BasketScene *basket = item->basket();
 
-        saveBasketToArchive(
-            basket,
-            true,
-            &tar,
-            backgrounds,
-            tempFolder,
-            &dialog);
+        if (!saveBasketToArchive(
+                basket, true, &tar, backgrounds, tempFolder, &dialog)) {
+            tar.close();
+            KMessageBox::error(nullptr, i18n("Failed to add a Mathom-House to the archive."),
+                               i18n("Mathom-House Archive Error"));
+            Tools::deleteRecursively(tempFolder);
+            return;
+        }
 
         listUsedTags(basket, true, tags);
     }
@@ -421,7 +428,7 @@ void Archive::saveAll(const QString &destination)
 }
 
 
-void Archive::saveBasketToArchive(BasketScene *basket,
+bool Archive::saveBasketToArchive(BasketScene *basket,
                                   bool recursive,
                                   KTar *tar,
                                   QStringList &backgrounds,
@@ -436,7 +443,8 @@ void Archive::saveBasketToArchive(BasketScene *basket,
 
     QDir dir;
     // Save basket data:
-    tar->addLocalDirectory(basket->fullPath(), QStringLiteral("baskets/") + basket->folderName());
+    if (!tar->addLocalDirectory(basket->fullPath(), QStringLiteral("baskets/") + basket->folderName()))
+        return false;
     // Save basket icon:
     QString tempIconFile = tempFolder + QStringLiteral("icon.png");
     if (!basket->icon().isEmpty() && basket->icon() != QStringLiteral("basket")) {
@@ -444,14 +452,17 @@ void Archive::saveBasketToArchive(BasketScene *basket,
             KIconLoader::global()
                 ->loadIcon(basket->icon(), KIconLoader::Small, 16, KIconLoader::DefaultState, QStringList(), /*path_store=*/nullptr, /*canReturnNull=*/true);
         if (!icon.isNull()) {
-            icon.save(tempIconFile, "PNG");
+            if (!icon.save(tempIconFile, "PNG"))
+                return false;
             QString iconFileName = basket->icon().replace(QLatin1Char('/'), QLatin1Char('_'));
-            tar->addLocalFile(tempIconFile, QStringLiteral("basket-icons/") + iconFileName);
+            if (!tar->addLocalFile(tempIconFile, QStringLiteral("basket-icons/") + iconFileName))
+                return false;
         }
     }
     // Export one background image only once for the whole archive.
     // Page background images are stored in the .basket file by name, so
     // every referenced image must also be present in the archive.
+    bool backgroundExportOk = true;
     const auto archiveBackgroundImage =
         [&](const QString &imageName) {
             if (imageName.isEmpty()
@@ -464,10 +475,10 @@ void Archive::saveBasketToArchive(BasketScene *basket,
                     ->pathForImageName(imageName);
 
             if (!backgroundPath.isEmpty()) {
-                tar->addLocalFile(
-                    backgroundPath,
-                    QStringLiteral("backgrounds/")
-                        + imageName);
+                if (!tar->addLocalFile(
+                        backgroundPath,
+                        QStringLiteral("backgrounds/") + imageName))
+                    backgroundExportOk = false;
 
                 const QString previewPath =
                     Global::backgroundManager
@@ -475,11 +486,10 @@ void Archive::saveBasketToArchive(BasketScene *basket,
                             imageName);
 
                 if (!previewPath.isEmpty()) {
-                    tar->addLocalFile(
-                        previewPath,
-                        QStringLiteral(
-                            "backgrounds/previews/")
-                            + imageName);
+                    if (!tar->addLocalFile(
+                            previewPath,
+                            QStringLiteral("backgrounds/previews/") + imageName))
+                        backgroundExportOk = false;
                 }
 
                 const QString configPath =
@@ -487,11 +497,11 @@ void Archive::saveBasketToArchive(BasketScene *basket,
                     + QStringLiteral(".config");
 
                 if (QFileInfo::exists(configPath)) {
-                    tar->addLocalFile(
-                        configPath,
-                        QStringLiteral("backgrounds/")
-                            + imageName
-                            + QStringLiteral(".config"));
+                    if (!tar->addLocalFile(
+                            configPath,
+                            QStringLiteral("backgrounds/") + imageName
+                                + QStringLiteral(".config")))
+                        backgroundExportOk = false;
                 }
             }
 
@@ -510,6 +520,9 @@ void Archive::saveBasketToArchive(BasketScene *basket,
             page.backgroundImage);
     }
 
+    if (!backgroundExportOk)
+        return false;
+
     progress->setValue(progress->value() + 1); // Basket exportation finished
     qCDebug(BASKET_LOG) << basket->basketName() << " finished";
 
@@ -517,9 +530,12 @@ void Archive::saveBasketToArchive(BasketScene *basket,
     BasketListViewItem *item = Global::bnpView->listViewItemForBasket(basket);
     if (recursive) {
         for (int i = 0; i < item->childCount(); i++) {
-            saveBasketToArchive(((BasketListViewItem *)item->child(i))->basket(), recursive, tar, backgrounds, tempFolder, progress);
+            if (!saveBasketToArchive(((BasketListViewItem *)item->child(i))->basket(),
+                                     recursive, tar, backgrounds, tempFolder, progress))
+                return false;
         }
     }
+    return true;
 }
 
 void Archive::listUsedTags(BasketScene *basket, bool recursive, QList<Tag *> &list)

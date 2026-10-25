@@ -74,7 +74,7 @@ public:
 
 private:
     // Convenient Methods for Saving:
-    static void
+    static bool
     saveBasketToArchive(BasketScene *basket, bool recursive, KTar *tar, QStringList &backgrounds, const QString &tempFolder, QProgressDialog *progress);
     static void listUsedTags(BasketScene *basket, bool recursive, QList<Tag *> &list);
     // Convenient Methods for Loading:
