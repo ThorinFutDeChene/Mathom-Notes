@@ -5,6 +5,7 @@
 
 #include "archive.h"
 
+#include <QByteArray>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -18,6 +19,7 @@
 #include <QPixmap>
 #include <QProgressBar>
 #include <QProgressDialog>
+#include <QSaveFile>
 #include <QStandardPaths>
 #include <QString>
 #include <QStringList>
@@ -51,7 +53,75 @@
 
 #include <basket_debug.h>
 
-void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &destination)
+namespace {
+
+// Keep the existing .mathom envelope byte-for-byte compatible with the
+// historic exporter, while rejecting short reads, failed writes and commits.
+// QSaveFile does not destroy an existing archive when a replacement fails.
+bool writeMathomEnvelope(const QString &tarPath,
+                         const QString &previewPath,
+                         const QString &destination,
+                         bool allMathomHouses)
+{
+    QFile compressed(tarPath);
+    if (!compressed.open(QIODevice::ReadOnly))
+        return false;
+
+    QFile preview(previewPath);
+    qint64 previewSize = 0;
+    if (!previewPath.isEmpty()) {
+        if (!preview.open(QIODevice::ReadOnly))
+            return false;
+        previewSize = preview.size();
+        if (previewSize < 0)
+            return false;
+    }
+
+    const qint64 compressedSize = compressed.size();
+    if (compressedSize <= 0 || destination.isEmpty())
+        return false;
+
+    QSaveFile output(destination);
+    if (!output.open(QIODevice::WriteOnly))
+        return false;
+
+    const auto writeBytes = [&](const QByteArray &bytes) {
+        return output.write(bytes) == bytes.size();
+    };
+    const auto copyBytes = [&](QFile &input, qint64 expectedSize) {
+        std::array<char, 65536> buffer{};
+        qint64 written = 0;
+        while (written < expectedSize) {
+            const qint64 count = input.read(
+                buffer.data(), std::min<qint64>(buffer.size(), expectedSize - written));
+            if (count <= 0 || output.write(buffer.data(), count) != count)
+                return false;
+            written += count;
+        }
+        return input.error() == QFileDevice::NoError && written == expectedSize;
+    };
+
+    const QByteArray header =
+        QByteArrayLiteral("MathomNotes:archive\nversion:1.0\n")
+        + (allMathomHouses ? QByteArrayLiteral("scope:all\n") : QByteArray())
+        + QByteArrayLiteral("preview*:") + QByteArray::number(previewSize) + '\n';
+    const QByteArray tarHeader =
+        QByteArrayLiteral("archive*:") + QByteArray::number(compressedSize) + '\n';
+
+    if (!writeBytes(header)
+        || (previewSize > 0 && !copyBytes(preview, previewSize))
+        || !writeBytes(tarHeader)
+        || !copyBytes(compressed, compressedSize)) {
+        output.cancelWriting();
+        return false;
+    }
+
+    return output.commit();
+}
+
+} // namespace
+
+bool Archive::save(BasketScene *basket, bool withSubBaskets, const QString &destination)
 {
     QDir dir;
     QProgressDialog dialog;
@@ -70,7 +140,11 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     // never leave stale files that affect the next archive.
     QString tempFolder = Global::savesFolder() + QStringLiteral("temp-archive/");
     Tools::deleteRecursively(tempFolder);
-    dir.mkpath(tempFolder);
+    if (!dir.mkpath(tempFolder)) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        return false;
+    }
 
     // Create the temporary archive file:
     QString tempDestination = tempFolder + QStringLiteral("temp-archive.tar.gz");
@@ -82,10 +156,16 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
             i18n("Mathom-House Archive Error"));
         QFile::remove(tempDestination);
         dir.rmdir(tempFolder);
-        return;
+        return false;
     }
 
-    tar.writeDir(QStringLiteral("baskets"), QString(), QString());
+    if (!tar.writeDir(QStringLiteral("baskets"), QString(), QString())) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
 
     dialog.setValue(dialog.value() + 1); // Preparation finished
 
@@ -93,7 +173,13 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
 
     // Copy the baskets data into the archive:
     QStringList backgrounds;
-    Archive::saveBasketToArchive(basket, withSubBaskets, &tar, backgrounds, tempFolder, &dialog);
+    if (!Archive::saveBasketToArchive(basket, withSubBaskets, &tar, backgrounds, tempFolder, &dialog)) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to add a Mathom-House to the archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
 
     // Create a Small baskets.xml Document:
     QString data;
@@ -102,15 +188,28 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     Global::bnpView->saveSubHierarchy(Global::bnpView->listViewItemForBasket(basket), stream, withSubBaskets);
     stream.writeEndElement();
     stream.writeEndDocument();
-    FileStorage::safelySaveToFile(tempFolder + QStringLiteral("baskets.xml"), data);
-    tar.addLocalFile(tempFolder + QStringLiteral("baskets.xml"), QStringLiteral("baskets/baskets.xml"));
+    if (!FileStorage::safelySaveToFile(tempFolder + QStringLiteral("baskets.xml"), data)
+        || !tar.addLocalFile(tempFolder + QStringLiteral("baskets.xml"),
+                             QStringLiteral("baskets/baskets.xml"))) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
     dir.remove(tempFolder + QStringLiteral("baskets.xml"));
 
     // Save a Small tags.xml Document:
     QList<Tag *> tags;
     listUsedTags(basket, withSubBaskets, tags);
     Tag::saveTagsTo(tags, tempFolder + QStringLiteral("tags.xml"));
-    tar.addLocalFile(tempFolder + QStringLiteral("tags.xml"), QStringLiteral("tags.xml"));
+    if (!tar.addLocalFile(tempFolder + QStringLiteral("tags.xml"), QStringLiteral("tags.xml"))) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
     dir.remove(tempFolder + QStringLiteral("tags.xml"));
 
     // Save Tag Emblems (in case they are loaded on a computer that do not have those icons):
@@ -121,16 +220,27 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
             State *state = (*it2);
             QPixmap icon = KIconLoader::global()->loadIcon(state->emblem(), KIconLoader::Small, 16, KIconLoader::DefaultState, QStringList(), nullptr, true);
             if (!icon.isNull()) {
-                icon.save(tempIconFile, "PNG");
-                QString iconFileName = state->emblem().replace(QLatin1Char('/'), QLatin1Char('_'));
-                tar.addLocalFile(tempIconFile, QStringLiteral("tag-emblems/") + iconFileName);
+                const QString iconFileName = state->emblem().replace(QLatin1Char('/'), QLatin1Char('_'));
+                if (!icon.save(tempIconFile, "PNG")
+                    || !tar.addLocalFile(tempIconFile, QStringLiteral("tag-emblems/") + iconFileName)) {
+                    tar.close();
+                    KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+                    Tools::deleteRecursively(tempFolder);
+                    return false;
+                }
             }
         }
     }
     dir.remove(tempIconFile);
 
-    // Finish Tar.Gz Exportation:
-    tar.close();
+    // A failed KTar close can mean an incomplete gzip stream.
+    if (!tar.close()) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
 
     // Computing the File Preview:
     BasketScene *previewBasket = basket; // FIXME: Use the first non-empty basket!
@@ -156,44 +266,25 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     QImage previewImage = previewPixmap.toImage();
     const int PREVIEW_SIZE = 256;
     previewImage = previewImage.scaled(PREVIEW_SIZE, PREVIEW_SIZE, Qt::KeepAspectRatio);
-    previewImage.save(tempFolder + QStringLiteral("preview.png"), "PNG");
+    if (!previewImage.save(tempFolder + QStringLiteral("preview.png"), "PNG")) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
 
-    // Finally Save to the Real Destination file:
-    QFile file(destination);
-    if (file.open(QIODevice::WriteOnly)) {
-        ulong previewSize = QFile(tempFolder + QStringLiteral("preview.png")).size();
-        ulong archiveSize = QFile(tempDestination).size();
-        QTextStream stream(&file);
-        // stream.setEncoding(QStringConverter::Latin1);
-        stream << "MathomNotes:archive\n"
-               << "version:1.0\n"
-               //             << "read-compatible:0.6.1\n"
-               //             << "write-compatible:0.6.1\n"
-               << "preview*:" << previewSize << "\n";
-
-        stream.flush();
-        // Copy the Preview File:
-        const unsigned long BUFFER_SIZE = 1024;
-        char *buffer = new char[BUFFER_SIZE];
-        long sizeRead;
-        QFile previewFile(tempFolder + QStringLiteral("preview.png"));
-        if (previewFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead = previewFile.read(buffer, BUFFER_SIZE)) > 0)
-                file.write(buffer, sizeRead);
-        }
-        stream << "archive*:" << archiveSize << "\n";
-        stream.flush();
-
-        // Copy the Archive File:
-        QFile archiveFile(tempDestination);
-        if (archiveFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead = archiveFile.read(buffer, BUFFER_SIZE)) > 0)
-                file.write(buffer, sizeRead);
-        }
-        // Clean Up:
-        delete[] buffer;
-        buffer = nullptr;
-        file.close();
+    // Write exactly the historic envelope, but only publish it when every
+    // read/write operation and the atomic commit have succeeded.
+    const bool success = writeMathomEnvelope(
+        tempDestination,
+        tempFolder + QStringLiteral("preview.png"),
+        destination,
+        false);
+    if (!success) {
+        KMessageBox::error(
+            nullptr,
+            i18n("Failed to save the Mathom-House archive to %1.", destination),
+            i18n("Mathom-House Archive Error"));
     }
 
     dialog.setValue(dialog.value() + 1); // Finishing finished
@@ -203,13 +294,14 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     dir.remove(tempFolder + QStringLiteral("preview.png"));
     dir.remove(tempDestination);
     dir.rmdir(tempFolder);
+    return success;
 }
 
 
-void Archive::saveAll(const QString &destination)
+bool Archive::saveAll(const QString &destination)
 {
     if (!Global::bnpView || Global::bnpView->topLevelItemCount() <= 0)
-        return;
+        return false;
 
     QDir dir;
     QProgressDialog dialog;
@@ -232,7 +324,11 @@ void Archive::saveAll(const QString &destination)
         Global::savesFolder() + QStringLiteral("temp-archive/");
 
     Tools::deleteRecursively(tempFolder);
-    dir.mkpath(tempFolder);
+    if (!dir.mkpath(tempFolder)) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        return false;
+    }
 
     const QString tempDestination =
         tempFolder + QStringLiteral("temp-archive.tar.gz");
@@ -244,10 +340,16 @@ void Archive::saveAll(const QString &destination)
             i18n("Failed to create the temporary Mathom archive."),
             i18n("Mathom Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
 
-    tar.writeDir(QStringLiteral("baskets"), QString(), QString());
+    if (!tar.writeDir(QStringLiteral("baskets"), QString(), QString())) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
     dialog.setValue(dialog.value() + 1);
 
     QStringList backgrounds;
@@ -257,13 +359,14 @@ void Archive::saveAll(const QString &destination)
         BasketListViewItem *item = Global::bnpView->topLevelItem(i);
         BasketScene *basket = item->basket();
 
-        saveBasketToArchive(
-            basket,
-            true,
-            &tar,
-            backgrounds,
-            tempFolder,
-            &dialog);
+        if (!saveBasketToArchive(
+                basket, true, &tar, backgrounds, tempFolder, &dialog)) {
+            tar.close();
+            KMessageBox::error(nullptr, i18n("Failed to add a Mathom-House to the archive."),
+                               i18n("Mathom-House Archive Error"));
+            Tools::deleteRecursively(tempFolder);
+            return false;
+        }
 
         listUsedTags(basket, true, tags);
     }
@@ -285,15 +388,27 @@ void Archive::saveAll(const QString &destination)
     const QString treePath =
         tempFolder + QStringLiteral("baskets.xml");
 
-    FileStorage::safelySaveToFile(treePath, data);
-    tar.addLocalFile(treePath, QStringLiteral("baskets/baskets.xml"));
+    if (!FileStorage::safelySaveToFile(treePath, data)
+        || !tar.addLocalFile(treePath, QStringLiteral("baskets/baskets.xml"))) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
     dir.remove(treePath);
 
     const QString tagsPath =
         tempFolder + QStringLiteral("tags.xml");
 
     Tag::saveTagsTo(tags, tagsPath);
-    tar.addLocalFile(tagsPath, QStringLiteral("tags.xml"));
+    if (!tar.addLocalFile(tagsPath, QStringLiteral("tags.xml"))) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
     dir.remove(tagsPath);
 
     const QString tempIconFile =
@@ -312,22 +427,28 @@ void Archive::saveAll(const QString &destination)
                     true);
 
             if (!icon.isNull()) {
-                icon.save(tempIconFile, "PNG");
-                QString iconFileName =
-                    state->emblem().replace(
-                        QLatin1Char('/'),
-                        QLatin1Char('_'));
-
-                tar.addLocalFile(
-                    tempIconFile,
-                    QStringLiteral("tag-emblems/")
-                        + iconFileName);
+                const QString iconFileName =
+                    state->emblem().replace(QLatin1Char('/'), QLatin1Char('_'));
+                if (!icon.save(tempIconFile, "PNG")
+                    || !tar.addLocalFile(
+                        tempIconFile, QStringLiteral("tag-emblems/") + iconFileName)) {
+                    tar.close();
+                    KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+                    Tools::deleteRecursively(tempFolder);
+                    return false;
+                }
             }
         }
     }
 
     dir.remove(tempIconFile);
-    tar.close();
+    if (!tar.close()) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return false;
+    }
 
     BasketScene *previewBasket =
         Global::bnpView->currentBasket();
@@ -360,63 +481,35 @@ void Archive::saveAll(const QString &destination)
         previewBasket->doHoverEffects();
         painter.end();
 
-        previewPixmap.toImage()
-            .scaled(256, 256, Qt::KeepAspectRatio)
-            .save(previewPath, "PNG");
+        if (!previewPixmap.toImage()
+                 .scaled(256, 256, Qt::KeepAspectRatio)
+                 .save(previewPath, "PNG")) {
+            KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+            Tools::deleteRecursively(tempFolder);
+            return false;
+        }
     }
 
-    QFile file(destination);
-    if (file.open(QIODevice::WriteOnly)) {
-        const ulong previewSize =
-            QFile(previewPath).size();
-
-        const ulong archiveSize =
-            QFile(tempDestination).size();
-
-        QTextStream output(&file);
-        output << "MathomNotes:archive\n"
-               << "version:1.0\n"
-               << "scope:all\n"
-               << "preview*:" << previewSize << "\n";
-        output.flush();
-
-        const unsigned long bufferSize = 1024;
-        char *buffer = new char[bufferSize];
-        long sizeRead;
-
-        QFile previewFile(previewPath);
-        if (previewFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead =
-                        previewFile.read(
-                            buffer,
-                            bufferSize)) > 0) {
-                file.write(buffer, sizeRead);
-            }
-        }
-
-        output << "archive*:" << archiveSize << "\n";
-        output.flush();
-
-        QFile archiveFile(tempDestination);
-        if (archiveFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead =
-                        archiveFile.read(
-                            buffer,
-                            bufferSize)) > 0) {
-                file.write(buffer, sizeRead);
-            }
-        }
-
-        delete[] buffer;
-        file.close();
+    // The selected basket may be null even though houses exist: an empty
+    // preview is valid and must not block exporting every Mathom-House.
+    if (!QFileInfo::exists(previewPath))
+        previewPath.clear();
+    const bool success = writeMathomEnvelope(tempDestination, previewPath, destination, true);
+    if (!success) {
+        KMessageBox::error(
+            nullptr,
+            i18n("Failed to save the Mathom-House archive to %1.", destination),
+            i18n("Mathom-House Archive Error"));
     }
 
     dialog.setValue(dialog.maximum());
     Tools::deleteRecursively(tempFolder);
+    return success;
 }
 
 
-void Archive::saveBasketToArchive(BasketScene *basket,
+bool Archive::saveBasketToArchive(BasketScene *basket,
                                   bool recursive,
                                   KTar *tar,
                                   QStringList &backgrounds,
@@ -431,7 +524,8 @@ void Archive::saveBasketToArchive(BasketScene *basket,
 
     QDir dir;
     // Save basket data:
-    tar->addLocalDirectory(basket->fullPath(), QStringLiteral("baskets/") + basket->folderName());
+    if (!tar->addLocalDirectory(basket->fullPath(), QStringLiteral("baskets/") + basket->folderName()))
+        return false;
     // Save basket icon:
     QString tempIconFile = tempFolder + QStringLiteral("icon.png");
     if (!basket->icon().isEmpty() && basket->icon() != QStringLiteral("basket")) {
@@ -439,14 +533,17 @@ void Archive::saveBasketToArchive(BasketScene *basket,
             KIconLoader::global()
                 ->loadIcon(basket->icon(), KIconLoader::Small, 16, KIconLoader::DefaultState, QStringList(), /*path_store=*/nullptr, /*canReturnNull=*/true);
         if (!icon.isNull()) {
-            icon.save(tempIconFile, "PNG");
+            if (!icon.save(tempIconFile, "PNG"))
+                return false;
             QString iconFileName = basket->icon().replace(QLatin1Char('/'), QLatin1Char('_'));
-            tar->addLocalFile(tempIconFile, QStringLiteral("basket-icons/") + iconFileName);
+            if (!tar->addLocalFile(tempIconFile, QStringLiteral("basket-icons/") + iconFileName))
+                return false;
         }
     }
     // Export one background image only once for the whole archive.
     // Page background images are stored in the .basket file by name, so
     // every referenced image must also be present in the archive.
+    bool backgroundExportOk = true;
     const auto archiveBackgroundImage =
         [&](const QString &imageName) {
             if (imageName.isEmpty()
@@ -459,10 +556,10 @@ void Archive::saveBasketToArchive(BasketScene *basket,
                     ->pathForImageName(imageName);
 
             if (!backgroundPath.isEmpty()) {
-                tar->addLocalFile(
-                    backgroundPath,
-                    QStringLiteral("backgrounds/")
-                        + imageName);
+                if (!tar->addLocalFile(
+                        backgroundPath,
+                        QStringLiteral("backgrounds/") + imageName))
+                    backgroundExportOk = false;
 
                 const QString previewPath =
                     Global::backgroundManager
@@ -470,11 +567,10 @@ void Archive::saveBasketToArchive(BasketScene *basket,
                             imageName);
 
                 if (!previewPath.isEmpty()) {
-                    tar->addLocalFile(
-                        previewPath,
-                        QStringLiteral(
-                            "backgrounds/previews/")
-                            + imageName);
+                    if (!tar->addLocalFile(
+                            previewPath,
+                            QStringLiteral("backgrounds/previews/") + imageName))
+                        backgroundExportOk = false;
                 }
 
                 const QString configPath =
@@ -482,11 +578,11 @@ void Archive::saveBasketToArchive(BasketScene *basket,
                     + QStringLiteral(".config");
 
                 if (QFileInfo::exists(configPath)) {
-                    tar->addLocalFile(
-                        configPath,
-                        QStringLiteral("backgrounds/")
-                            + imageName
-                            + QStringLiteral(".config"));
+                    if (!tar->addLocalFile(
+                            configPath,
+                            QStringLiteral("backgrounds/") + imageName
+                                + QStringLiteral(".config")))
+                        backgroundExportOk = false;
                 }
             }
 
@@ -505,6 +601,9 @@ void Archive::saveBasketToArchive(BasketScene *basket,
             page.backgroundImage);
     }
 
+    if (!backgroundExportOk)
+        return false;
+
     progress->setValue(progress->value() + 1); // Basket exportation finished
     qCDebug(BASKET_LOG) << basket->basketName() << " finished";
 
@@ -512,9 +611,12 @@ void Archive::saveBasketToArchive(BasketScene *basket,
     BasketListViewItem *item = Global::bnpView->listViewItemForBasket(basket);
     if (recursive) {
         for (int i = 0; i < item->childCount(); i++) {
-            saveBasketToArchive(((BasketListViewItem *)item->child(i))->basket(), recursive, tar, backgrounds, tempFolder, progress);
+            if (!saveBasketToArchive(((BasketListViewItem *)item->child(i))->basket(),
+                                     recursive, tar, backgrounds, tempFolder, progress))
+                return false;
         }
     }
+    return true;
 }
 
 void Archive::listUsedTags(BasketScene *basket, bool recursive, QList<Tag *> &list)
@@ -587,280 +689,205 @@ void Archive::open(const QString &path)
 
 Archive::IOErrorCode Archive::extractArchive(const QString &path, const QString &destination, const bool protectDestination)
 {
-    IOErrorCode retCode = IOErrorCode::NoError;
-
-    QString l_destination;
-
-    // derive name of the extraction directory
+    QString extractionPath;
     if (destination.isEmpty()) {
-        // have the decoded baskets the same name as the archive
-        l_destination = QFileInfo(path).path() + QDir::separator() + QFileInfo(path).baseName() + QStringLiteral("-source");
+        extractionPath = QFileInfo(path).path() + QDir::separator()
+            + QFileInfo(path).baseName() + QStringLiteral("-source");
     } else {
-        l_destination = QDir::cleanPath(destination);
+        extractionPath = QDir::cleanPath(destination);
     }
 
-    QDir dir(l_destination);
-
-    // do nothing when writeProtected
-    if (dir.exists() && protectDestination) {
-        return IOErrorCode::DestinationExists;
-    }
-
-    // Create directory and delete its content in case it was not empty
-    if (!dir.removeRecursively()) {
-        return IOErrorCode::FailedToOpenResource;
-    }
-    dir.mkpath(QStringLiteral("."));
-
-    const qint64 BUFFER_SIZE = 1024;
-
+    QDir dir(extractionPath);
     QFile file(path);
-    if (file.open(QIODevice::ReadOnly)) {
-        QTextStream stream(&file);
-        // stream.setEncoding(QStringConverter::Latin1);
-        QString line = stream.readLine();
-        const bool nativeMathomArchive =
-            line == QStringLiteral("MathomNotes:archive");
-        const bool legacyBasketArchive =
-            line == QStringLiteral("BasKetNP:archive");
+    // Do not delete an extraction folder just because the input is missing.
+    if (!file.open(QIODevice::ReadOnly))
+        return IOErrorCode::FailedToOpenResource;
 
-        if (!nativeMathomArchive && !legacyBasketArchive) {
-            file.close();
-            dir.removeRecursively();
-            return IOErrorCode::NotABasketArchive;
-        }
+    if (dir.exists() && protectDestination)
+        return IOErrorCode::DestinationExists;
 
-        const QString expectedVersion =
-            nativeMathomArchive
-                ? QStringLiteral("1.0")
-                : QStringLiteral("0.6.1");
+    // Reject a non-Mathom file before touching a pre-existing extraction
+    // directory (including when protectDestination is false).
+    QTextStream stream(&file);
+    const QString magic = stream.readLine();
+    const bool native = magic == QStringLiteral("MathomNotes:archive");
+    const bool legacy = magic == QStringLiteral("BasKetNP:archive");
+    if (!native && !legacy)
+        return IOErrorCode::NotABasketArchive;
 
-        QString version;
-        QStringList readCompatibleVersions;
-        QStringList writeCompatibleVersions;
-        while (!stream.atEnd()) {
-            // Get Key/Value Pair From the Line to Read:
-            line = stream.readLine();
-            int index = line.indexOf(QLatin1Char(':'));
-            QString key;
-            QString value;
-            if (index >= 0) {
-                key = line.left(index);
-                value = line.right(line.length() - index - 1);
-            } else {
-                key = line;
-                value = QString();
-            }
-            if (key == QStringLiteral("version")) {
-                version = value;
-            } else if (key == QStringLiteral("read-compatible")) {
-                readCompatibleVersions = value.split(QLatin1Char(';'));
-            } else if (key == QStringLiteral("write-compatible")) {
-                writeCompatibleVersions = value.split(QLatin1Char(';'));
-            } else if (key == QStringLiteral("preview*")) {
-                bool ok;
-                const qint64 size = value.toULong(&ok);
-                if (!ok) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::CorruptedBasketArchive;
-                }
-                // Get the preview file:
-                QFile previewFile(dir.absolutePath() + QDir::separator() + QStringLiteral("preview.png"));
-                if (previewFile.open(QIODevice::WriteOnly)) {
-                    std::array<char, BUFFER_SIZE> buffer{};
-                    qint64 remainingBytes = size;
-                    qint64 sizeRead = 0;
-                    file.seek(stream.pos());
+    if (!dir.removeRecursively() || !dir.mkpath(QStringLiteral(".")))
+        return IOErrorCode::FailedToOpenResource;
 
-                    while ((sizeRead = file.read(buffer.data(), std::min(BUFFER_SIZE, remainingBytes))) > 0) {
-                        previewFile.write(buffer.data(), sizeRead);
-                        remainingBytes -= sizeRead;
-                    }
-                    previewFile.close();
-                }
-                stream.seek(stream.pos() + size);
-            } else if (key == QStringLiteral("archive*")) {
-                if (version != expectedVersion && readCompatibleVersions.contains(expectedVersion)
-                    && !writeCompatibleVersions.contains(expectedVersion)) {
-                    retCode = IOErrorCode::PossiblyCompatibleBasketVersion;
-                }
-                if (version != expectedVersion && !readCompatibleVersions.contains(expectedVersion)
-                    && !writeCompatibleVersions.contains(expectedVersion)) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::IncompatibleBasketVersion;
-                }
-
-                bool ok;
-                qint64 size = value.toULong(&ok);
-                if (!ok) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::CorruptedBasketArchive;
-                }
-
-                // Get the archive file and extract it to destination:
-                QTemporaryDir tempDir;
-                if (!tempDir.isValid()) {
-                    return IOErrorCode::FailedToOpenResource;
-                }
-                QString tempArchive = tempDir.path() + QDir::separator() + QStringLiteral("temp-archive.tar.gz");
-                QFile archiveFile(tempArchive);
-                file.seek(stream.pos());
-
-                if (!archiveFile.open(QIODevice::WriteOnly)) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::FailedToOpenResource;
-                }
-
-                char *buffer = new char[BUFFER_SIZE];
-                qint64 sizeRead;
-
-                while ((sizeRead = file.read(
-                            buffer,
-                            std::min(BUFFER_SIZE, size))) > 0) {
-                    archiveFile.write(buffer, sizeRead);
-                    size -= sizeRead;
-                }
-
-                archiveFile.close();
-                delete[] buffer;
-
-                KTar tar(
-                    tempArchive,
-                    QStringLiteral("application/x-gzip"));
-
-                if (!tar.open(QIODevice::ReadOnly)) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::CorruptedBasketArchive;
-                }
-
-                tar.directory()->copyTo(l_destination);
-                tar.close();
-
-                stream.seek(file.pos());
-            } else if (key.endsWith(QLatin1Char('*'))) {
-                // We do not know what it is, but we should read the embedded-file in
-                // order to discard it:
-                bool ok;
-                qint64 size = value.toULong(&ok);
-                if (!ok) {
-                    file.close();
-                    dir.removeRecursively();
-                    return IOErrorCode::CorruptedBasketArchive;
-                }
-                // Get the archive file:
-                char *buffer = new char[BUFFER_SIZE];
-                qint64 sizeRead;
-                while ((sizeRead = file.read(buffer, std::min(BUFFER_SIZE, size))) > 0) {
-                    size -= sizeRead;
-                }
-                delete[] buffer;
-            } else {
-                // We do not know what it is, and we do not care.
-            }
-            // Analyze the Value, if Understood:
-        }
+    // All failures after creating an extraction directory remove the partial
+    // contents, so no caller can mistake an incomplete extraction for success.
+    const auto fail = [&](IOErrorCode code) {
         file.close();
+        dir.removeRecursively();
+        return code;
+    };
+
+    const QString expectedVersion =
+        native ? QStringLiteral("1.0") : QStringLiteral("0.6.1");
+    QString version;
+    QStringList readCompatibleVersions;
+    QStringList writeCompatibleVersions;
+    IOErrorCode result = IOErrorCode::NoError;
+    bool extractedArchive = false;
+    constexpr qint64 bufferSize = 1024;
+
+    // Read exactly the number of payload bytes declared by the envelope.
+    // All stream positions are restored before parsing the following key.
+    const auto consumePayload = [&](qint64 size, QFile *output) {
+        const qint64 offset = stream.pos();
+        if (offset < 0 || size < 0 || size > file.size() - offset
+            || !file.seek(offset)) {
+            return false;
+        }
+        std::array<char, bufferSize> buffer{};
+        while (size > 0) {
+            const qint64 count =
+                file.read(buffer.data(), std::min(bufferSize, size));
+            if (count <= 0)
+                return false;
+            if (output && output->write(buffer.data(), count) != count)
+                return false;
+            size -= count;
+        }
+        if (output && !output->flush())
+            return false;
+        return stream.seek(file.pos())
+            && file.error() == QFileDevice::NoError;
+    };
+
+    while (!stream.atEnd()) {
+        const QString line = stream.readLine();
+        const int colon = line.indexOf(QLatin1Char(':'));
+        const QString key = colon < 0 ? line : line.left(colon);
+        const QString value = colon < 0 ? QString() : line.mid(colon + 1);
+
+        if (key == QStringLiteral("version")) {
+            version = value;
+        } else if (key == QStringLiteral("read-compatible")) {
+            readCompatibleVersions = value.split(QLatin1Char(';'));
+        } else if (key == QStringLiteral("write-compatible")) {
+            writeCompatibleVersions = value.split(QLatin1Char(';'));
+        } else if (key == QStringLiteral("preview*")) {
+            bool ok = false;
+            const qint64 size = value.toLongLong(&ok);
+            if (!ok || size < 0)
+                return fail(IOErrorCode::CorruptedBasketArchive);
+
+            QFile preview(dir.filePath(QStringLiteral("preview.png")));
+            if (!preview.open(QIODevice::WriteOnly))
+                return fail(IOErrorCode::FailedToOpenResource);
+            if (!consumePayload(size, &preview))
+                return fail(preview.error() == QFileDevice::NoError
+                                ? IOErrorCode::CorruptedBasketArchive
+                                : IOErrorCode::FailedToOpenResource);
+            preview.close();
+        } else if (key == QStringLiteral("archive*")) {
+            if (version != expectedVersion
+                && readCompatibleVersions.contains(expectedVersion)
+                && !writeCompatibleVersions.contains(expectedVersion)) {
+                result = IOErrorCode::PossiblyCompatibleBasketVersion;
+            } else if (version != expectedVersion
+                       && !readCompatibleVersions.contains(expectedVersion)
+                       && !writeCompatibleVersions.contains(expectedVersion)) {
+                return fail(IOErrorCode::IncompatibleBasketVersion);
+            }
+
+            bool ok = false;
+            const qint64 size = value.toLongLong(&ok);
+            if (!ok || size <= 0)
+                return fail(IOErrorCode::CorruptedBasketArchive);
+
+            QTemporaryDir temporary;
+            if (!temporary.isValid())
+                return fail(IOErrorCode::FailedToOpenResource);
+            const QString compressedPath =
+                temporary.filePath(QStringLiteral("temp-archive.tar.gz"));
+            QFile compressed(compressedPath);
+            if (!compressed.open(QIODevice::WriteOnly))
+                return fail(IOErrorCode::FailedToOpenResource);
+            if (!consumePayload(size, &compressed)) {
+                return fail(compressed.error() == QFileDevice::NoError
+                                ? IOErrorCode::CorruptedBasketArchive
+                                : IOErrorCode::FailedToOpenResource);
+            }
+            compressed.close();
+
+            KTar tar(compressedPath, QStringLiteral("application/x-gzip"));
+            if (!tar.open(QIODevice::ReadOnly))
+                return fail(IOErrorCode::CorruptedBasketArchive);
+            if (!tar.directory() || !tar.directory()->copyTo(extractionPath)) {
+                tar.close();
+                return fail(IOErrorCode::FailedToOpenResource);
+            }
+            if (!tar.close())
+                return fail(IOErrorCode::CorruptedBasketArchive);
+            extractedArchive = true;
+        } else if (key.endsWith(QLatin1Char('*'))) {
+            // Unknown binary extension: skip only when its declared size fits.
+            bool ok = false;
+            const qint64 size = value.toLongLong(&ok);
+            if (!ok || size < 0 || !consumePayload(size, nullptr))
+                return fail(IOErrorCode::CorruptedBasketArchive);
+        }
     }
 
-    return retCode;
+    if (!extractedArchive || file.error() != QFileDevice::NoError)
+        return fail(IOErrorCode::CorruptedBasketArchive);
+    file.close();
+    return result;
 }
 
 Archive::IOErrorCode
 Archive::createArchiveFromSource(const QString &sourcePath, const QString &previewImage, const QString &destination, const bool protectDestination)
 {
-    QDir source(sourcePath);
-    QFileInfo destinationFile(destination);
-
-    // sourcePath must be a valid directory
-    if (!source.exists()) {
+    const QDir source(sourcePath);
+    if (!source.exists() || destination.isEmpty())
         return IOErrorCode::FailedToOpenResource;
-    }
 
-    // destinationFile must not previously exist;
-    if (destinationFile.exists() && protectDestination) {
+    if (protectDestination && QFileInfo::exists(destination))
         return IOErrorCode::DestinationExists;
-    }
 
     QTemporaryDir tempDir;
-    if (!tempDir.isValid()) {
+    if (!tempDir.isValid())
         return IOErrorCode::FailedToOpenResource;
-    }
 
-    // Create the temporary archive file:
-    QString tempDestinationFile = tempDir.path() + QDir::separator() + QStringLiteral("temp-archive.tar.gz");
-    KTar archive(tempDestinationFile, QStringLiteral("application/x-gzip"));
-
-    // Prepare the archive for writing.
-    if (!archive.open(QIODevice::WriteOnly)) {
-        // Failed to open file.
-        archive.close();
+    const QString tempArchive = tempDir.filePath(QStringLiteral("temp-archive.tar.gz"));
+    KTar archive(tempArchive, QStringLiteral("application/x-gzip"));
+    if (!archive.open(QIODevice::WriteOnly))
         return IOErrorCode::FailedToOpenResource;
-    }
 
-    // Add files and directories to tar archive
-    auto sourceFiles = source.entryList(QDir::Files);
+    // Only change error propagation, not the existing archive directory tree.
+    QStringList sourceFiles = source.entryList(QDir::Files);
     sourceFiles.removeOne(QStringLiteral("preview.png"));
-    std::for_each(sourceFiles.constBegin(), sourceFiles.constEnd(), [&](const QString &entry) {
-        archive.addLocalFile(source.absolutePath() + QDir::separator() + entry, entry);
-    });
-    const auto sourceDirectories = source.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    std::for_each(sourceDirectories.constBegin(), sourceDirectories.constEnd(), [&](const QString &entry) {
-        archive.addLocalDirectory(source.absolutePath() + QDir::separator() + entry, entry);
-    });
-
-    archive.close();
-
-    // use generic basket icon as preview if no valid image supplied
-    /// \todo write a way to create preview the way it's done in Archive::save
-    QString previewImagePath = previewImage;
-    if (previewImage.isEmpty() && !QFileInfo(previewImage).exists()) {
-        previewImagePath = QStringLiteral(":/mathom/icons/app.png");
-    }
-
-    // Finally Save to the Real Destination file:
-    QFile file(destination);
-    if (file.open(QIODevice::WriteOnly)) {
-        ulong previewSize = QFile(previewImagePath).size();
-        ulong archiveSize = QFile(tempDestinationFile).size();
-        QTextStream stream(&file);
-        // stream.setEncoding(QStringConverter::Latin1);
-        stream << "MathomNotes:archive\n"
-               << "version:1.0\n"
-               //             << "read-compatible:0.6.1\n"
-               //             << "write-compatible:0.6.1\n"
-               << "preview*:" << previewSize << "\n";
-
-        stream.flush();
-        // Copy the Preview File:
-        const unsigned long BUFFER_SIZE = 1024;
-        char *buffer = new char[BUFFER_SIZE];
-        long sizeRead;
-        QFile previewFile(previewImagePath);
-        if (previewFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead = previewFile.read(buffer, BUFFER_SIZE)) > 0)
-                file.write(buffer, sizeRead);
+    for (const QString &entry : sourceFiles) {
+        if (!archive.addLocalFile(source.filePath(entry), entry)) {
+            archive.close();
+            return IOErrorCode::FailedToOpenResource;
         }
-        stream << "archive*:" << archiveSize << "\n";
-        stream.flush();
-
-        // Copy the Archive File:
-        QFile archiveFile(tempDestinationFile);
-        if (archiveFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead = archiveFile.read(buffer, BUFFER_SIZE)) > 0)
-                file.write(buffer, sizeRead);
-        }
-        // Clean Up:
-        delete[] buffer;
-        buffer = nullptr;
-        file.close();
     }
+    for (const QString &entry : source.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        if (!archive.addLocalDirectory(source.filePath(entry), entry)) {
+            archive.close();
+            return IOErrorCode::FailedToOpenResource;
+        }
+    }
+    if (!archive.close())
+        return IOErrorCode::FailedToOpenResource;
 
-    return IOErrorCode::NoError;
+    // Keep the same default preview, but do not claim success if a caller
+    // explicitly supplied an unreadable preview image.
+    const QString defaultPreview = QStringLiteral(":/mathom/icons/app.png");
+    const QString previewPath = previewImage.isEmpty()
+        ? (QFile::exists(defaultPreview) ? defaultPreview : QString())
+        : previewImage;
+
+    return writeMathomEnvelope(tempArchive, previewPath, destination, false)
+        ? IOErrorCode::NoError
+        : IOErrorCode::FailedToOpenResource;
 }
 
 /**

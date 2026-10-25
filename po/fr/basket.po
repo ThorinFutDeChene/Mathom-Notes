@@ -6965,3 +6965,15 @@ msgstr "La page numérisée dépasse la limite de mémoire autorisée."
 #: src/mathomscandialog.cpp
 msgid "The scanner refused the resolution required for this profile."
 msgstr "Le scanner a refusé la résolution demandée pour ce profil."
+
+#: src/archive.cpp
+msgid "Failed to create the Mathom-House archive."
+msgstr "Impossible de créer l'archive de la Mathom-House."
+
+#: src/archive.cpp
+msgid "Failed to add a Mathom-House to the archive."
+msgstr "Impossible d'ajouter une Mathom-House à l'archive."
+
+#: src/archive.cpp
+msgid "Failed to save the Mathom-House archive to %1."
+msgstr "Impossible d'enregistrer l'archive de la Mathom-House dans %1."

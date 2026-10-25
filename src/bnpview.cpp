@@ -4329,13 +4329,14 @@ void BNPView::saveAsArchive()
         {{QStringLiteral("scope"), QStringLiteral("current-house")},
          {QStringLiteral("folder"), basket->folderName()}});
 
-    Archive::save(
+    const bool exportSucceeded = Archive::save(
         basket,
         true,
         destination);
 
     DiagnosticManager::instance().logEvent(
-        QStringLiteral("EXPORT_MATHOM_OK"),
+        exportSucceeded ? QStringLiteral("EXPORT_MATHOM_OK")
+                        : QStringLiteral("EXPORT_MATHOM_FAILED"),
         {{QStringLiteral("scope"), QStringLiteral("current-house")},
          {QStringLiteral("folder"), basket->folderName()}});
 }
@@ -4419,10 +4420,11 @@ void BNPView::saveAllAsArchive()
         QStringLiteral("EXPORT_MATHOM_BEGIN"),
         {{QStringLiteral("scope"), QStringLiteral("all-houses")}});
 
-    Archive::saveAll(destination);
+    const bool exportSucceeded = Archive::saveAll(destination);
 
     DiagnosticManager::instance().logEvent(
-        QStringLiteral("EXPORT_MATHOM_OK"),
+        exportSucceeded ? QStringLiteral("EXPORT_MATHOM_OK")
+                        : QStringLiteral("EXPORT_MATHOM_FAILED"),
         {{QStringLiteral("scope"), QStringLiteral("all-houses")}});
 }
 
