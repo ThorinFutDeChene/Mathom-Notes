@@ -5,6 +5,7 @@
 
 #include "archive.h"
 
+#include <QByteArray>
 #include <QDebug>
 #include <QDir>
 #include <QFile>
@@ -18,6 +19,7 @@
 #include <QPixmap>
 #include <QProgressBar>
 #include <QProgressDialog>
+#include <QSaveFile>
 #include <QStandardPaths>
 #include <QString>
 #include <QStringList>
@@ -50,6 +52,74 @@
 #include <array>
 
 #include <basket_debug.h>
+
+namespace {
+
+// Keep the existing .mathom envelope byte-for-byte compatible with the
+// historic exporter, while rejecting short reads, failed writes and commits.
+// QSaveFile does not destroy an existing archive when a replacement fails.
+bool writeMathomEnvelope(const QString &tarPath,
+                         const QString &previewPath,
+                         const QString &destination,
+                         bool allMathomHouses)
+{
+    QFile compressed(tarPath);
+    if (!compressed.open(QIODevice::ReadOnly))
+        return false;
+
+    QFile preview(previewPath);
+    qint64 previewSize = 0;
+    if (!previewPath.isEmpty()) {
+        if (!preview.open(QIODevice::ReadOnly))
+            return false;
+        previewSize = preview.size();
+        if (previewSize < 0)
+            return false;
+    }
+
+    const qint64 compressedSize = compressed.size();
+    if (compressedSize <= 0 || destination.isEmpty())
+        return false;
+
+    QSaveFile output(destination);
+    if (!output.open(QIODevice::WriteOnly))
+        return false;
+
+    const auto writeBytes = [&](const QByteArray &bytes) {
+        return output.write(bytes) == bytes.size();
+    };
+    const auto copyBytes = [&](QFile &input, qint64 expectedSize) {
+        std::array<char, 65536> buffer{};
+        qint64 written = 0;
+        while (written < expectedSize) {
+            const qint64 count = input.read(
+                buffer.data(), std::min<qint64>(buffer.size(), expectedSize - written));
+            if (count <= 0 || output.write(buffer.data(), count) != count)
+                return false;
+            written += count;
+        }
+        return input.error() == QFileDevice::NoError && written == expectedSize;
+    };
+
+    const QByteArray header =
+        QByteArrayLiteral("MathomNotes:archive\nversion:1.0\n")
+        + (allMathomHouses ? QByteArrayLiteral("scope:all\n") : QByteArray())
+        + QByteArrayLiteral("preview*:") + QByteArray::number(previewSize) + '\n';
+    const QByteArray tarHeader =
+        QByteArrayLiteral("archive*:") + QByteArray::number(compressedSize) + '\n';
+
+    if (!writeBytes(header)
+        || (previewSize > 0 && !copyBytes(preview, previewSize))
+        || !writeBytes(tarHeader)
+        || !copyBytes(compressed, compressedSize)) {
+        output.cancelWriting();
+        return false;
+    }
+
+    return output.commit();
+}
+
+} // namespace
 
 void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &destination)
 {
@@ -773,94 +843,50 @@ Archive::IOErrorCode Archive::extractArchive(const QString &path, const QString 
 Archive::IOErrorCode
 Archive::createArchiveFromSource(const QString &sourcePath, const QString &previewImage, const QString &destination, const bool protectDestination)
 {
-    QDir source(sourcePath);
-    QFileInfo destinationFile(destination);
-
-    // sourcePath must be a valid directory
-    if (!source.exists()) {
+    const QDir source(sourcePath);
+    if (!source.exists() || destination.isEmpty())
         return IOErrorCode::FailedToOpenResource;
-    }
 
-    // destinationFile must not previously exist;
-    if (destinationFile.exists() && protectDestination) {
+    if (protectDestination && QFileInfo::exists(destination))
         return IOErrorCode::DestinationExists;
-    }
 
     QTemporaryDir tempDir;
-    if (!tempDir.isValid()) {
+    if (!tempDir.isValid())
         return IOErrorCode::FailedToOpenResource;
-    }
 
-    // Create the temporary archive file:
-    QString tempDestinationFile = tempDir.path() + QDir::separator() + QStringLiteral("temp-archive.tar.gz");
-    KTar archive(tempDestinationFile, QStringLiteral("application/x-gzip"));
-
-    // Prepare the archive for writing.
-    if (!archive.open(QIODevice::WriteOnly)) {
-        // Failed to open file.
-        archive.close();
+    const QString tempArchive = tempDir.filePath(QStringLiteral("temp-archive.tar.gz"));
+    KTar archive(tempArchive, QStringLiteral("application/x-gzip"));
+    if (!archive.open(QIODevice::WriteOnly))
         return IOErrorCode::FailedToOpenResource;
-    }
 
-    // Add files and directories to tar archive
-    auto sourceFiles = source.entryList(QDir::Files);
+    // Only change error propagation, not the existing archive directory tree.
+    QStringList sourceFiles = source.entryList(QDir::Files);
     sourceFiles.removeOne(QStringLiteral("preview.png"));
-    std::for_each(sourceFiles.constBegin(), sourceFiles.constEnd(), [&](const QString &entry) {
-        archive.addLocalFile(source.absolutePath() + QDir::separator() + entry, entry);
-    });
-    const auto sourceDirectories = source.entryList(QDir::Dirs | QDir::NoDotAndDotDot);
-    std::for_each(sourceDirectories.constBegin(), sourceDirectories.constEnd(), [&](const QString &entry) {
-        archive.addLocalDirectory(source.absolutePath() + QDir::separator() + entry, entry);
-    });
-
-    archive.close();
-
-    // use generic basket icon as preview if no valid image supplied
-    /// \todo write a way to create preview the way it's done in Archive::save
-    QString previewImagePath = previewImage;
-    if (previewImage.isEmpty() && !QFileInfo(previewImage).exists()) {
-        previewImagePath = QStringLiteral(":/mathom/icons/app.png");
-    }
-
-    // Finally Save to the Real Destination file:
-    QFile file(destination);
-    if (file.open(QIODevice::WriteOnly)) {
-        ulong previewSize = QFile(previewImagePath).size();
-        ulong archiveSize = QFile(tempDestinationFile).size();
-        QTextStream stream(&file);
-        // stream.setEncoding(QStringConverter::Latin1);
-        stream << "MathomNotes:archive\n"
-               << "version:1.0\n"
-               //             << "read-compatible:0.6.1\n"
-               //             << "write-compatible:0.6.1\n"
-               << "preview*:" << previewSize << "\n";
-
-        stream.flush();
-        // Copy the Preview File:
-        const unsigned long BUFFER_SIZE = 1024;
-        char *buffer = new char[BUFFER_SIZE];
-        long sizeRead;
-        QFile previewFile(previewImagePath);
-        if (previewFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead = previewFile.read(buffer, BUFFER_SIZE)) > 0)
-                file.write(buffer, sizeRead);
+    for (const QString &entry : sourceFiles) {
+        if (!archive.addLocalFile(source.filePath(entry), entry)) {
+            archive.close();
+            return IOErrorCode::FailedToOpenResource;
         }
-        stream << "archive*:" << archiveSize << "\n";
-        stream.flush();
-
-        // Copy the Archive File:
-        QFile archiveFile(tempDestinationFile);
-        if (archiveFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead = archiveFile.read(buffer, BUFFER_SIZE)) > 0)
-                file.write(buffer, sizeRead);
-        }
-        // Clean Up:
-        delete[] buffer;
-        buffer = nullptr;
-        file.close();
     }
+    for (const QString &entry : source.entryList(QDir::Dirs | QDir::NoDotAndDotDot)) {
+        if (!archive.addLocalDirectory(source.filePath(entry), entry)) {
+            archive.close();
+            return IOErrorCode::FailedToOpenResource;
+        }
+    }
+    if (!archive.close())
+        return IOErrorCode::FailedToOpenResource;
 
-    return IOErrorCode::NoError;
+    // Keep the same default preview, but do not claim success if a caller
+    // explicitly supplied an unreadable preview image.
+    const QString defaultPreview = QStringLiteral(":/mathom/icons/app.png");
+    const QString previewPath = previewImage.isEmpty()
+        ? (QFile::exists(defaultPreview) ? defaultPreview : QString())
+        : previewImage;
+
+    return writeMathomEnvelope(tempArchive, previewPath, destination, false)
+        ? IOErrorCode::NoError
+        : IOErrorCode::FailedToOpenResource;
 }
 
 /**
