@@ -18,7 +18,7 @@ env:
   # Infrastructure stays on the CI branch. Set this to the exact reviewed commit
   # on the isolated point-3 branch, never on the rejected five-fix DEV branch.
   # An empty value deliberately stops before building or publishing anything.
-  MATHOM_SOURCE_COMMIT: 'c3d457ffd6109703f6883efe71283785aa01fbe9'
+  MATHOM_SOURCE_COMMIT: '49173c90af0857f6fa0374e07cf7feaf62b32b9a'
   # Publication is enabled for this reviewed candidate. Compilation, regression
   # tests and native package checks must all succeed before the release step.
   PUBLISH_POINT3_DEV: 'true'
@@ -83,12 +83,12 @@ jobs:
           git -C source diff --exit-code v5.0.3 "$APPLICATION_COMMIT" -- .github/workflows
           # Whitelist only the archive error reporting and its new negative tests, and the DEV version declaration.
           changed_paths="$(git -C source diff --name-only v5.0.3 "$APPLICATION_COMMIT")"
-          expected_paths="$(printf 'VERSION\npo/fr/basket.po\nsrc/archive.cpp\nsrc/archive.h\nsrc/tests/archivetest.cpp')"
+          expected_paths="$(printf 'VERSION\npo/fr/basket.po\nsrc/archive.cpp\nsrc/archive.h\nsrc/bnpview.cpp\nsrc/tests/archivetest.cpp')"
           if [[ "$changed_paths" != "$expected_paths" ]]; then
             printf 'Unexpected application files in point-3 DEV:\n%s\n' "$changed_paths" >&2
             exit 1
           fi
-          test "$(tr -d '[:space:]' < source/VERSION)" = '5.0.4-dev2'
+          test "$(tr -d '[:space:]' < source/VERSION)" = '5.0.4-dev3'
           git -C source diff --check
           msgfmt --check --check-format -o /dev/null source/po/fr/basket.po
           cmake -S source -B source/build-tests -G Ninja \
