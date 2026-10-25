@@ -75,13 +75,13 @@ jobs:
           test "$(git -C source rev-parse HEAD)" = "$APPLICATION_COMMIT"
           git -C source merge-base --is-ancestor "$APPLICATION_COMMIT" origin/fix/5.0.3-point2-sauvegardes
           test "$(git -C source rev-parse origin/main)" = "7f1ccbecde88171004be5e67953ed18f7388faef"
-          git -C source diff --exit-code v5.0.1 "$APPLICATION_COMMIT" -- .github/workflows
+          git -C source diff --exit-code v5.0.2 "$APPLICATION_COMMIT" -- .github/workflows
           # Whitelist only the backup implementation, its new regression tests,
           # test registration and the DEV version declaration.
-          changed_paths="$(git -C source diff --name-only v5.0.1 "$APPLICATION_COMMIT")"
+          changed_paths="$(git -C source diff --name-only v5.0.2 "$APPLICATION_COMMIT")"
           expected_paths="$(printf 'VERSION\nsrc/backup.cpp\nsrc/tests/CMakeLists.txt\nsrc/tests/backuptest.cpp')"
           if [[ "$changed_paths" != "$expected_paths" ]]; then
-            printf 'Unexpected application files in point-1 branch:\n%s\n' "$changed_paths" >&2
+            printf 'Unexpected application files in point-2 branch:\n%s\n' "$changed_paths" >&2
             exit 1
           fi
           test "$(tr -d '[:space:]' < source/VERSION)" = '5.0.3-dev1'
