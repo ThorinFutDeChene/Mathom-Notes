@@ -33,12 +33,12 @@ git merge-base --is-ancestor "$source_commit" origin/fix/5.0.4-point3-erreurs-ar
 # Reject accidental mixing of another change into this single-point DEV.
 test "$(git rev-parse origin/main)" = "1b377a316a65848b0cf4403d8c3f451055c77fb5"
 changed_paths="$(git diff --name-only v5.0.3 "$source_commit")"
-expected_paths="$(printf 'VERSION\nsrc/archive.cpp\nsrc/archive.h\nsrc/tests/archivetest.cpp')"
+expected_paths="$(printf 'VERSION\npo/fr/basket.po\nsrc/archive.cpp\nsrc/archive.h\nsrc/tests/archivetest.cpp')"
 if [[ "$changed_paths" != "$expected_paths" ]]; then
     printf 'Unexpected point-3 source files:\n%s\n' "$changed_paths" >&2
     exit 1
 fi
-test "$version" = "5.0.4-dev1"
+test "$version" = "5.0.4-dev2"
 # The source commit is selected before CI runs and contains only the application
 # change. Never publish the infrastructure commit or rewrite a refused target.
 git diff --exit-code v5.0.3 "$source_commit" -- .github/workflows
@@ -60,7 +60,7 @@ fi
 results="$root/packaging/ci-results/publication"
 mkdir -p "$results"
 cat > "$results/release-notes.txt" <<EOF
-Mathom Notes 5.0.4-dev1 — POINT 3 UNIQUEMENT
+Mathom Notes 5.0.4-dev2 — POINT 3 UNIQUEMENT
 
 Correction de la remontee des erreurs de creation et d'extraction :
 - l'API detecte les fichiers manquants, les destinations inaccessibles
@@ -70,7 +70,7 @@ Correction de la remontee des erreurs de creation et d'extraction :
   signalees et les fichiers temporaires incomplets nettoyes ;
 - export utilisateur : controle des ajouts KTar, de la fermeture du tar
   et publication atomique du fichier final ;
-- message d'erreur explicite en cas d'export impossible.
+- messages d'erreur traduits en francais en cas d'export impossible.
 
 Les formats .mathom et .baskets restent identiques.
 Les regles d'importation/renommage ne changent pas.
