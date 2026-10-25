@@ -2044,7 +2044,7 @@ bool copyFileAtomically(
         if (errorString) {
             *errorString =
                 QStringLiteral(
-                    "Cannot open automatic backup source");
+                    "Cannot open backup source");
         }
         return false;
     }
@@ -2057,7 +2057,7 @@ bool copyFileAtomically(
         if (errorString) {
             *errorString =
                 QStringLiteral(
-                    "Cannot create automatic backup destination");
+                    "Cannot create backup destination");
         }
         return false;
     }
@@ -2073,7 +2073,7 @@ bool copyFileAtomically(
             if (errorString) {
                 *errorString =
                     QStringLiteral(
-                        "Cannot read automatic backup source");
+                        "Cannot read backup source");
             }
             destination.cancelWriting();
             return false;
@@ -2084,7 +2084,7 @@ bool copyFileAtomically(
             if (errorString) {
                 *errorString =
                     QStringLiteral(
-                        "Cannot write automatic backup destination");
+                        "Cannot write backup destination");
             }
             destination.cancelWriting();
             return false;
@@ -2095,7 +2095,7 @@ bool copyFileAtomically(
         if (errorString) {
             *errorString =
                 QStringLiteral(
-                    "Cannot finalize automatic backup");
+                    "Cannot finalize backup");
         }
         return false;
     }
