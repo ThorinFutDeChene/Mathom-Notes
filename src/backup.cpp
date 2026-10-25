@@ -2044,7 +2044,7 @@ bool copyFileAtomically(
         if (errorString) {
             *errorString =
                 QStringLiteral(
-                    "Cannot open automatic backup source");
+                    "Cannot open backup source");
         }
         return false;
     }
@@ -2057,7 +2057,7 @@ bool copyFileAtomically(
         if (errorString) {
             *errorString =
                 QStringLiteral(
-                    "Cannot create automatic backup destination");
+                    "Cannot create backup destination");
         }
         return false;
     }
@@ -2073,7 +2073,7 @@ bool copyFileAtomically(
             if (errorString) {
                 *errorString =
                     QStringLiteral(
-                        "Cannot read automatic backup source");
+                        "Cannot read backup source");
             }
             destination.cancelWriting();
             return false;
@@ -2084,7 +2084,7 @@ bool copyFileAtomically(
             if (errorString) {
                 *errorString =
                     QStringLiteral(
-                        "Cannot write automatic backup destination");
+                        "Cannot write backup destination");
             }
             destination.cancelWriting();
             return false;
@@ -2095,7 +2095,7 @@ bool copyFileAtomically(
         if (errorString) {
             *errorString =
                 QStringLiteral(
-                    "Cannot finalize automatic backup");
+                    "Cannot finalize backup");
         }
         return false;
     }
@@ -2411,8 +2411,8 @@ void BackupDialog::backup()
     qApp->processEvents();
 
     if (!thread.success()) {
-        QFile::remove(destination);
-
+        // BackupThread never touches an existing destination until the new
+        // archive has been fully created and verified. Do not delete it here.
         DiagnosticManager::instance()
             .logEvent(
                 QStringLiteral(
@@ -3191,15 +3191,18 @@ void BackupThread::run()
         return;
     }
 
-    QFile::remove(
-        m_backupFile);
+    // The old backup must remain untouched during creation and validation.
+    // Stage the new archive OUTSIDE snapshotRoot so it is not archived as
+    // part of its own contents, and clean it up with the temporary directory.
+    const QString stagedBackup =
+        snapshot.filePath(
+            QStringLiteral(
+                "backup.mathom-backup"));
 
     if (!createTarFromSnapshot(
             snapshotRoot,
-            m_backupFile,
+            stagedBackup,
             &m_errorString)) {
-        QFile::remove(
-            m_backupFile);
         return;
     }
 
@@ -3209,25 +3212,27 @@ void BackupThread::run()
         m_errorString =
             QStringLiteral(
                 "Cannot create backup validation area");
-        QFile::remove(
-            m_backupFile);
         return;
     }
 
     if (!extractFullBackup(
-            m_backupFile,
+            stagedBackup,
             validation.path(),
             nullptr,
             nullptr,
             nullptr,
             nullptr,
             &m_errorString)) {
-        QFile::remove(
-            m_backupFile);
         return;
     }
 
-    m_success = true;
+    // QSaveFile writes to a temporary file beside the final destination
+    // and commits only after the whole verified backup has been copied.
+    // A failed write/commit keeps the previous backup intact.
+    m_success = copyFileAtomically(
+        stagedBackup,
+        m_backupFile,
+        &m_errorString);
 }
 
 RestoreThread::RestoreThread(

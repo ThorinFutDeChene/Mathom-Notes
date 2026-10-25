@@ -10,6 +10,7 @@ set(BASKET_TEST_SRC
     basketviewtest.cpp
     toolstest.cpp
     archivetest.cpp
+    backuptest.cpp
     notefactorytest.cpp
     secondarylanguagetest.cpp
     secondarylanguageenginetest.cpp
