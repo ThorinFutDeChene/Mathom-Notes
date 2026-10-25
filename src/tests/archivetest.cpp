@@ -32,6 +32,14 @@ private Q_SLOTS:
 
     void testExtractArchive();
     void testCreateArchive();
+    void testMissingArchiveDoesNotEraseDestination();
+    void testRejectsEnvelopeWithoutArchive();
+    void testRejectsTruncatedPreview();
+    void testRejectsTruncatedArchive();
+    void testCannotCreateArchiveAtUnwritablePath();
+    void testFailedReplacementPreservesExistingArchive();
+    void testCannotExtractToUnwritablePath();
+    void testProtectedExtractionDestination();
     void testContentComparison_data();
     void testContentComparison();
     void testUnreadableContent();
@@ -120,6 +128,146 @@ void ArchiveTest::testCreateArchive()
     //    auto hashTest = fileHash(testArchive, QCryptographicHash::Sha256);
 
     //    QVERIFY2(hashRef == hashTest, "Created .baskets archive is not identical with the reference (hashes different)");
+}
+
+
+void ArchiveTest::testMissingArchiveDoesNotEraseDestination()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString existing = temp.filePath(QStringLiteral("existing"));
+    QVERIFY(QDir().mkpath(existing));
+    const QString sentinel = QDir(existing).filePath(QStringLiteral("sentinel.txt"));
+    QVERIFY(writeFile(sentinel, QByteArrayLiteral("Do not erase old data")));
+
+    QCOMPARE(Archive::extractArchive(
+                 temp.filePath(QStringLiteral("missing.mathom")), existing, false),
+             Archive::IOErrorCode::FailedToOpenResource);
+    QCOMPARE(QFileInfo(sentinel).exists(), true);
+    QFile saved(sentinel);
+    QVERIFY(saved.open(QIODevice::ReadOnly));
+    QCOMPARE(saved.readAll(), QByteArrayLiteral("Do not erase old data"));
+}
+
+void ArchiveTest::testRejectsEnvelopeWithoutArchive()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString source = temp.filePath(QStringLiteral("header-only.mathom"));
+    const QString destination = temp.filePath(QStringLiteral("extracted"));
+
+    QVERIFY(writeFile(source, QByteArrayLiteral(
+        "MathomNotes:archive\\nversion:1.0\\npreview*:0\\n")));
+    QCOMPARE(Archive::extractArchive(source, destination),
+             Archive::IOErrorCode::CorruptedBasketArchive);
+    QVERIFY(!QDir(destination).exists());
+}
+
+void ArchiveTest::testRejectsTruncatedPreview()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString source = temp.filePath(QStringLiteral("short-preview.mathom"));
+    const QString destination = temp.filePath(QStringLiteral("extracted"));
+
+    QVERIFY(writeFile(source, QByteArrayLiteral(
+        "MathomNotes:archive\\nversion:1.0\\npreview*:32\\nabc")));
+    QCOMPARE(Archive::extractArchive(source, destination),
+             Archive::IOErrorCode::CorruptedBasketArchive);
+    QVERIFY(!QDir(destination).exists());
+}
+
+void ArchiveTest::testRejectsTruncatedArchive()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString normal = temp.filePath(QStringLiteral("normal.mathom"));
+    const QString truncated = temp.filePath(QStringLiteral("truncated.mathom"));
+    const QString destination = temp.filePath(QStringLiteral("extracted"));
+    const QString source = m_sampleSourceDir.filePath(QStringLiteral("sample_source"));
+
+    QCOMPARE(Archive::createArchiveFromSource(source, QString(), normal),
+             Archive::IOErrorCode::NoError);
+
+    QFile original(normal);
+    QVERIFY(original.open(QIODevice::ReadOnly));
+    QByteArray contents = original.readAll();
+    QVERIFY(contents.size() > 32);
+    contents.chop(16);
+    QVERIFY(writeFile(truncated, contents));
+
+    QCOMPARE(Archive::extractArchive(truncated, destination),
+             Archive::IOErrorCode::CorruptedBasketArchive);
+    QVERIFY(!QDir(destination).exists());
+}
+
+void ArchiveTest::testCannotCreateArchiveAtUnwritablePath()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString source = m_sampleSourceDir.filePath(QStringLiteral("sample_source"));
+    const QString blockedParent = temp.filePath(QStringLiteral("not-a-directory"));
+    QVERIFY(writeFile(blockedParent, QByteArrayLiteral("file not directory")));
+    const QString destination = blockedParent + QStringLiteral("/cannot-create.mathom");
+
+    QCOMPARE(Archive::createArchiveFromSource(source, QString(), destination),
+             Archive::IOErrorCode::FailedToOpenResource);
+    QVERIFY(!QFileInfo::exists(destination));
+}
+
+void ArchiveTest::testFailedReplacementPreservesExistingArchive()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString source = m_sampleSourceDir.filePath(QStringLiteral("sample_source"));
+    const QString destination = temp.filePath(QStringLiteral("existing.mathom"));
+    const QByteArray oldContents("Existing user archive must be preserved");
+    QVERIFY(writeFile(destination, oldContents));
+
+    // An explicitly requested missing preview makes publication fail even
+    // after the temporary tar has been created. QSaveFile must not replace
+    // the existing file and the API must report the error.
+    QCOMPARE(Archive::createArchiveFromSource(
+                 source, temp.filePath(QStringLiteral("missing-preview.png")),
+                 destination, false),
+             Archive::IOErrorCode::FailedToOpenResource);
+    QFile saved(destination);
+    QVERIFY(saved.open(QIODevice::ReadOnly));
+    QCOMPARE(saved.readAll(), oldContents);
+}
+
+void ArchiveTest::testCannotExtractToUnwritablePath()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString blockedParent = temp.filePath(QStringLiteral("not-a-directory"));
+    QVERIFY(writeFile(blockedParent, QByteArrayLiteral("Keep this file")));
+    const QString destination = blockedParent + QStringLiteral("/cannot-extract");
+
+    const QString legacy = QFINDTESTDATA("archive/sample.baskets");
+    QVERIFY(!legacy.isEmpty());
+    QCOMPARE(Archive::extractArchive(legacy, destination),
+             Archive::IOErrorCode::FailedToOpenResource);
+    QFile blocker(blockedParent);
+    QVERIFY(blocker.open(QIODevice::ReadOnly));
+    QCOMPARE(blocker.readAll(), QByteArrayLiteral("Keep this file"));
+}
+
+void ArchiveTest::testProtectedExtractionDestination()
+{
+    QTemporaryDir temp;
+    QVERIFY(temp.isValid());
+    const QString destination = temp.filePath(QStringLiteral("existing"));
+    QVERIFY(QDir().mkpath(destination));
+    const QString sentinel = QDir(destination).filePath(QStringLiteral("keep.txt"));
+    QVERIFY(writeFile(sentinel, QByteArrayLiteral("Protected")));
+
+    const QString legacy = QFINDTESTDATA("archive/sample.baskets");
+    QCOMPARE(Archive::extractArchive(legacy, destination, true),
+             Archive::IOErrorCode::DestinationExists);
+    QFile file(sentinel);
+    QVERIFY(file.open(QIODevice::ReadOnly));
+    QCOMPARE(file.readAll(), QByteArrayLiteral("Protected"));
 }
 
 void ArchiveTest::testContentComparison_data()
