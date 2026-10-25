@@ -228,42 +228,16 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     previewImage = previewImage.scaled(PREVIEW_SIZE, PREVIEW_SIZE, Qt::KeepAspectRatio);
     previewImage.save(tempFolder + QStringLiteral("preview.png"), "PNG");
 
-    // Finally Save to the Real Destination file:
-    QFile file(destination);
-    if (file.open(QIODevice::WriteOnly)) {
-        ulong previewSize = QFile(tempFolder + QStringLiteral("preview.png")).size();
-        ulong archiveSize = QFile(tempDestination).size();
-        QTextStream stream(&file);
-        // stream.setEncoding(QStringConverter::Latin1);
-        stream << "MathomNotes:archive\n"
-               << "version:1.0\n"
-               //             << "read-compatible:0.6.1\n"
-               //             << "write-compatible:0.6.1\n"
-               << "preview*:" << previewSize << "\n";
-
-        stream.flush();
-        // Copy the Preview File:
-        const unsigned long BUFFER_SIZE = 1024;
-        char *buffer = new char[BUFFER_SIZE];
-        long sizeRead;
-        QFile previewFile(tempFolder + QStringLiteral("preview.png"));
-        if (previewFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead = previewFile.read(buffer, BUFFER_SIZE)) > 0)
-                file.write(buffer, sizeRead);
-        }
-        stream << "archive*:" << archiveSize << "\n";
-        stream.flush();
-
-        // Copy the Archive File:
-        QFile archiveFile(tempDestination);
-        if (archiveFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead = archiveFile.read(buffer, BUFFER_SIZE)) > 0)
-                file.write(buffer, sizeRead);
-        }
-        // Clean Up:
-        delete[] buffer;
-        buffer = nullptr;
-        file.close();
+    // Write exactly the historic envelope, but only publish it when every
+    // read/write operation and the atomic commit have succeeded.
+    if (!writeMathomEnvelope(tempDestination,
+                             tempFolder + QStringLiteral("preview.png"),
+                             destination,
+                             false)) {
+        KMessageBox::error(
+            nullptr,
+            i18n("Failed to save the Mathom-House archive to %1.", destination),
+            i18n("Mathom-House Archive Error"));
     }
 
     dialog.setValue(dialog.value() + 1); // Finishing finished
@@ -435,50 +409,11 @@ void Archive::saveAll(const QString &destination)
             .save(previewPath, "PNG");
     }
 
-    QFile file(destination);
-    if (file.open(QIODevice::WriteOnly)) {
-        const ulong previewSize =
-            QFile(previewPath).size();
-
-        const ulong archiveSize =
-            QFile(tempDestination).size();
-
-        QTextStream output(&file);
-        output << "MathomNotes:archive\n"
-               << "version:1.0\n"
-               << "scope:all\n"
-               << "preview*:" << previewSize << "\n";
-        output.flush();
-
-        const unsigned long bufferSize = 1024;
-        char *buffer = new char[bufferSize];
-        long sizeRead;
-
-        QFile previewFile(previewPath);
-        if (previewFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead =
-                        previewFile.read(
-                            buffer,
-                            bufferSize)) > 0) {
-                file.write(buffer, sizeRead);
-            }
-        }
-
-        output << "archive*:" << archiveSize << "\n";
-        output.flush();
-
-        QFile archiveFile(tempDestination);
-        if (archiveFile.open(QIODevice::ReadOnly)) {
-            while ((sizeRead =
-                        archiveFile.read(
-                            buffer,
-                            bufferSize)) > 0) {
-                file.write(buffer, sizeRead);
-            }
-        }
-
-        delete[] buffer;
-        file.close();
+    if (!writeMathomEnvelope(tempDestination, previewPath, destination, true)) {
+        KMessageBox::error(
+            nullptr,
+            i18n("Failed to save the Mathom-House archive to %1.", destination),
+            i18n("Mathom-House Archive Error"));
     }
 
     dialog.setValue(dialog.maximum());
