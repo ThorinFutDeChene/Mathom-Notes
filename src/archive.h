@@ -28,8 +28,9 @@ class KTar;
 class Archive
 {
 public:
-    static void save(BasketScene *basket, bool withSubBaskets, const QString &destination);
-    static void saveAll(const QString &destination);
+    // True only when a complete archive has been committed to its destination.
+    static bool save(BasketScene *basket, bool withSubBaskets, const QString &destination);
+    static bool saveAll(const QString &destination);
     static void open(const QString &path);
 
     /**

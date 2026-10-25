@@ -121,7 +121,7 @@ bool writeMathomEnvelope(const QString &tarPath,
 
 } // namespace
 
-void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &destination)
+bool Archive::save(BasketScene *basket, bool withSubBaskets, const QString &destination)
 {
     QDir dir;
     QProgressDialog dialog;
@@ -143,7 +143,7 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     if (!dir.mkpath(tempFolder)) {
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
-        return;
+        return false;
     }
 
     // Create the temporary archive file:
@@ -156,7 +156,7 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
             i18n("Mathom-House Archive Error"));
         QFile::remove(tempDestination);
         dir.rmdir(tempFolder);
-        return;
+        return false;
     }
 
     if (!tar.writeDir(QStringLiteral("baskets"), QString(), QString())) {
@@ -164,7 +164,7 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
 
     dialog.setValue(dialog.value() + 1); // Preparation finished
@@ -178,7 +178,7 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
         KMessageBox::error(nullptr, i18n("Failed to add a Mathom-House to the archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
 
     // Create a Small baskets.xml Document:
@@ -195,7 +195,7 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
     dir.remove(tempFolder + QStringLiteral("baskets.xml"));
 
@@ -208,7 +208,7 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
     dir.remove(tempFolder + QStringLiteral("tags.xml"));
 
@@ -227,7 +227,7 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
                     KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
                     Tools::deleteRecursively(tempFolder);
-                    return;
+                    return false;
                 }
             }
         }
@@ -239,7 +239,7 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
 
     // Computing the File Preview:
@@ -270,15 +270,17 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
 
     // Write exactly the historic envelope, but only publish it when every
     // read/write operation and the atomic commit have succeeded.
-    if (!writeMathomEnvelope(tempDestination,
-                             tempFolder + QStringLiteral("preview.png"),
-                             destination,
-                             false)) {
+    const bool success = writeMathomEnvelope(
+        tempDestination,
+        tempFolder + QStringLiteral("preview.png"),
+        destination,
+        false);
+    if (!success) {
         KMessageBox::error(
             nullptr,
             i18n("Failed to save the Mathom-House archive to %1.", destination),
@@ -292,13 +294,14 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     dir.remove(tempFolder + QStringLiteral("preview.png"));
     dir.remove(tempDestination);
     dir.rmdir(tempFolder);
+    return success;
 }
 
 
-void Archive::saveAll(const QString &destination)
+bool Archive::saveAll(const QString &destination)
 {
     if (!Global::bnpView || Global::bnpView->topLevelItemCount() <= 0)
-        return;
+        return false;
 
     QDir dir;
     QProgressDialog dialog;
@@ -324,7 +327,7 @@ void Archive::saveAll(const QString &destination)
     if (!dir.mkpath(tempFolder)) {
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
-        return;
+        return false;
     }
 
     const QString tempDestination =
@@ -337,7 +340,7 @@ void Archive::saveAll(const QString &destination)
             i18n("Failed to create the temporary Mathom archive."),
             i18n("Mathom Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
 
     if (!tar.writeDir(QStringLiteral("baskets"), QString(), QString())) {
@@ -345,7 +348,7 @@ void Archive::saveAll(const QString &destination)
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
     dialog.setValue(dialog.value() + 1);
 
@@ -362,7 +365,7 @@ void Archive::saveAll(const QString &destination)
             KMessageBox::error(nullptr, i18n("Failed to add a Mathom-House to the archive."),
                                i18n("Mathom-House Archive Error"));
             Tools::deleteRecursively(tempFolder);
-            return;
+            return false;
         }
 
         listUsedTags(basket, true, tags);
@@ -391,7 +394,7 @@ void Archive::saveAll(const QString &destination)
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
     dir.remove(treePath);
 
@@ -404,7 +407,7 @@ void Archive::saveAll(const QString &destination)
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
     dir.remove(tagsPath);
 
@@ -433,7 +436,7 @@ void Archive::saveAll(const QString &destination)
                     KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
                     Tools::deleteRecursively(tempFolder);
-                    return;
+                    return false;
                 }
             }
         }
@@ -444,7 +447,7 @@ void Archive::saveAll(const QString &destination)
         KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
         Tools::deleteRecursively(tempFolder);
-        return;
+        return false;
     }
 
     BasketScene *previewBasket =
@@ -484,7 +487,7 @@ void Archive::saveAll(const QString &destination)
             KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
                            i18n("Mathom-House Archive Error"));
             Tools::deleteRecursively(tempFolder);
-            return;
+            return false;
         }
     }
 
@@ -492,7 +495,8 @@ void Archive::saveAll(const QString &destination)
     // preview is valid and must not block exporting every Mathom-House.
     if (!QFileInfo::exists(previewPath))
         previewPath.clear();
-    if (!writeMathomEnvelope(tempDestination, previewPath, destination, true)) {
+    const bool success = writeMathomEnvelope(tempDestination, previewPath, destination, true);
+    if (!success) {
         KMessageBox::error(
             nullptr,
             i18n("Failed to save the Mathom-House archive to %1.", destination),
@@ -501,6 +505,7 @@ void Archive::saveAll(const QString &destination)
 
     dialog.setValue(dialog.maximum());
     Tools::deleteRecursively(tempFolder);
+    return success;
 }
 
 
