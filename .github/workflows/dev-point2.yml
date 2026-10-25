@@ -18,7 +18,7 @@ env:
   # Infrastructure stays on the CI branch. Set this to the exact reviewed commit
   # on the isolated point-2 branch, never on the rejected five-fix DEV branch.
   # An empty value deliberately stops before building or publishing anything.
-  MATHOM_SOURCE_COMMIT: 'fce7673aa35fccd64598dad1a6cc5e9b7364c016'
+  MATHOM_SOURCE_COMMIT: 'e9b8cf73ae08631b839497a0f04b48de57c1acae'
   # Publication is enabled for this reviewed candidate. Compilation, regression
   # tests and native package checks must all succeed before the release step.
   PUBLISH_POINT2_DEV: 'true'
