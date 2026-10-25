@@ -140,7 +140,11 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     // never leave stale files that affect the next archive.
     QString tempFolder = Global::savesFolder() + QStringLiteral("temp-archive/");
     Tools::deleteRecursively(tempFolder);
-    dir.mkpath(tempFolder);
+    if (!dir.mkpath(tempFolder)) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        return;
+    }
 
     // Create the temporary archive file:
     QString tempDestination = tempFolder + QStringLiteral("temp-archive.tar.gz");
@@ -155,7 +159,13 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
         return;
     }
 
-    tar.writeDir(QStringLiteral("baskets"), QString(), QString());
+    if (!tar.writeDir(QStringLiteral("baskets"), QString(), QString())) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
 
     dialog.setValue(dialog.value() + 1); // Preparation finished
 
@@ -178,15 +188,28 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     Global::bnpView->saveSubHierarchy(Global::bnpView->listViewItemForBasket(basket), stream, withSubBaskets);
     stream.writeEndElement();
     stream.writeEndDocument();
-    FileStorage::safelySaveToFile(tempFolder + QStringLiteral("baskets.xml"), data);
-    tar.addLocalFile(tempFolder + QStringLiteral("baskets.xml"), QStringLiteral("baskets/baskets.xml"));
+    if (!FileStorage::safelySaveToFile(tempFolder + QStringLiteral("baskets.xml"), data)
+        || !tar.addLocalFile(tempFolder + QStringLiteral("baskets.xml"),
+                             QStringLiteral("baskets/baskets.xml"))) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
     dir.remove(tempFolder + QStringLiteral("baskets.xml"));
 
     // Save a Small tags.xml Document:
     QList<Tag *> tags;
     listUsedTags(basket, withSubBaskets, tags);
     Tag::saveTagsTo(tags, tempFolder + QStringLiteral("tags.xml"));
-    tar.addLocalFile(tempFolder + QStringLiteral("tags.xml"), QStringLiteral("tags.xml"));
+    if (!tar.addLocalFile(tempFolder + QStringLiteral("tags.xml"), QStringLiteral("tags.xml"))) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
     dir.remove(tempFolder + QStringLiteral("tags.xml"));
 
     // Save Tag Emblems (in case they are loaded on a computer that do not have those icons):
@@ -197,16 +220,27 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
             State *state = (*it2);
             QPixmap icon = KIconLoader::global()->loadIcon(state->emblem(), KIconLoader::Small, 16, KIconLoader::DefaultState, QStringList(), nullptr, true);
             if (!icon.isNull()) {
-                icon.save(tempIconFile, "PNG");
-                QString iconFileName = state->emblem().replace(QLatin1Char('/'), QLatin1Char('_'));
-                tar.addLocalFile(tempIconFile, QStringLiteral("tag-emblems/") + iconFileName);
+                const QString iconFileName = state->emblem().replace(QLatin1Char('/'), QLatin1Char('_'));
+                if (!icon.save(tempIconFile, "PNG")
+                    || !tar.addLocalFile(tempIconFile, QStringLiteral("tag-emblems/") + iconFileName)) {
+                    tar.close();
+                    KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+                    Tools::deleteRecursively(tempFolder);
+                    return;
+                }
             }
         }
     }
     dir.remove(tempIconFile);
 
-    // Finish Tar.Gz Exportation:
-    tar.close();
+    // A failed KTar close can mean an incomplete gzip stream.
+    if (!tar.close()) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
 
     // Computing the File Preview:
     BasketScene *previewBasket = basket; // FIXME: Use the first non-empty basket!
@@ -232,7 +266,12 @@ void Archive::save(BasketScene *basket, bool withSubBaskets, const QString &dest
     QImage previewImage = previewPixmap.toImage();
     const int PREVIEW_SIZE = 256;
     previewImage = previewImage.scaled(PREVIEW_SIZE, PREVIEW_SIZE, Qt::KeepAspectRatio);
-    previewImage.save(tempFolder + QStringLiteral("preview.png"), "PNG");
+    if (!previewImage.save(tempFolder + QStringLiteral("preview.png"), "PNG")) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
 
     // Write exactly the historic envelope, but only publish it when every
     // read/write operation and the atomic commit have succeeded.
@@ -282,7 +321,11 @@ void Archive::saveAll(const QString &destination)
         Global::savesFolder() + QStringLiteral("temp-archive/");
 
     Tools::deleteRecursively(tempFolder);
-    dir.mkpath(tempFolder);
+    if (!dir.mkpath(tempFolder)) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        return;
+    }
 
     const QString tempDestination =
         tempFolder + QStringLiteral("temp-archive.tar.gz");
@@ -297,7 +340,13 @@ void Archive::saveAll(const QString &destination)
         return;
     }
 
-    tar.writeDir(QStringLiteral("baskets"), QString(), QString());
+    if (!tar.writeDir(QStringLiteral("baskets"), QString(), QString())) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
     dialog.setValue(dialog.value() + 1);
 
     QStringList backgrounds;
@@ -336,15 +385,27 @@ void Archive::saveAll(const QString &destination)
     const QString treePath =
         tempFolder + QStringLiteral("baskets.xml");
 
-    FileStorage::safelySaveToFile(treePath, data);
-    tar.addLocalFile(treePath, QStringLiteral("baskets/baskets.xml"));
+    if (!FileStorage::safelySaveToFile(treePath, data)
+        || !tar.addLocalFile(treePath, QStringLiteral("baskets/baskets.xml"))) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
     dir.remove(treePath);
 
     const QString tagsPath =
         tempFolder + QStringLiteral("tags.xml");
 
     Tag::saveTagsTo(tags, tagsPath);
-    tar.addLocalFile(tagsPath, QStringLiteral("tags.xml"));
+    if (!tar.addLocalFile(tagsPath, QStringLiteral("tags.xml"))) {
+        tar.close();
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
     dir.remove(tagsPath);
 
     const QString tempIconFile =
@@ -363,22 +424,28 @@ void Archive::saveAll(const QString &destination)
                     true);
 
             if (!icon.isNull()) {
-                icon.save(tempIconFile, "PNG");
-                QString iconFileName =
-                    state->emblem().replace(
-                        QLatin1Char('/'),
-                        QLatin1Char('_'));
-
-                tar.addLocalFile(
-                    tempIconFile,
-                    QStringLiteral("tag-emblems/")
-                        + iconFileName);
+                const QString iconFileName =
+                    state->emblem().replace(QLatin1Char('/'), QLatin1Char('_'));
+                if (!icon.save(tempIconFile, "PNG")
+                    || !tar.addLocalFile(
+                        tempIconFile, QStringLiteral("tag-emblems/") + iconFileName)) {
+                    tar.close();
+                    KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+                    Tools::deleteRecursively(tempFolder);
+                    return;
+                }
             }
         }
     }
 
     dir.remove(tempIconFile);
-    tar.close();
+    if (!tar.close()) {
+        KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+        Tools::deleteRecursively(tempFolder);
+        return;
+    }
 
     BasketScene *previewBasket =
         Global::bnpView->currentBasket();
@@ -411,11 +478,20 @@ void Archive::saveAll(const QString &destination)
         previewBasket->doHoverEffects();
         painter.end();
 
-        previewPixmap.toImage()
-            .scaled(256, 256, Qt::KeepAspectRatio)
-            .save(previewPath, "PNG");
+        if (!previewPixmap.toImage()
+                 .scaled(256, 256, Qt::KeepAspectRatio)
+                 .save(previewPath, "PNG")) {
+            KMessageBox::error(nullptr, i18n("Failed to create the Mathom-House archive."),
+                           i18n("Mathom-House Archive Error"));
+            Tools::deleteRecursively(tempFolder);
+            return;
+        }
     }
 
+    // The selected basket may be null even though houses exist: an empty
+    // preview is valid and must not block exporting every Mathom-House.
+    if (!QFileInfo::exists(previewPath))
+        previewPath.clear();
     if (!writeMathomEnvelope(tempDestination, previewPath, destination, true)) {
         KMessageBox::error(
             nullptr,
