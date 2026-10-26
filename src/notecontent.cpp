@@ -233,16 +233,91 @@ void NoteContent::setFileName(const QString &fileName)
     m_fileName = fileName;
 }
 
-bool NoteContent::trySetFileName(const QString &fileName)
+QString NoteContent::renameFileOnDisk(const QString &sourcePath,
+                                      const QString &wantedFileName,
+                                      QString *errorMessage)
 {
-    if (useFile() && fileName != m_fileName) {
-        QString newFileName = Tools::fileNameForNewFile(fileName, basket()->fullPath());
-        QDir dir;
-        dir.rename(fullPath(), basket()->fullPathForFileName(newFileName));
-        return true;
+    if (errorMessage)
+        errorMessage->clear();
+
+    const auto fail = [&](const QString &message) -> QString {
+        if (errorMessage)
+            *errorMessage = message;
+        return {};
+    };
+
+    // Accept only a basename: never move an attachment out of its Mathom-House.
+    if (wantedFileName.isEmpty()
+        || wantedFileName == QStringLiteral(".")
+        || wantedFileName == QStringLiteral("..")
+        || wantedFileName.contains(QLatin1Char('/'))
+        || wantedFileName.contains(QLatin1Char('\\'))
+        || wantedFileName.contains(QChar::Null)
+        || QDir::isAbsolutePath(wantedFileName)) {
+        return fail(i18n("Enter a file name without a folder path."));
     }
 
-    return false; // !useFile() or unsuccessful rename
+    const QFileInfo source(sourcePath);
+    if (sourcePath.isEmpty() || (!source.exists() && !source.isSymLink())) {
+        return fail(i18n("Could not rename \"%1\": the file no longer exists.",
+                         source.fileName()));
+    }
+
+    if (wantedFileName == source.fileName())
+        return wantedFileName;
+
+    const QDir directory = source.absoluteDir();
+    const QString directoryPath = directory.absolutePath() + QLatin1Char('/');
+    const auto occupied = [&](const QString &name) {
+        const QFileInfo target(directory.filePath(name));
+        return target.exists() || target.isSymLink();
+    };
+
+    // Preserve the established -2, -3... numbering, including pre-existing
+    // attachments. QFileInfo::isSymLink() also protects a dangling symlink.
+    QString newName = Tools::fileNameForNewFile(wantedFileName, directoryPath);
+    if (occupied(newName)) {
+        const int dot = wantedFileName.lastIndexOf(QLatin1Char('.'));
+        const QString stem = (dot > 0 ? wantedFileName.left(dot) : wantedFileName);
+        const QString extension = (dot > 0 ? wantedFileName.mid(dot) : QString());
+        for (int number = 2;; ++number) {
+            newName = stem + QLatin1Char('-') + QString::number(number) + extension;
+            if (!occupied(newName))
+                break;
+        }
+    }
+
+    // QDir::rename supports both file and directory attachments, and must
+    // succeed before the note may refer to the new name.
+    if (!QDir().rename(source.absoluteFilePath(), directory.filePath(newName))) {
+        return fail(i18n("Could not rename \"%1\" to \"%2\". The file name was not changed.",
+                         source.fileName(), newName));
+    }
+
+    return newName;
+}
+
+bool NoteContent::trySetFileName(const QString &fileName, QString *errorMessage)
+{
+    if (errorMessage)
+        errorMessage->clear();
+    if (!useFile() || !basket() || fileName == m_fileName)
+        return false;
+
+    const QString oldPath = fullPath();
+    // Detach the watcher before the filesystem operation: otherwise the
+    // source disappearing can be mistaken for a deleted Mathom.
+    basket()->removeWatchedFile(oldPath);
+
+    const QString actualName = renameFileOnDisk(oldPath, fileName, errorMessage);
+    if (actualName.isEmpty()) {
+        basket()->addWatchedFile(oldPath);
+        return false;
+    }
+
+    setFileName(actualName);
+    basket()->addWatchedFile(fullPath());
+    return true;
 }
 
 QString NoteContent::fullPath()

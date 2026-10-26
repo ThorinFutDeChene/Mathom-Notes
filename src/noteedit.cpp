@@ -734,9 +734,18 @@ FileEditor::~FileEditor() = default;
 void FileEditor::autoSave(bool toFileToo)
 {
     // FIXME: How to detect cancel?
-    if (toFileToo && !lineEdit()->text().isEmpty() && m_fileContent->trySetFileName(lineEdit()->text())) {
-        m_fileContent->setFileName(lineEdit()->text());
+    if (!toFileToo || lineEdit()->text().isEmpty())
+        return;
+
+    QString error;
+    if (m_fileContent->trySetFileName(lineEdit()->text(), &error)) {
+        // The accepted filename can differ from the requested one on collision.
+        // trySetFileName() has already updated the reference and file watcher.
+        lineEdit()->setText(m_fileContent->fileName());
         m_fileContent->setEdited();
+    } else if (!error.isEmpty()) {
+        lineEdit()->setText(m_fileContent->fileName());
+        KMessageBox::error(lineEdit(), error, i18n("Attachment Rename Error"));
     }
 }
 
