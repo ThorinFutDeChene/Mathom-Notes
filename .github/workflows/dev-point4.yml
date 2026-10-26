@@ -18,7 +18,7 @@ env:
   # Infrastructure stays on this CI branch. Compile the exact isolated point-4
   # application commit, never a rejected multiple-fix release.
   # An empty value deliberately stops before building or publishing anything.
-  MATHOM_SOURCE_COMMIT: '7564618dfacfc9043d51a49ebe265bbd55d29cd5'
+  MATHOM_SOURCE_COMMIT: '4c056421d6decd10b3bbe6d15998fccd2fb9c5f5'
   # Publication is enabled for this reviewed candidate. Compilation, regression
   # tests and native package checks must all succeed before the release step.
   PUBLISH_POINT4_DEV: 'true'
