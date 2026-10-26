@@ -95,14 +95,14 @@ if [[ "$phase" == published ]]; then
     fi
     # Point-1/3 archive and point-2 backup regression suites must load the
     # published packaged library; rejected multi-fix DEV changes are excluded.
-    for priority_test in archivetest backuptest; do
+    for priority_test in archivetest backuptest notecontentrenametest; do
         if [[ "${linked_tests[$priority_test]:-0}" != 1 ]]; then
             echo "Priority suite was not verified against the packaged LibBasket: $priority_test" \
                 | tee -a "$library_log" >&2
             exit 1
         fi
     done
-    printf 'Point-1/3 archive and point-2 backup suites load the packaged LibBasket.\n' | tee -a "$library_log"
+    printf 'Point-1/3 archive, point-2 backup and point-4 rename suites load the packaged LibBasket.\n' | tee -a "$library_log"
 fi
 
 timeout --signal=TERM --kill-after=10s 20m \
