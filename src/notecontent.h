@@ -231,8 +231,15 @@ public:
       /// users in the setting (choice to use a custom app or not, and which app).
     // Common File Management:                                            ///    (and do save changes) and optionally hide the toolbar.
     virtual void setFileName(const QString &fileName); /// << Set the filename. Reimplement it if you eg. want to update the view when the filename is changed.
-    bool
-    trySetFileName(const QString &fileName); /// << Set the new filename and return true. Can fail and return false if a file with this fileName already exists.
+    /** Rename an attached file/directory, updating the note and watcher only on success.
+     *  A name collision uses the actual available name (-2, -3, ...).
+     *  On error, preserve both the attachment and its note reference.
+     */
+    bool trySetFileName(const QString &fileName, QString *errorMessage = nullptr);
+    /** Filesystem-only helper used by the rename operation and its regression tests.
+     *  Return the accepted basename, or an empty string without changing the source.
+     */
+    static QString renameFileOnDisk(const QString &sourcePath, const QString &wantedFileName, QString *errorMessage = nullptr);
     QString fullPath(); /// << Get the absolute path of the file where this content is stored on disk.
     QUrl fullPathUrl(); /// << Get the absolute path of the file where this content is stored on disk as QUrl
     QString fileName() const

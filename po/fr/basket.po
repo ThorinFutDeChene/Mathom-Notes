@@ -6977,3 +6977,19 @@ msgstr "Impossible d'ajouter une Mathom-House à l'archive."
 #: src/archive.cpp
 msgid "Failed to save the Mathom-House archive to %1."
 msgstr "Impossible d'enregistrer l'archive de la Mathom-House dans %1."
+
+# Mathom Notes 5.0.5-dev1 -- point 4 : renommage fiable des pieces jointes
+msgid "Enter a file name without a folder path."
+msgstr "Saisis un nom de fichier sans chemin de dossier."
+
+#, kde-format
+msgid "Could not rename \"%1\": the file no longer exists."
+msgstr "Impossible de renommer « %1 » : le fichier n'existe plus."
+
+#, kde-format
+msgid "Could not rename \"%1\" to \"%2\". The file name was not changed."
+msgstr "Impossible de renommer « %1 » en « %2 ». Le nom du fichier n'a pas été modifié."
+
+msgid "Attachment Rename Error"
+msgstr "Erreur de renommage de pièce jointe"
+
