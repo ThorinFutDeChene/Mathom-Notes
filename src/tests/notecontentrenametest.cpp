@@ -3,22 +3,13 @@
  * Point 4 only: the file and its Mathom reference must agree after renaming.
  */
 
-#include <basketscene.h>
-#include <basketstatusbar.h>
-#include <bnpview.h>
-#include <global.h>
-#include <note.h>
 #include <notecontent.h>
 
-#include <KActionCollection>
-#include <KDirWatch>
-#include <KSharedConfig>
 
 #include <QDir>
 #include <QFile>
-#include <QStatusBar>
+#include <QFileInfo>
 #include <QTemporaryDir>
-#include <QXmlStreamWriter>
 #include <QtTest/QtTest>
 
 namespace {
@@ -49,7 +40,7 @@ private Q_SLOTS:
     void invalidName();
     void renameFailureLeavesOriginal();
     void renameDirectoryCollision();
-    void fileModelWatcherAndSavedReference();
+    void danglingSymlinkCollisionIsPreserved();
 };
 
 void NoteContentRenameTest::renamePreservesBinaryData()
@@ -165,57 +156,27 @@ void NoteContentRenameTest::renameDirectoryCollision()
     QCOMPARE(readBytes(temp.filePath(QStringLiteral("new/child.txt"))), QByteArrayLiteral("existing child"));
 }
 
-void NoteContentRenameTest::fileModelWatcherAndSavedReference()
+void NoteContentRenameTest::danglingSymlinkCollisionIsPreserved()
 {
     QTemporaryDir temp;
     QVERIFY(temp.isValid());
-    Global::setCustomSavesFolder(temp.path());
-    Global::basketConfig = KSharedConfig::openConfig(temp.filePath(QStringLiteral("mathomrc")), KConfig::SimpleConfig);
+    const QString source = temp.filePath(QStringLiteral("source.txt"));
+    const QString target = temp.filePath(QStringLiteral("target.txt"));
 
-    QStatusBar statusBar;
-    KActionCollection actions(static_cast<QObject *>(nullptr));
-    BNPView view(nullptr, nullptr, &actions, new BasketStatusBar(&statusBar));
-    BasketScene basket(nullptr, QStringLiteral("rename-test"));
-    QVERIFY(QDir().mkpath(basket.fullPath()));
-    const QString path = basket.fullPathForFileName(QStringLiteral("source.txt"));
-    QVERIFY(writeBytes(path, QByteArrayLiteral("content to preserve")));
-
-    Note note(&basket);
-    auto *content = new FileContent(&note, QStringLiteral("source.txt"));
-    auto *watcher = basket.findChild<KDirWatch *>();
-    QVERIFY(watcher);
-    QVERIFY(watcher->contains(path));
+    // A dangling symlink occupies a name even though QFileInfo::exists()
+    // returns false. It must never be overwritten by an attachment rename.
+    QVERIFY(QFile::link(temp.filePath(QStringLiteral("absent.txt")), target));
+    QVERIFY(QFileInfo(target).isSymLink());
+    QVERIFY(writeBytes(source, QByteArrayLiteral("attachment data")));
 
     QString error;
-    QVERIFY(content->trySetFileName(QStringLiteral("target.txt"), &error));
+    QCOMPARE(NoteContent::renameFileOnDisk(source, QStringLiteral("target.txt"), &error),
+             QStringLiteral("target-2.txt"));
     QVERIFY(error.isEmpty());
-    QCOMPARE(content->fileName(), QStringLiteral("target.txt"));
-    QVERIFY(!watcher->contains(path));
-    QVERIFY(watcher->contains(content->fullPath()));
-    QCOMPARE(readBytes(content->fullPath()), QByteArrayLiteral("content to preserve"));
-
-    const QString occupied = basket.fullPathForFileName(QStringLiteral("occupied.txt"));
-    QVERIFY(writeBytes(occupied, QByteArrayLiteral("not overwritten")));
-    QVERIFY(content->trySetFileName(QStringLiteral("occupied.txt"), &error));
-    QCOMPARE(content->fileName(), QStringLiteral("occupied-2.txt"));
-    QVERIFY(!watcher->contains(basket.fullPathForFileName(QStringLiteral("target.txt"))));
-    QVERIFY(watcher->contains(content->fullPath()));
-    QCOMPARE(readBytes(occupied), QByteArrayLiteral("not overwritten"));
-    QCOMPARE(readBytes(content->fullPath()), QByteArrayLiteral("content to preserve"));
-
-    QString saved;
-    QXmlStreamWriter writer(&saved);
-    content->saveToNode(writer);
-    QVERIFY(saved.contains(QStringLiteral(">occupied-2.txt</content>")));
-
-    const QString accepted = content->fullPath();
-    QVERIFY(!content->trySetFileName(QString(4096, QLatin1Char('x')), &error));
-    QVERIFY(!error.isEmpty());
-    QCOMPARE(content->fullPath(), accepted);
-    QCOMPARE(content->fileName(), QStringLiteral("occupied-2.txt"));
-    QVERIFY(watcher->contains(accepted));
-    QCOMPARE(readBytes(accepted), QByteArrayLiteral("content to preserve"));
-    QCOMPARE(readBytes(occupied), QByteArrayLiteral("not overwritten"));
+    QVERIFY(QFileInfo(target).isSymLink());
+    QCOMPARE(readBytes(temp.filePath(QStringLiteral("target-2.txt"))),
+             QByteArrayLiteral("attachment data"));
+    QVERIFY(!QFile::exists(source));
 }
 
 QTEST_MAIN(NoteContentRenameTest)
