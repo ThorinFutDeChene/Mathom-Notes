@@ -194,7 +194,9 @@ int main(int argc, char *argv[])
     if (opts.isSet(QStringLiteral("debug")))
         Global::bnpView->enableDebugMode();
 
-    win->show();
+    // Open Mathom maximized after restoring window settings.
+    // Keep the desktop panels and window controls available.
+    win->showMaximized();
 
     // Start probing connected scanners as soon as the main window is shown,
     // without waiting for the user to open Mathom Scan.
