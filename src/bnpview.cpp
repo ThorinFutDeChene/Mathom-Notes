@@ -39,6 +39,7 @@
 #include <QStackedWidget>
 #include <QSplitterHandle>
 #include <QToolButton>
+#include <QTimer>
 #include <QVBoxLayout>
 #include <QUndoStack>
 #include <QXmlStreamWriter>
@@ -128,6 +129,7 @@ BNPView::BNPView(QWidget *parent, KXMLGUIClient *aGUIClient, KActionCollection *
     , m_actionCollection(actionCollection)
     , m_guiClient(aGUIClient)
     , m_statusbar(bar)
+    , m_pendingSave(this, [this] { save(); })
 {
     new BNPViewAdaptor(this);
     QDBusConnection dbus = QDBusConnection::sessionBus();
@@ -1391,10 +1393,20 @@ void BNPView::save()
     stream.writeEndDocument();
 
     // Write to Disk:
-    FileStorage::safelySaveToFile(Global::basketsFolder() + QStringLiteral("baskets.xml"), data);
+    const bool saved = m_pendingSave.recordResult(
+        FileStorage::safelySaveToFile(
+            Global::basketsFolder() + QStringLiteral("baskets.xml"),
+            data));
+
+    if (!saved) {
+        DiagnosticManager::instance().logEvent(
+            QStringLiteral("TREE_SAVE_FAILED"));
+        return;
+    }
 
     GitWrapper::commitBasketView();
-    DiagnosticManager::instance().logEvent(QStringLiteral("TREE_SAVE_OK"));
+    DiagnosticManager::instance().logEvent(
+        QStringLiteral("TREE_SAVE_OK"));
 }
 
 void BNPView::save(QTreeWidget *listView, QTreeWidgetItem *item, QXmlStreamWriter &stream)
@@ -2840,6 +2852,30 @@ void BNPView::discardDetachedBasketForUndo(
         }
     }
 
+    // Closing an editor can trigger its final file save.
+    // Never destroy a detached Shelf while any write is pending.
+    for (BasketScene *basket : baskets) {
+        if (basket && basket->isDuringEdit())
+            basket->closeEditor();
+    }
+
+    bool waitingForSave = false;
+
+    for (BasketScene *basket : baskets) {
+        if (basket && PendingSave::hasPendingSaves(basket)) {
+            waitingForSave = true;
+            break;
+        }
+    }
+
+    if (waitingForSave) {
+        QTimer::singleShot(1000, this, [this, item] {
+            discardDetachedBasketForUndo(item);
+        });
+
+        return;
+    }
+
     /*
      * The tree item is already detached. Delete its visual hierarchy,
      * then permanently remove the BasketScenes from disk/memory.
@@ -4146,6 +4182,37 @@ void BNPView::delBasket()
             return;
     }
 
+    // Verify every shelf in the subtree before detaching or
+    // destroying any part of it.
+    QList<QTreeWidgetItem *> subtree;
+    subtree.append(listViewItemForBasket(basket));
+
+    for (int index = 0; index < subtree.size(); ++index) {
+        auto *item = static_cast<BasketListViewItem *>(
+            subtree.at(index));
+
+        BasketScene *scene = item->basket();
+
+        if (scene) {
+            if (scene->isDuringEdit())
+                scene->closeEditor();
+
+            if (!PendingSave::retryPendingSaves(scene)) {
+                Q_EMIT showErrorMessage(
+                    i18n(
+                        "Some Mathoms could not be saved. "
+                        "The Mathom-House or Shelf has not been removed."));
+                return;
+            }
+        }
+
+        for (int child = 0;
+             child < item->childCount();
+             ++child) {
+            subtree.append(item->child(child));
+        }
+    }
+
     QString basketFolderName = basket->folderName();
 
     DiagnosticManager::instance().logEvent(
@@ -4641,7 +4708,10 @@ void BNPView::setStatusBarHint(const QString &hint)
 
 void BNPView::setUnsavedStatus(bool isUnsaved)
 {
-    m_statusbar->setUnsavedStatus(isUnsaved);
+    if (m_statusbar) {
+        m_statusbar->setUnsavedStatus(
+            isUnsaved || PendingSave::hasPendingSaves());
+    }
 }
 
 void BNPView::setActive(bool active)

@@ -43,6 +43,7 @@
 #include "bnpview.h"
 #include "diagnosticmanager.h"
 #include "global.h"
+#include "pendingsave.h"
 #include "mathomicons.h"
 #include "settings.h"
 
@@ -1282,8 +1283,23 @@ void MainWindow::quit()
 
 bool MainWindow::queryClose()
 {
-    /*  if (m_shuttingDown) // Set in askForQuit(): we don't have to ask again
-        return true;*/
+    if (Global::bnpView)
+        Global::bnpView->closeAllEditors();
+
+    if (!PendingSave::retryPendingSaves()) {
+        m_quit = false;
+
+        KMessageBox::error(
+            this,
+            i18n(
+                "Some changes could not be saved. "
+                "Mathom Notes will stay open and retry automatically. "
+                "Check that the storage is available and has enough "
+                "free space before quitting."),
+            i18n("Changes Not Saved"));
+
+        return false;
+    }
 
     if (qApp->isSavingSession()) {
         Settings::saveConfig();

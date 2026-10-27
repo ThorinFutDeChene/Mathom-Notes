@@ -14,6 +14,7 @@
 
 #include "basket_export.h"
 #include "linklabel.h"
+#include "pendingsave.h"
 
 class QBuffer;
 class QColor;
@@ -259,10 +260,13 @@ public:
 
 public:
     void setEdited(); /// << Mark the note as edited NOW: change the "last modification time and time" AND save the basket to XML file.
+    bool hasPendingSave() const { return m_pendingSave.isPending(); }
+    void cancelPendingSave() { m_pendingSave.cancel(); }
 protected:
     void contentChanged(qreal newMinWidth); /// << When the content has changed, inherited classes should call this to specify its new minimum size and trigger
                                             /// a basket relayout.
     NoteType::Id m_type = NoteType::Unknown;
+    PendingSave m_pendingSave;
 
 private:
     Note *m_note;

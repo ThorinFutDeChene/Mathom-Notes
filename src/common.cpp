@@ -124,38 +124,28 @@ bool FileStorage::saveToFile(const QString &fullPath, const QByteArray &array, b
  */
 bool FileStorage::safelySaveToFile(const QString &fullPath, const QByteArray &array)
 {
-    // Modulus operandi:
-    // 1. Use QSaveFile to try and save the file
-    // 2. Show a modal dialog (with the error) when bad things happen
-    // 3. We keep trying (at increasing intervals, up until every minute)
-    //    until we finally save the file.
+    // Une seule tentative atomique.
+    // Le proprietaire des donnees gere les reprises avec PendingSave.
 
-    // The error dialog is static to make sure we never show the dialog twice,
-    static const uint maxDelay = 60 * 1000; // ms
-    uint retryDelay = 1000; // ms
-    bool success = false;
-    do {
-        QSaveFile saveFile(fullPath);
-        if (saveFile.open(QIODevice::WriteOnly)) {
-            saveFile.write(array);
-            if (saveFile.commit())
-                success = true;
+    QSaveFile saveFile(fullPath);
+    saveFile.setDirectWriteFallback(false);
+
+    if (saveFile.open(QIODevice::WriteOnly)) {
+        if (saveFile.write(array) == array.size()
+            && saveFile.commit()) {
+            return true;
         }
 
-        if (!success) {
-            Q_EMIT Global::bnpView->showErrorMessage(i18n("Error while saving: ") + saveFile.errorString());
+        saveFile.cancelWriting();
+    }
 
-            static const uint sleepDelay = 50; // ms
-            for (uint i = 0; i < retryDelay / sleepDelay; ++i) {
-                qApp->processEvents();
-            }
+    if (Global::bnpView) {
+        Q_EMIT Global::bnpView->showErrorMessage(
+            i18n("Error while saving: ")
+            + saveFile.errorString());
+    }
 
-            // Double the retry delay, but don't go over the max.
-            retryDelay = std::min(maxDelay, retryDelay * 2); // ms
-        }
-    } while (!success);
-
-    return true; // Guess we can't really return a fail
+    return false;
 }
 
 bool FileStorage::safelySaveToFile(const QString &fullPath, const QString &string)

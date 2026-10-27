@@ -17,6 +17,7 @@
 
 #include "config.h"
 #include "note.h" // For Note::Zone
+#include "pendingsave.h"
 
 class QFrame;
 class QMenu;
@@ -805,6 +806,7 @@ public Q_SLOTS:
 
 public:
     Note *noteForFullPath(const QString &path);
+    bool saveNoteForFileTransfer(Note *note);
 
     /// EXPORTATION:
 public:
@@ -892,6 +894,7 @@ public:
     }
 
 private:
+    PendingSave m_pendingSave;
     QGraphicsView *m_view;
 };
 

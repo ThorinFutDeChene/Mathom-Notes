@@ -12,6 +12,7 @@
 #include <QtGui/QClipboard>
 
 #include "basket_export.h"
+#include "pendingsave.h"
 
 class QDomElement;
 
@@ -428,6 +429,7 @@ private:
     KActionCollection *m_globalShortcutActions = nullptr;
     KXMLGUIClient *m_guiClient;
     BasketStatusBar *m_statusbar;
+    PendingSave m_pendingSave;
 
     QUndoStack *m_undoStack;
     bool m_previousSessionUndoConfirmed = false;

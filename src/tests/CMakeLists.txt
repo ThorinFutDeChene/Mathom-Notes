@@ -12,6 +12,7 @@ set(BASKET_TEST_SRC
     archivetest.cpp
     backuptest.cpp
     notecontentrenametest.cpp
+    pendingsavetest.cpp
     notefactorytest.cpp
     secondarylanguagetest.cpp
     secondarylanguageenginetest.cpp

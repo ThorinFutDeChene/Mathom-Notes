@@ -9,6 +9,7 @@
 #include <KActionCollection>
 #include <KLocalizedString>
 
+#include <QCoreApplication>
 #include <QDir>
 #include <QFont>
 #include <QIcon>
@@ -23,6 +24,7 @@
 #include "defaulttagtranslation.h"
 #include "gitwrapper.h"
 #include "global.h"
+#include "pendingsave.h"
 #include "mathomicons.h"
 #include "tools.h"
 #include "xmlwork.h"
@@ -507,12 +509,23 @@ Tag *Tag::tagSimilarTo(Tag *tagToTest)
 void Tag::saveTags()
 {
     DEBUG_WIN << QStringLiteral("Saving tags...");
-    saveTagsTo(all, Global::savesFolder() + QStringLiteral("tags.xml"));
+
+    static auto *pendingSave = new PendingSave(
+        QCoreApplication::instance(),
+        [] { Tag::saveTags(); });
+
+    const bool saved = pendingSave->recordResult(
+        saveTagsTo(
+            all,
+            Global::savesFolder() + QStringLiteral("tags.xml")));
+
+    if (!saved)
+        return;
 
     GitWrapper::commitTagsXml();
 }
 
-void Tag::saveTagsTo(QList<Tag *> &list, const QString &fullPath)
+bool Tag::saveTagsTo(QList<Tag *> &list, const QString &fullPath)
 {
     // Create Document:
     QDomDocument document(/*doctype=*/QStringLiteral("basketTags"));
@@ -565,8 +578,12 @@ void Tag::saveTagsTo(QList<Tag *> &list, const QString &fullPath)
     }
 
     // Write to Disk:
-    if (!FileStorage::safelySaveToFile(fullPath, QStringLiteral("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n") + document.toString()))
+    if (!FileStorage::safelySaveToFile(fullPath, QStringLiteral("<?xml version=\"1.0\" encoding=\"UTF-8\" ?>\n") + document.toString())) {
         DEBUG_WIN << QStringLiteral("<font color=red>FAILED to save tags</font>!");
+        return false;
+    }
+
+    return true;
 }
 
 void Tag::copyTo(Tag *other)

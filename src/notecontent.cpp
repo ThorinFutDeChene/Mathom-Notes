@@ -197,6 +197,7 @@ const int NoteContent::FEEDBACK_DARKING = 105;
 
 NoteContent::NoteContent(Note *parent, const NoteType::Id type, const QString &fileName)
     : m_type(type)
+    , m_pendingSave(parent, [this] { saveToFile(); })
     , m_note(parent)
     , m_minWidth(0.0)
 {
@@ -303,6 +304,18 @@ bool NoteContent::trySetFileName(const QString &fileName, QString *errorMessage)
         errorMessage->clear();
     if (!useFile() || !basket() || fileName == m_fileName)
         return false;
+
+    if (m_pendingSave.isPending()
+        && !PendingSave::retryPendingSaves(note())) {
+
+        if (errorMessage) {
+            *errorMessage = i18n(
+                "This Mathom contains unsaved changes. "
+                "Wait until the file is saved before renaming it.");
+        }
+
+        return false;
+    }
 
     const QString oldPath = fullPath();
     // Detach the watcher before the filesystem operation: otherwise the
@@ -1075,7 +1088,8 @@ bool TextContent::finishLazyLoad()
 
 bool TextContent::saveToFile()
 {
-    return FileStorage::saveToFile(fullPath(), text());
+    return m_pendingSave.recordResult(
+        FileStorage::saveToFile(fullPath(), text()));
 }
 
 QString TextContent::linkAt(const QPointF & /*pos*/)
@@ -1201,7 +1215,8 @@ bool HtmlContent::finishLazyLoad()
 
 bool HtmlContent::saveToFile()
 {
-    return FileStorage::saveToFile(fullPath(), html());
+    return m_pendingSave.recordResult(
+        FileStorage::saveToFile(fullPath(), html()));
 }
 
 QString HtmlContent::linkAt(const QPointF &pos)
@@ -1342,17 +1357,18 @@ bool ImageContent::saveToFile()
     QBuffer buffer(&ba);
 
     if (!buffer.open(QIODevice::WriteOnly))
-        return false;
+        return m_pendingSave.recordResult(false);
 
     if (!m_pixmapItem.pixmap().save(
             &buffer,
             m_format.constData())) {
-        return false;
+        return m_pendingSave.recordResult(false);
     }
 
     buffer.close();
 
-    return FileStorage::saveToFile(fullPath(), ba);
+    return m_pendingSave.recordResult(
+        FileStorage::saveToFile(fullPath(), ba));
 }
 
 QMap<QString, QString> ImageContent::toolTipInfos()

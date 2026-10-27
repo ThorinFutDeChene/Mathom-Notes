@@ -784,7 +784,10 @@ bool SpreadsheetContent::saveToFile()
     }
     object.insert(QStringLiteral("cells"), rowsArray);
 
-    return FileStorage::saveToFile(fullPath(), QJsonDocument(object).toJson(QJsonDocument::Compact));
+    return m_pendingSave.recordResult(
+        FileStorage::saveToFile(
+            fullPath(),
+            QJsonDocument(object).toJson(QJsonDocument::Compact)));
 }
 
 void SpreadsheetContent::fontChanged()

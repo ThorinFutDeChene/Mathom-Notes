@@ -1140,7 +1140,11 @@ bool BasketScene::save()
     stream.writeEndDocument();
 
     // Write to Disk:
-    if (!FileStorage::saveToFile(fullPath() + QStringLiteral(".basket"), data, isEncrypted())) {
+    if (!m_pendingSave.recordResult(
+            FileStorage::saveToFile(
+                fullPath() + QStringLiteral(".basket"),
+                data,
+                isEncrypted()))) {
         DEBUG_WIN << QStringLiteral("Basket[") + folderName() + QStringLiteral("]: <font color=red>FAILED to save</font>!");
         DiagnosticManager::instance().logEvent(
             QStringLiteral("SHELF_SAVE_FAILED"),
@@ -2385,6 +2389,16 @@ bool BasketScene::deletePage(
     if (isDuringEdit())
         closeEditor();
 
+    if (!PendingSave::retryPendingSaves(this)) {
+        if (Global::bnpView) {
+            Q_EMIT Global::bnpView->showErrorMessage(
+                i18n(
+                    "The page cannot be deleted while "
+                    "some Mathoms contain unsaved changes."));
+        }
+        return false;
+    }
+
     const QString replacementPageId =
         pageIndex + 1 < m_pages.size()
             ? m_pages.at(pageIndex + 1).id
@@ -2862,6 +2876,15 @@ void BasketScene::aboutToBeActivated()
 void BasketScene::reload()
 {
     closeEditor();
+
+    if (!PendingSave::retryPendingSaves(this)) {
+        if (Global::bnpView) {
+            Q_EMIT Global::bnpView->showErrorMessage(
+                i18n("Cannot reload while changes remain unsaved."));
+        }
+        return;
+    }
+
     unbufferizeAll(); // Keep the memory footprint low
 
     m_firstNote = nullptr;
@@ -3129,6 +3152,7 @@ BasketScene::BasketScene(QWidget *parent, const QString &folderName)
     , m_startOfShiftSelectionNote(nullptr)
     , m_finishLoadOnFirstShow(false)
     , m_relayoutOnNextShow(false)
+    , m_pendingSave(this, [this] { save(); })
 {
     m_view = new BasketView(this);
     m_view->setFocusPolicy(Qt::StrongFocus);
@@ -4594,7 +4618,8 @@ void BasketScene::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         NoteSelection *selection = selectedNotes();
         if (selection->firstStacked()) {
             QDrag *d = NoteDrag::dragObject(selection, /*cutting=*/false, /*source=*/m_view); // d will be deleted by QT
-            /*bool shouldRemove = */ d->exec();
+            if (d)
+                /*bool shouldRemove = */ d->exec();
             //      delete selection;
 
             // Never delete because URL is dragged and the file must be available for the extern application
@@ -6178,6 +6203,19 @@ void BasketScene::discardSuspendedMathom(
     if (!note)
         return;
 
+    // An Undo command can expire while a file write is still pending.
+    // Keep the suspended Mathom alive until the storage has recovered.
+    if (PendingSave::hasPendingSaves(this)) {
+        QPointer<Note> deferredNote(note);
+
+        QTimer::singleShot(1000, this, [this, deferredNote] {
+            if (deferredNote)
+                discardSuspendedMathom(deferredNote.data());
+        });
+
+        return;
+    }
+
     /*
      * This happens when an Undoable deletion remains active and the
      * command finally leaves history. A suspended root can now be an
@@ -6448,7 +6486,11 @@ bool BasketScene::closeEditor(bool deleteEmptyNote /* =true*/)
 void BasketScene::closeBasket()
 {
     closeEditor();
-    unbufferizeAll(); // Keep the memory footprint low
+
+    // Keep in-memory Mathoms until every failed write has recovered.
+    if (!PendingSave::hasPendingSaves(this))
+        unbufferizeAll();
+
     if (isEncrypted()) {
         if (Settings::enableReLockTimeout()) {
             int seconds = Settings::reLockTimeoutMinutes() * 60;
@@ -6761,6 +6803,16 @@ void BasketScene::focusANonSelectedNoteAboveOrThenBelow()
 
 void BasketScene::noteDeleteWithoutConfirmation(bool deleteFilesToo)
 {
+    if (!PendingSave::retryPendingSaves(this)) {
+        if (Global::bnpView) {
+            Q_EMIT Global::bnpView->showErrorMessage(
+                i18n(
+                    "Some Mathoms could not be saved. "
+                    "Deletion has been cancelled to protect your changes."));
+        }
+        return;
+    }
+
     /*
      * A normal user deletion belongs to the global Undo/Redo history.
      *
@@ -6852,6 +6904,25 @@ void BasketScene::noteDeleteWithoutConfirmation(bool deleteFilesToo)
     save();
 }
 
+bool BasketScene::saveNoteForFileTransfer(Note *note)
+{
+    if (!note || note->basket() != this || !note->content())
+        return false;
+
+    // Synchronize the current editor before reading its backing file.
+    if (m_editor && m_editor->note() == note)
+        m_editor->autoSave(/*toFileToo=*/true);
+
+    // One immediate retry; no nested event loop.
+    if (!PendingSave::retryPendingSaves(note))
+        return false;
+
+    const QString path = note->content()->fullPath();
+
+    // Missing source files must never be silently transferred.
+    return !path.isEmpty() && QFileInfo::exists(path);
+}
+
 void BasketScene::doCopy(CopyMode copyMode)
 {
     QClipboard *cb = QApplication::clipboard();
@@ -6861,6 +6932,9 @@ void BasketScene::doCopy(CopyMode copyMode)
     int countCopied = countSelecteds();
     if (selection->firstStacked()) {
         QDrag *d = NoteDrag::dragObject(selection, copyMode == CutToClipboard, /*source=*/nullptr); // d will be deleted by QT
+
+        if (!d)
+            return;
 
         cb->setMimeData(d->mimeData(), mode);
 
@@ -7368,9 +7442,14 @@ void BasketScene::slotCopyingDone2(KIO::Job *job, const QUrl & /*from*/, const Q
     Note *note = noteForFullPath(to.path());
     DEBUG_WIN << QStringLiteral("Copy finished, load note: ") + to.path() + (note ? QString() : QStringLiteral(" --- NO CORRESPONDING NOTE"));
     if (note != nullptr) {
-        note->content()->loadFromFile(/*lazyLoad=*/false);
-        if (isEncrypted())
-            note->content()->saveToFile();
+        if (note->content()
+            && !note->content()->hasPendingSave()) {
+            note->content()->loadFromFile(/*lazyLoad=*/false);
+
+            if (isEncrypted())
+                note->content()->saveToFile();
+        }
+
         if (m_focusedNote == note) // When inserting a new note we ensure it visible
             ensureNoteVisible(note); //  But after loading it has certainly grown and if it was
     } //  on bottom of the basket it's not visible entirely anymore
@@ -7874,6 +7953,12 @@ void BasketScene::watchedFileModified(const QString &fullPath)
 void BasketScene::watchedFileDeleted(const QString &fullPath)
 {
     Note *note = noteForFullPath(fullPath);
+
+    if (note && note->content()
+        && note->content()->hasPendingSave()) {
+        return;
+    }
+
     removeWatchedFile(fullPath);
     if (note) {
         NoteSelection *selection = selectedNotes();
@@ -7891,8 +7976,10 @@ void BasketScene::updateModifiedNotes()
 {
     for (QList<QString>::iterator it = m_modifiedFiles.begin(); it != m_modifiedFiles.end(); ++it) {
         Note *note = noteForFullPath(*it);
-        if (note)
+        if (note && note->content()
+            && !note->content()->hasPendingSave()) {
             note->content()->loadFromFile(/*lazyLoad=*/false);
+        }
     }
     m_modifiedFiles.clear();
 }
@@ -7969,6 +8056,10 @@ void BasketScene::lock()
 {
 #ifdef HAVE_LIBGPGME
     closeEditor();
+
+    if (!PendingSave::retryPendingSaves(this))
+        return;
+
     m_gpg->clearCache();
     m_locked = true;
     enableActions();

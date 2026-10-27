@@ -209,7 +209,7 @@ public:
                                                                    /// if @p path isEmpty(). If @p merge is true and a tag with the id of a tag that should be
                                                                    /// loaded already exist, the tag will get a new id. Otherwise, the tag will be dismissed.
     static void saveTags();
-    static void saveTagsTo(QList<Tag *> &list, const QString &fullPath);
+    static bool saveTagsTo(QList<Tag *> &list, const QString &fullPath);
     static void createDefaultTagsSet(const QString &file);
     static long getNextStateUid();
     static void updateCaches();

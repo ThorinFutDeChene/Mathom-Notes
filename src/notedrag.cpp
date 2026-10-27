@@ -20,8 +20,12 @@
 
 #include <KIO/CopyJob>
 #include <KIO/Paste>
+#include <KLocalizedString>
 
 #include "basketscene.h"
+#include "bnpview.h"
+#include "note.h"
+#include "pendingsave.h"
 #include "global.h"
 #include "notefactory.h"
 #include "noteselection.h"
@@ -43,8 +47,37 @@ void NoteDrag::createAndEmptyCuttingTmpFolder()
 
 QDrag *NoteDrag::dragObject(NoteSelection *noteList, bool cutting, QWidget *source)
 {
-    if (noteList->count() <= 0)
+    if (!noteList || noteList->count() <= 0)
         return nullptr;
+
+    // Preflight every file-backed Mathom before constructing a drag
+    // or modifying any clipboard-related temporary file.
+    for (NoteSelection *node = noteList->firstStacked();
+         node;
+         node = node->nextStacked()) {
+
+        Note *note = node->note;
+
+        if (!note || !note->content())
+            continue;
+
+        if (!note->content()->shouldSerializeFile())
+            continue;
+
+        if (!note->basket()
+            || !note->basket()->saveNoteForFileTransfer(note)) {
+
+            if (Global::bnpView) {
+                Q_EMIT Global::bnpView->showErrorMessage(
+                    i18n(
+                        "Some selected mathoms could not be saved. "
+                        "Wait until they are saved before copying, "
+                        "cutting or moving them."));
+            }
+
+            return nullptr;
+        }
+    }
 
     auto *multipleDrag = new QDrag(source);
 
@@ -407,9 +440,38 @@ Note *NoteDrag::decode(const QMimeData *source, BasketScene *parent, bool moveFi
     if (buffer.open(QIODevice::ReadOnly)) {
         QDataStream stream(&buffer);
         // Get the parent basket:
-        quint64 basketPointer;
-        stream >> (quint64 &)basketPointer;
-        auto *basket = (BasketScene *)basketPointer;
+        quint64 basketPointer = 0;
+        stream >> basketPointer;
+
+        auto *basket = reinterpret_cast<BasketScene *>(
+            static_cast<quintptr>(basketPointer));
+
+        const bool sourceAvailable =
+            stream.status() == QDataStream::Ok
+            && basket
+            && Global::bnpView
+            && Global::bnpView
+                   ->findChildren<BasketScene *>()
+                   .contains(basket);
+
+        if (!sourceAvailable) {
+            if (Global::bnpView) {
+                Q_EMIT Global::bnpView->showErrorMessage(
+                    i18n(
+                        "The source Mathom-House is no longer available. "
+                        "Copy the mathoms again before pasting them."));
+            }
+            return nullptr;
+        }
+
+        if (!PendingSave::retryPendingSaves(basket)) {
+            Q_EMIT Global::bnpView->showErrorMessage(
+                i18n(
+                    "The source Mathom-House contains unsaved changes. "
+                    "Wait until they are saved before pasting."));
+            return nullptr;
+        }
+
         // Decode the note hierarchy:
         Note *hierarchy = decodeHierarchy(stream, parent, moveFiles, moveNotes, basket);
         // In case we moved notes from one basket to another, save the source basket where notes were removed:

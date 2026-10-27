@@ -9,17 +9,19 @@
 #ifndef BASKET_COMMON_H
 #define BASKET_COMMON_H
 
+#include "basket_export.h"
+
 class QByteArray;
 class QString;
 
 namespace FileStorage
 {
-bool loadFromFile(const QString &fullPath, QString *string);
-bool loadFromFile(const QString &fullPath, QByteArray *array);
-bool saveToFile(const QString &fullPath, const QString &string, bool isEncrypted = false);
-bool saveToFile(const QString &fullPath, const QByteArray &array, bool isEncrypted = false); //[Encrypt and] save binary content
-bool safelySaveToFile(const QString &fullPath, const QByteArray &array);
-bool safelySaveToFile(const QString &fullPath, const QString &string);
+BASKET_EXPORT bool loadFromFile(const QString &fullPath, QString *string);
+BASKET_EXPORT bool loadFromFile(const QString &fullPath, QByteArray *array);
+BASKET_EXPORT bool saveToFile(const QString &fullPath, const QString &string, bool isEncrypted = false);
+BASKET_EXPORT bool saveToFile(const QString &fullPath, const QByteArray &array, bool isEncrypted = false); //[Encrypt and] save binary content
+BASKET_EXPORT bool safelySaveToFile(const QString &fullPath, const QByteArray &array);
+BASKET_EXPORT bool safelySaveToFile(const QString &fullPath, const QString &string);
 }
 
 #endif
