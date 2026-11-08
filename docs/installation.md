@@ -3,7 +3,7 @@
 ## Versions
 
 - **Derniere stable publiee** : 5.0.6.
-- **Version de developpement en preparation** : 5.0.7-dev1.
+- **Version de developpement en preparation** : 5.0.7-dev2.
 - Depot et code source publics, logiciel libre et gratuit (GPL-2.0-or-later).
 
 ## Norme d'installation
@@ -40,14 +40,14 @@ aucune note et aucune sauvegarde automatique.
 Installer le nouveau .deb sous le meme nom de paquet mathom :
 
 ~~~bash
-sudo apt install ./mathom_5.0.7-0dev1_amd64.deb
+sudo apt install ./mathom_5.0.7-0dev2_amd64.deb
 ~~~
 
 APT/dpkg substituent les anciens composants applicatifs places sous /usr
 aux composants du paquet sous /opt et a son nouveau lanceur.
 Le script d'installation ne manipule jamais les fichiers personnels.
 
-**Important :** la version 5.0.7-dev1 est en developpement ;
+**Important :** la version 5.0.7-dev2 est en developpement ;
 ne pas la considerer comme disponible avant publication de la Release DEV
 et ses tests d'installation.
 
@@ -71,7 +71,7 @@ relance ne s'effectue qu'avec l'accord de l'utilisateur.
 ~~~bash
 ./scripts/build-mathom-native-deb.sh
 
-DEB="packaging/mathom_5.0.7-0dev1_amd64.deb"
+DEB="packaging/mathom_5.0.7-0dev2_amd64.deb"
 dpkg-deb -f "$DEB" Package Version Architecture Depends
 dpkg-deb -c "$DEB"
 sha256sum "$DEB"

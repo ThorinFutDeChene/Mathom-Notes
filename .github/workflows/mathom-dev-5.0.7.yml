@@ -1,9 +1,9 @@
-name: Mathom 5.0.7 DEV build and publish
+name: Mathom 5.0.7 DEV2 build and publish
 
 on:
   push:
     branches:
-      - dev/conformite-installation-5.0.7-dev1
+      - dev/conformite-installation-5.0.7-dev2
 
 permissions:
   contents: write
@@ -42,10 +42,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          DEB=packaging/mathom_5.0.7-0dev1_amd64.deb
+          DEB=packaging/mathom_5.0.7-0dev2_amd64.deb
           test -s "$DEB"
           test "$(dpkg-deb -f "$DEB" Package)" = mathom
-          test "$(dpkg-deb -f "$DEB" Version)" = 5.0.7-0dev1
+          test "$(dpkg-deb -f "$DEB" Version)" = 5.0.7-0dev2
           dpkg-deb -c "$DEB" > packaging/package-manifest.txt
           grep -q './opt/mathom/bin/mathom' packaging/package-manifest.txt
           grep -q './usr/bin/mathom' packaging/package-manifest.txt
@@ -55,10 +55,10 @@ jobs:
 
       - uses: actions/upload-artifact@v4
         with:
-          name: mathom-5.0.7-dev1-deb
+          name: mathom-5.0.7-dev2-deb
           path: |
-            packaging/mathom_5.0.7-0dev1_amd64.deb
-            packaging/mathom_5.0.7-0dev1_amd64.deb.sha256
+            packaging/mathom_5.0.7-0dev2_amd64.deb
+            packaging/mathom_5.0.7-0dev2_amd64.deb.sha256
             packaging/package-manifest.txt
 
       - name: Publish version DEV only after successful compilation
@@ -67,15 +67,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          TAG=v5.0.7-dev1
+          TAG=v5.0.7-dev2
           if gh release view "$TAG" >/dev/null 2>&1; then
             echo "La DEV est deja publiee. Ne jamais reecrire une prerelease."
             exit 1
           fi
           gh release create "$TAG" \
-            packaging/mathom_5.0.7-0dev1_amd64.deb \
-            packaging/mathom_5.0.7-0dev1_amd64.deb.sha256 \
+            packaging/mathom_5.0.7-0dev2_amd64.deb \
+            packaging/mathom_5.0.7-0dev2_amd64.deb.sha256 \
             --prerelease \
             --target "$GITHUB_SHA" \
-            --title "Mathom Notes 5.0.7 DEV1 - conformite installation" \
+            --title "Mathom Notes 5.0.7 DEV2 - conformite installation" \
             --notes "Version DEV de migration de l'application sous /opt/mathom. Les donnees XDG existantes restent intactes. A tester avant toute stable : mise a niveau depuis 5.0.6, installation neuve, ressources KDE, icones, exports, sauvegardes automatiques et notification de mise a jour."
