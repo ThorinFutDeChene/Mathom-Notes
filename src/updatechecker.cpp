@@ -24,6 +24,8 @@
 #include <QUrl>
 #include <QWidget>
 
+#include <KConfigGroup>
+#include <KSharedConfig>
 #include <KLocalizedString>
 #include <KMessageBox>
 
@@ -45,16 +47,23 @@ const QString allUpdatesApiUrl =
         "ThorinFutDeChene/Mathom-Notes/releases?per_page=20");
 }
 
-UpdateChecker::UpdateChecker(QWidget *parent)
+UpdateChecker::UpdateChecker(QWidget *parent, bool automatic)
     : QObject(parent)
     , m_parentWidget(parent)
+    , m_automatic(automatic)
     , m_network(new QNetworkAccessManager(this))
 {
 }
 
 void UpdateChecker::check(QWidget *parent)
 {
-    auto *checker = new UpdateChecker(parent);
+    auto *checker = new UpdateChecker(parent, false);
+    checker->start();
+}
+
+void UpdateChecker::checkAutomatically(QWidget *parent)
+{
+    auto *checker = new UpdateChecker(parent, true);
     checker->start();
 }
 
@@ -554,8 +563,14 @@ void UpdateChecker::start()
         return;
     }
 
+    // Automatic checks only target stable releases. DEV checks stay manual.
+    if (m_automatic && currentVersion.contains(QStringLiteral("dev"))) {
+        deleteLater();
+        return;
+    }
+
     const bool allowDevelopment =
-        Settings::allowDevelopmentUpdates();
+        !m_automatic && Settings::allowDevelopmentUpdates();
 
     QNetworkRequest request{
         QUrl(
@@ -591,13 +606,15 @@ void UpdateChecker::start()
          allowDevelopment]() {
             if (reply->error()
                 != QNetworkReply::NoError) {
-                KMessageBox::error(
-                    m_parentWidget,
-                    i18n(
-                        "Unable to contact the "
-                        "Mathom update server: %1",
-                        reply->errorString()),
-                    i18n("Mathom Update"));
+                if (!m_automatic) {
+                    KMessageBox::error(
+                        m_parentWidget,
+                        i18n(
+                            "Unable to contact the "
+                            "Mathom update server: %1",
+                            reply->errorString()),
+                        i18n("Mathom Update"));
+                }
 
                 reply->deleteLater();
                 deleteLater();
@@ -777,12 +794,14 @@ void UpdateChecker::start()
             }
 
             if (newestVersion.isEmpty()) {
-                KMessageBox::error(
-                    m_parentWidget,
-                    i18n(
-                        "No valid Mathom Debian package "
-                        "was found in the available releases."),
-                    i18n("Mathom Update"));
+                if (!m_automatic) {
+                    KMessageBox::error(
+                        m_parentWidget,
+                        i18n(
+                            "No valid Mathom Debian package "
+                            "was found in the available releases."),
+                        i18n("Mathom Update"));
+                }
 
                 deleteLater();
                 return;
@@ -808,16 +827,30 @@ void UpdateChecker::start()
             if (!isVersionGreater(
                     newestVersion,
                     currentVersion)) {
-                KMessageBox::information(
-                    m_parentWidget,
-                    i18n(
-                        "Mathom is up to date.")
-                        + QStringLiteral("\n\n")
-                        + versions,
-                    i18n("Mathom Update"));
+                if (!m_automatic) {
+                    KMessageBox::information(
+                        m_parentWidget,
+                        i18n(
+                            "Mathom is up to date.")
+                            + QStringLiteral("\n\n")
+                            + versions,
+                        i18n("Mathom Update"));
+                }
 
                 deleteLater();
                 return;
+            }
+
+            if (m_automatic && !selectedDevelopment) {
+                const KConfigGroup updates(
+                    KSharedConfig::openConfig(QStringLiteral("mathomrc")),
+                    QStringLiteral("Mathom Updates"));
+                if (updates.readEntry(
+                        QStringLiteral("declinedStableVersion"), QString())
+                    == newestVersion) {
+                    deleteLater();
+                    return;
+                }
             }
 
             const QString updateMessage =
@@ -840,6 +873,14 @@ void UpdateChecker::start()
                     QMessageBox::Yes);
 
             if (answer != QMessageBox::Yes) {
+                if (!selectedDevelopment) {
+                    KConfigGroup updates(
+                        KSharedConfig::openConfig(QStringLiteral("mathomrc")),
+                        QStringLiteral("Mathom Updates"));
+                    updates.writeEntry(
+                        QStringLiteral("declinedStableVersion"), newestVersion);
+                    updates.sync();
+                }
                 deleteLater();
                 return;
             }

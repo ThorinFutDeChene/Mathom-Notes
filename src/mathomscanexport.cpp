@@ -140,8 +140,8 @@ MathomScanExport::Output MathomScanExport::write(
         return result;
     }
     QDir destination(directory);
-    if (!destination.exists()) {
-        result.error = QStringLiteral("The configured output directory does not exist");
+    if (!destination.exists() && !QDir().mkpath(directory)) {
+        result.error = QStringLiteral("Unable to create the configured output directory");
         return result;
     }
     QLockFile lock(destination.filePath(QStringLiteral(".mathom-scan.lock")));

@@ -5,6 +5,7 @@
  */
 
 #include "htmlexporter.h"
+#include "userexportpaths.h"
 
 #include "basketlistview.h"
 #include "basketscene.h"
@@ -58,7 +59,7 @@ HTMLExporter::HTMLExporter(BasketScene *basket)
     const QString folder =
         config.readEntry(
             "lastFolder",
-            QDir::homePath())
+            MathomUserPaths::readyDirectory())
         + QLatin1Char('/');
 
     QString destination =

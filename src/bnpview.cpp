@@ -69,6 +69,7 @@
 #include "archive.h"
 #include "backgroundmanager.h"
 #include "backup.h"
+#include "userexportpaths.h"
 #include "basketfactory.h"
 #include "basketlistview.h"
 #include "basketproperties.h"
@@ -235,6 +236,12 @@ void BNPView::lateInit()
     // been loaded successfully. The backup itself runs transparently
     // in a worker thread and never blocks startup with a dialog.
     Backup::startAutomaticBackupIfDue();
+
+    // UpdateChecker belongs to LibBasket. Invoke it within this library
+    // so no non-exported internal symbols leak into the executable.
+    QTimer::singleShot(3000, this, [this] {
+        UpdateChecker::checkAutomatically(this);
+    });
 }
 
 void BNPView::addWelcomeBaskets()
@@ -3332,7 +3339,7 @@ void BNPView::exportCurrentPageToPDF()
     const QString folder =
         config.readEntry(
             "lastFolder",
-            QDir::homePath());
+            MathomUserPaths::readyDirectory());
 
     QString destination =
         QDir(folder)
@@ -4329,7 +4336,7 @@ void BNPView::saveAsArchive()
     const QString folder =
         config.readEntry(
             "lastFolder",
-            QDir::homePath())
+            MathomUserPaths::readyDirectory())
         + QStringLiteral("/");
 
     QString destination =
@@ -4422,7 +4429,7 @@ void BNPView::saveAllAsArchive()
     const QString folder =
         config.readEntry(
             "lastFolder",
-            QDir::homePath())
+            MathomUserPaths::readyDirectory())
         + QStringLiteral("/");
 
     QString destination =
