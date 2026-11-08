@@ -1,0 +1,81 @@
+name: Mathom 5.0.7 DEV build and publish
+
+on:
+  push:
+    branches:
+      - dev/conformite-installation-5.0.7-dev1
+
+permissions:
+  contents: write
+
+jobs:
+  deb:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Install native Qt6 and KDE Frameworks6 build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential cmake ninja-build pkg-config gettext dpkg-dev file \
+            extra-cmake-modules libgit2-dev libpoppler-qt6-dev libsane-dev \
+            qt6-base-dev qt6-multimedia-dev qt6-5compat-dev \
+            libkf6archive-dev libkf6codecs-dev libkf6colorscheme-dev \
+            libkf6completion-dev libkf6config-dev libkf6configwidgets-dev \
+            libkf6coreaddons-dev libkf6crash-dev libkf6dbusaddons-dev \
+            libkf6filemetadata-dev libkf6globalaccel-dev libkf6guiaddons-dev \
+            libkf6i18n-dev libkf6iconthemes-dev libkf6jobwidgets-dev \
+            libkf6kcmutils-dev libkf6kio-dev libkf6parts-dev \
+            libkf6service-dev libkf6textwidgets-dev libkf6widgetsaddons-dev \
+            libkf6xmlgui-dev
+
+      - name: Build complete native Debian package
+        run: |
+          chmod +x scripts/build-mathom-native-deb.sh
+          ./scripts/build-mathom-native-deb.sh
+
+      - name: Validate package paths and metadata
+        shell: bash
+        run: |
+          set -euo pipefail
+          DEB=packaging/mathom_5.0.7-0dev1_amd64.deb
+          test -s "$DEB"
+          test "$(dpkg-deb -f "$DEB" Package)" = mathom
+          test "$(dpkg-deb -f "$DEB" Version)" = 5.0.7-0dev1
+          dpkg-deb -c "$DEB" > packaging/package-manifest.txt
+          grep -q './opt/mathom/bin/mathom' packaging/package-manifest.txt
+          grep -q './usr/bin/mathom' packaging/package-manifest.txt
+          grep -q './usr/share/applications/fr.thorinux.mathom.desktop' packaging/package-manifest.txt
+          sha256sum "$DEB" > "$DEB.sha256"
+          sha256sum --check "$DEB.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: mathom-5.0.7-dev1-deb
+          path: |
+            packaging/mathom_5.0.7-0dev1_amd64.deb
+            packaging/mathom_5.0.7-0dev1_amd64.deb.sha256
+            packaging/package-manifest.txt
+
+      - name: Publish version DEV only after successful compilation
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TAG=v5.0.7-dev1
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "La DEV est deja publiee. Ne jamais reecrire une prerelease."
+            exit 1
+          fi
+          gh release create "$TAG" \
+            packaging/mathom_5.0.7-0dev1_amd64.deb \
+            packaging/mathom_5.0.7-0dev1_amd64.deb.sha256 \
+            --prerelease \
+            --target "$GITHUB_SHA" \
+            --title "Mathom Notes 5.0.7 DEV1 - conformite installation" \
+            --notes "Version DEV de migration de l'application sous /opt/mathom. Les donnees XDG existantes restent intactes. A tester avant toute stable : mise a niveau depuis 5.0.6, installation neuve, ressources KDE, icones, exports, sauvegardes automatiques et notification de mise a jour."
