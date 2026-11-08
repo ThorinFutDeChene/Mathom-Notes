@@ -62,7 +62,7 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
-          dpkg -L mathom | grep -E '(/opt/mathom|/usr/bin/mathom|/usr/share/applications|/usr/share/pixmaps)' | head -n 70
+          dpkg -L mathom | grep -E '(/opt/mathom|/usr/bin/mathom|/usr/share/applications|/usr/share/pixmaps)' | sed -n '1,70p'
           dpkg -L mathom > /tmp/mathom-installed-files
           grep -qx /opt/mathom/bin/mathom /tmp/mathom-installed-files
           grep -qx /usr/bin/mathom /tmp/mathom-installed-files
