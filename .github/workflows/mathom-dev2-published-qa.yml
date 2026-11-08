@@ -1,0 +1,79 @@
+name: Smoke test the published Mathom DEV2 .deb
+
+on:
+  push:
+    branches:
+      - qa/mathom-5.0.7-dev2-published
+
+permissions:
+  contents: read
+
+jobs:
+  published-deb:
+    runs-on: ubuntu-26.04
+    timeout-minutes: 30
+    steps:
+      - name: Download published stable and DEV2 packages
+        shell: bash
+        run: |
+          set -euo pipefail
+          curl -fL --retry 3 -o /tmp/mathom-stable.deb \
+            https://github.com/ThorinFutDeChene/Mathom-Notes/releases/download/v5.0.6/mathom_5.0.6-1_amd64.deb
+          curl -fL --retry 3 -o /tmp/mathom-dev2.deb \
+            https://github.com/ThorinFutDeChene/Mathom-Notes/releases/download/v5.0.7-dev2/mathom_5.0.7-0dev2_amd64.deb
+          printf '%s  %s\n' \
+            757213a34ad82475c74ccb2d62d123ed367e552aaf8a16124cd86d4e1bb7c573 \
+            /tmp/mathom-dev2.deb | sha256sum --check
+          test "$(dpkg-deb -f /tmp/mathom-dev2.deb Package)" = mathom
+          test "$(dpkg-deb -f /tmp/mathom-dev2.deb Version)" = 5.0.7-0dev2
+
+      - name: Install the published stable 5.0.6
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update
+          sudo apt-get install -y /tmp/mathom-stable.deb
+          test "$(dpkg-query -W -f='${Version}' mathom)" = 5.0.6-1
+
+      - name: Create a user profile migration fixture
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/share/mathom/baskets" \
+                   "$HOME/.local/share/mathom_backup" \
+                   "$HOME/.config"
+          printf 'test-note-keep-this\n' > "$HOME/.local/share/mathom/baskets/qa-preserve"
+          printf 'test-backup-keep-this\n' > "$HOME/.local/share/mathom_backup/qa-preserve"
+          printf 'test-config-keep-this\n' > "$HOME/.config/mathomrc"
+          sha256sum "$HOME/.local/share/mathom/baskets/qa-preserve" \
+                    "$HOME/.local/share/mathom_backup/qa-preserve" \
+                    "$HOME/.config/mathomrc" > /tmp/mathom-profile-sha256
+          QT_QPA_PLATFORM=offscreen mathom --version
+
+      - name: Upgrade to the actual published DEV2 package
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get install -y /tmp/mathom-dev2.deb
+          test "$(dpkg-query -W -f='${Version}' mathom)" = 5.0.7-0dev2
+          sha256sum --check /tmp/mathom-profile-sha256
+
+      - name: Verify installed paths and executable startup
+        shell: bash
+        run: |
+          set -euo pipefail
+          dpkg -L mathom > /tmp/mathom-installed-files
+          grep -qx /opt/mathom/bin/mathom /tmp/mathom-installed-files
+          grep -qx /usr/bin/mathom /tmp/mathom-installed-files
+          grep -qx /usr/share/applications/fr.thorinux.mathom.desktop /tmp/mathom-installed-files
+          grep -qx /usr/share/pixmaps/fr.thorinux.mathom.png /tmp/mathom-installed-files
+          test -x /opt/mathom/bin/mathom
+          test -x /usr/bin/mathom
+          grep -q '/opt/mathom/bin/mathom' /usr/bin/mathom
+          if grep -E '^/usr/lib/.*/libLibBasket.so' /tmp/mathom-installed-files; then
+            echo "ERROR: Mathom library still packaged under /usr" >&2
+            exit 1
+          fi
+          QT_QPA_PLATFORM=offscreen timeout 30s /usr/bin/mathom --version
+          sha256sum --check /tmp/mathom-profile-sha256
+          echo "PASS: installed public DEV2, /opt layout, launcher, user profile preserved"
