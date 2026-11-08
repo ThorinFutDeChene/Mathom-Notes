@@ -236,6 +236,12 @@ void BNPView::lateInit()
     // been loaded successfully. The backup itself runs transparently
     // in a worker thread and never blocks startup with a dialog.
     Backup::startAutomaticBackupIfDue();
+
+    // UpdateChecker belongs to LibBasket. Invoke it within this library
+    // so no non-exported internal symbols leak into the executable.
+    QTimer::singleShot(3000, this, [this] {
+        UpdateChecker::checkAutomatically(this);
+    });
 }
 
 void BNPView::addWelcomeBaskets()
