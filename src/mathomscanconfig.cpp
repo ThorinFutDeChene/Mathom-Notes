@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "mathomscanconfig.h"
+#include "userexportpaths.h"
 
 #include <KConfigGroup>
 #include <KSharedConfig>
@@ -8,9 +9,7 @@
 
 QString MathomScanConfig::defaultDirectory()
 {
-    const QString downloads =
-        QStandardPaths::writableLocation(QStandardPaths::DownloadLocation);
-    return downloads.isEmpty() ? QDir::homePath() : downloads;
+    return MathomUserPaths::documentsDirectory();
 }
 
 MathomScanPreferences MathomScanConfig::load()

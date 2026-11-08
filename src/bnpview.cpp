@@ -69,6 +69,7 @@
 #include "archive.h"
 #include "backgroundmanager.h"
 #include "backup.h"
+#include "userexportpaths.h"
 #include "basketfactory.h"
 #include "basketlistview.h"
 #include "basketproperties.h"
@@ -3332,7 +3333,7 @@ void BNPView::exportCurrentPageToPDF()
     const QString folder =
         config.readEntry(
             "lastFolder",
-            QDir::homePath());
+            MathomUserPaths::readyDirectory());
 
     QString destination =
         QDir(folder)
@@ -4329,7 +4330,7 @@ void BNPView::saveAsArchive()
     const QString folder =
         config.readEntry(
             "lastFolder",
-            QDir::homePath())
+            MathomUserPaths::readyDirectory())
         + QStringLiteral("/");
 
     QString destination =
@@ -4422,7 +4423,7 @@ void BNPView::saveAllAsArchive()
     const QString folder =
         config.readEntry(
             "lastFolder",
-            QDir::homePath())
+            MathomUserPaths::readyDirectory())
         + QStringLiteral("/");
 
     QString destination =

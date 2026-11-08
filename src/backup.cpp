@@ -4,6 +4,7 @@
  */
 
 #include "backup.h"
+#include "userexportpaths.h"
 
 #include "bnpview.h"
 #include "diagnosticmanager.h"
@@ -2272,7 +2273,7 @@ void BackupDialog::populateLastBackup()
     const QString fallbackFolder =
         group.readPathEntry(
             QStringLiteral("lastFolder"),
-            QDir::homePath());
+            MathomUserPaths::readyDirectory());
 
     const QString backupFolder =
         group.readPathEntry(
@@ -2320,7 +2321,7 @@ void BackupDialog::backup()
     const QString fallbackFolder =
         configGroup.readPathEntry(
             QStringLiteral("lastFolder"),
-            QDir::homePath());
+            MathomUserPaths::readyDirectory());
 
     const QString folder =
         configGroup.readPathEntry(
@@ -2471,7 +2472,7 @@ void BackupDialog::restore()
     const QString fallbackFolder =
         configGroup.readPathEntry(
             QStringLiteral("lastFolder"),
-            QDir::homePath());
+            MathomUserPaths::readyDirectory());
 
     const QString folder =
         configGroup.readPathEntry(
