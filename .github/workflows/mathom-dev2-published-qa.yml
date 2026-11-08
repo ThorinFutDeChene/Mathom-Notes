@@ -70,16 +70,8 @@ jobs:
           grep -qx /usr/share/pixmaps/fr.thorinux.mathom.png /tmp/mathom-installed-files
           test -x /opt/mathom/bin/mathom
           test -x /usr/bin/mathom
-          grep -q '^APPDIR=/opt/mathom
-          if grep -E '^/usr/lib/.*/libLibBasket.so' /tmp/mathom-installed-files; then
-            echo "ERROR: Mathom library still packaged under /usr" >&2
-            exit 1
-          fi
-          QT_QPA_PLATFORM=offscreen timeout 30s /usr/bin/mathom --version
-          sha256sum --check /tmp/mathom-profile-sha256
-          echo "PASS: installed public DEV2, /opt layout, launcher, user profile preserved"
- /usr/bin/mathom
-          grep -q 'exec "\$APPBIN" "\$@"' /usr/bin/mathom
+          grep -Fqx 'APPDIR=/opt/mathom' /usr/bin/mathom
+          grep -Fq 'exec "$APPBIN" "$@"' /usr/bin/mathom
           if grep -E '^/usr/lib/.*/libLibBasket.so' /tmp/mathom-installed-files; then
             echo "ERROR: Mathom library still packaged under /usr" >&2
             exit 1
