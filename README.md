@@ -4,7 +4,7 @@
 
 **Mathom Notes** est un logiciel libre de prise de notes et d'organisation d'informations pour Linux, développé à partir de **BasKet Note Pads**.
 
-La version stable actuelle est **Mathom Notes 3.10.2**.
+La version stable actuelle est **Mathom Notes 5.0.6**.
 
 ## Concepts
 
@@ -44,15 +44,15 @@ Mathom Notes conserve les fonctions historiques utiles de BasKet et ajoute progr
 
 La méthode recommandée est l'installation du paquet Debian natif disponible dans les Releases GitHub.
 
-Exemple pour Mathom Notes 3.10.2 :
+Exemple pour Mathom Notes 5.0.6 :
 
 ~~~bash
-sudo apt install ./mathom_3.10.2-1_amd64.deb
+sudo apt install ./mathom_5.0.6-1_amd64.deb
 ~~~
 
 Le paquet utilise les bibliothèques Qt 6 et KDE Frameworks 6 du système.
 
-Il ne déploie pas de runtime autonome sous `/opt/mathom`.
+À partir de la DEV 5.0.7, les composants Mathom sont installés sous `/opt/mathom/`, en conservant les bibliothèques Qt 6 et KDE Frameworks 6 du système.
 
 ## Construction du paquet Debian
 
@@ -62,10 +62,10 @@ Le script officiel actuel est :
 ./scripts/build-mathom-native-deb.sh
 ~~~
 
-Le paquet stable 3.10.2 produit est :
+Le paquet stable 5.0.6 produit est :
 
 ~~~text
-packaging/mathom_3.10.2-1_amd64.deb
+packaging/mathom_5.0.6-1_amd64.deb
 ~~~
 
 L'ancien constructeur Debian autonome basé sur Flatpak/AppImage a été retiré du dépôt.
@@ -75,7 +75,7 @@ L'ancien constructeur Debian autonome basé sur Flatpak/AppImage a été retiré
 | Élément | Valeur |
 |---|---|
 | Nom | Mathom Notes |
-| Version stable | 3.10.2 |
+| Version stable | 5.0.6 |
 | Exécutable | `mathom` |
 | Desktop ID | `fr.thorinux.mathom` |
 | Fichier desktop | `fr.thorinux.mathom.desktop` |

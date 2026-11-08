@@ -28,6 +28,7 @@
 #include "diagnosticmanager.h"
 #include "mainwindow.h"
 #include "mathomscanpreloader.h"
+#include "updatechecker.h"
 #ifdef DEBUG_PIPE
 #include "debugwindow.h"
 #endif
@@ -202,6 +203,12 @@ int main(int argc, char *argv[])
     // without waiting for the user to open Mathom Scan.
     QTimer::singleShot(0, win, [] {
         MathomScanPreloader::instance().start();
+    });
+
+    // Silent, asynchronous stable update check after the UI is ready.
+    // Development versions never check automatically.
+    QTimer::singleShot(3000, win, [win] {
+        UpdateChecker::checkAutomatically(win);
     });
 
     QTimer::singleShot(0, win, [win]() {

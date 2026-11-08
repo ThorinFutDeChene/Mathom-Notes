@@ -16,7 +16,7 @@ Mathom Notes utilise principalement :
 | Élément | Valeur |
 |---|---|
 | Application | Mathom Notes |
-| Version stable | 3.12.0 |
+| Version stable | 5.0.6 |
 | Exécutable | `mathom` |
 | Desktop ID | `fr.thorinux.mathom` |
 | Desktop file | `fr.thorinux.mathom.desktop` |
@@ -81,7 +81,7 @@ Le script de référence actuel est :
 scripts/build-mathom-native-deb.sh
 ~~~
 
-Le constructeur natif utilise les bibliothèques Qt 6 et KDE Frameworks 6 du système.
+Le constructeur natif utilise les bibliothèques Qt 6 et KDE Frameworks 6 du système. Les composants applicatifs sont installés dans `/opt/mathom` et le lanceur dans `/usr/bin/mathom`.
 
 L'ancien constructeur Debian autonome basé sur Flatpak/AppImage a été retiré du dépôt.
 
@@ -153,8 +153,4 @@ dpkg-deb -c paquet.deb
 sha256sum paquet.deb
 ~~~
 
-Le paquet natif Mathom ne doit pas contenir de runtime :
-
-~~~text
-/opt/mathom
-~~~
+Le paquet natif Mathom doit contenir l'application sous `/opt/mathom/`, mais **aucune copie des runtimes Qt/KF6 du système**. La migration depuis le paquet `/usr` ne doit toucher aucune donnée XDG.

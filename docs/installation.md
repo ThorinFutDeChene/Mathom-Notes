@@ -1,88 +1,85 @@
-# Installation et construction
+# Installation et construction de Mathom Notes
 
-## Version stable
+## Versions
 
-~~~text
-Mathom Notes 3.4.1
-~~~
+- **Derniere stable publiee** : 5.0.6.
+- **Version de developpement en preparation** : 5.0.7-dev1.
+- Depot et code source publics, logiciel libre et gratuit (GPL-2.0-or-later).
 
-## Installation du paquet Debian
+## Norme d'installation
 
-Télécharger le paquet Debian depuis les Releases GitHub.
+Le paquet Debian natif installe l'application dans :
 
-Pour Mathom Notes 3.4.1 :
+- /opt/mathom/bin/mathom : executable principal ;
+- /opt/mathom/lib et /opt/mathom/share : bibliotheques internes, modules de configuration, traductions et ressources ;
+- /usr/bin/mathom : lanceur systeme ;
+- /usr/share/applications : entree de menu ;
+- /usr/share/icons et /usr/share/pixmaps : icones ;
+- /usr/share/metainfo et /usr/share/mime : integration au systeme.
 
-~~~text
-mathom_3.4.1-1_amd64.deb
-~~~
+Les bibliotheques Qt 6 et KDE Frameworks 6 du systeme restent des dependances APT :
+elles ne sont pas copiees dans /opt.
 
-Installation :
+## Donnees utilisateur : aucun deplacement
+
+Mathom conserve les notes et fichiers de travail dans le repertoire XDG
+habituel (par defaut ~/.local/share/mathom/), la configuration dans
+~/.config/mathomrc et les sauvegardes automatiques dans l'emplacement
+interne actuellement calcule par l'application (generalement
+~/.local/share/mathom_backup/).
+
+Seuls les exports et les sauvegardes manuelles proposes par defaut
+utilisent ~/Documents/Mathom Notes/ (ou le repertoire Documents XDG localise).
+
+Un dossier de destination deja choisi par l'utilisateur est respecte.
+La migration du programme ne deplace, n'ecrase et ne supprime aucun profil,
+aucune note et aucune sauvegarde automatique.
+
+## Mise a jour d'une installation existante
+
+Installer le nouveau .deb sous le meme nom de paquet mathom :
 
 ~~~bash
-sudo apt install ./mathom_3.4.1-1_amd64.deb
+sudo apt install ./mathom_5.0.7-0dev1_amd64.deb
 ~~~
 
-Mathom utilise les bibliothèques Qt 6 et KDE Frameworks 6 du système.
+APT/dpkg substituent les anciens composants applicatifs places sous /usr
+aux composants du paquet sous /opt et a son nouveau lanceur.
+Le script d'installation ne manipule jamais les fichiers personnels.
 
-Le paquet Debian natif actuel ne déploie pas de runtime autonome sous `/opt/mathom`.
+**Important :** la version 5.0.7-dev1 est en developpement ;
+ne pas la considerer comme disponible avant publication de la Release DEV
+et ses tests d'installation.
 
-## Construction du paquet
+## Mises a jour automatiques
 
-Le constructeur officiel est :
+En version stable, une verification asynchrone des Releases stables GitHub
+est lancee apres l'ouverture. Aucun message si le reseau est indisponible
+ou si aucune nouvelle version stable n'est disponible. L'utilisateur reste
+libre d'accepter ou de refuser une version stable ; le refus est retenu
+pour cette version.
+
+En DEV, pas de verification automatique. Le menu conserve la verification
+manuelle, avec le canal developpement lorsque les reglages l'autorisent.
+
+Le telechargement valide le SHA-256 annonce par GitHub et l'identite du
+paquet Debian. L'installation demande l'autorisation Polkit et la
+relance ne s'effectue qu'avec l'accord de l'utilisateur.
+
+## Construction et controle
 
 ~~~bash
 ./scripts/build-mathom-native-deb.sh
-~~~
 
-Le script :
-
-1. configure le projet avec CMake ;
-2. compile Mathom ;
-3. installe les fichiers dans une racine Debian temporaire ;
-4. construit le paquet avec `dpkg-deb` ;
-5. effectue les contrôles de packaging.
-
-Pour la version 3.4.1 :
-
-~~~text
-packaging/mathom_3.4.1-1_amd64.deb
-~~~
-
-## Journal de compilation
-
-Pour conserver la sortie d'un build :
-
-~~~bash
-./scripts/build-mathom-native-deb.sh \
-  > packaging/build-3.4.1.log 2>&1
-~~~
-
-## Contrôle du paquet
-
-~~~bash
-DEB="packaging/mathom_3.4.1-1_amd64.deb"
-
+DEB="packaging/mathom_5.0.7-0dev1_amd64.deb"
 dpkg-deb -f "$DEB" Package Version Architecture Depends
 dpkg-deb -c "$DEB"
 sha256sum "$DEB"
 ~~~
 
-## Compilation directe
+Verifier que l'executable et les composants sont bien sous /opt/mathom,
+que /usr/bin/mathom est un lanceur, et que les ressources hicolor,
+le fichier desktop et l'integration MIME sont presentes.
 
-Versions minimales actuellement déclarées :
-
-- CMake 3.16 ;
-- Qt 6.5 ;
-- KDE Frameworks 6.9 ;
-- LibGit2 1.8.4 lorsque le support Git est activé.
-
-Exemple :
-
-~~~bash
-cmake -S . -B build \
-  -DCMAKE_BUILD_TYPE=Release \
-  -DBUILD_TESTING=OFF \
-  -DBUILD_DEVTOOLS=OFF
-
-cmake --build build
-~~~
+Un build reussi ne remplace pas un essai sur le paquet DEV publie.
+Tester une premiere installation et une mise a jour depuis 5.0.6.

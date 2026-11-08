@@ -18,9 +18,10 @@ class UpdateChecker final : public QObject
 {
 public:
     static void check(QWidget *parent);
+    static void checkAutomatically(QWidget *parent);
 
 private:
-    explicit UpdateChecker(QWidget *parent);
+    explicit UpdateChecker(QWidget *parent, bool automatic);
 
     void start();
 
@@ -49,6 +50,7 @@ private:
         const QString &version);
 
     QWidget *m_parentWidget = nullptr;
+    bool m_automatic = false;
     QNetworkAccessManager *m_network = nullptr;
 
     QTemporaryDir *m_tempDir = nullptr;
