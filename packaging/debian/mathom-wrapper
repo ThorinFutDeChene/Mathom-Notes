@@ -1,33 +1,56 @@
 #!/bin/sh
+# SPDX-License-Identifier: GPL-2.0-or-later
+# Launcher for a native Mathom installation under /opt/mathom.
+set -e
 
-APPDIR="/opt/mathom"
+APPDIR=/opt/mathom
+APPBIN="$APPDIR/bin/mathom"
 
-if [ -z "${XDG_MENU_PREFIX:-}" ]; then
-    if [ -f /etc/xdg/menus/mate-applications.menu ]; then
-        export XDG_MENU_PREFIX="mate-"
-    elif [ -f /etc/xdg/menus/gnome-applications.menu ]; then
-        export XDG_MENU_PREFIX="gnome-"
-    elif [ -f /etc/xdg/menus/plasma-applications.menu ]; then
-        export XDG_MENU_PREFIX="plasma-"
-    elif [ -f /etc/xdg/menus/kf5-applications.menu ]; then
-        export XDG_MENU_PREFIX="kf5-"
+if [ ! -x "$APPBIN" ]; then
+    echo "Mathom Notes : executable absent : $APPBIN" >&2
+    exit 127
+fi
+
+# Only application resources live in /opt; personal notes remain in XDG.
+if [ -n "$XDG_DATA_DIRS" ]; then
+    export XDG_DATA_DIRS="$APPDIR/share:$XDG_DATA_DIRS"
+else
+    export XDG_DATA_DIRS="$APPDIR/share:/usr/local/share:/usr/share"
+fi
+
+APP_LIB_PATH=""
+APP_PLUGIN_PATH=""
+for library in "$APPDIR/lib" "$APPDIR"/lib/*-linux-gnu; do
+    [ -d "$library" ] || continue
+    if [ -n "$APP_LIB_PATH" ]; then
+        APP_LIB_PATH="$APP_LIB_PATH:$library"
+    else
+        APP_LIB_PATH="$library"
+    fi
+    for plugins in "$library/qt6/plugins" "$library/plugins"; do
+        [ -d "$plugins" ] || continue
+        if [ -n "$APP_PLUGIN_PATH" ]; then
+            APP_PLUGIN_PATH="$APP_PLUGIN_PATH:$plugins"
+        else
+            APP_PLUGIN_PATH="$plugins"
+        fi
+    done
+done
+
+if [ -n "$APP_LIB_PATH" ]; then
+    if [ -n "$LD_LIBRARY_PATH" ]; then
+        export LD_LIBRARY_PATH="$APP_LIB_PATH:$LD_LIBRARY_PATH"
+    else
+        export LD_LIBRARY_PATH="$APP_LIB_PATH"
     fi
 fi
 
-export XDG_DATA_DIRS="$APPDIR/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
-export PATH="$APPDIR/usr/bin:$PATH"
-
-# The self-contained KF6 runtime must search its own translations as well as
-# the host locale tree. This keeps the installed .deb identical to the lab
-# build for KStandardAction/KXmlGui strings.
-export XLOCALEDIR="$APPDIR/usr/share/locale"
-
-if [ -x "$APPDIR/usr/bin/kbuildsycoca6" ]; then
-    env \
-        LD_LIBRARY_PATH="$APPDIR/usr/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" \
-        XDG_DATA_DIRS="$XDG_DATA_DIRS" \
-        XDG_MENU_PREFIX="${XDG_MENU_PREFIX:-}" \
-        "$APPDIR/usr/bin/kbuildsycoca6" >/dev/null 2>&1 || true
+if [ -n "$APP_PLUGIN_PATH" ]; then
+    if [ -n "$QT_PLUGIN_PATH" ]; then
+        export QT_PLUGIN_PATH="$APP_PLUGIN_PATH:$QT_PLUGIN_PATH"
+    else
+        export QT_PLUGIN_PATH="$APP_PLUGIN_PATH"
+    fi
 fi
 
-exec "$APPDIR/AppRun" "$@"
+exec "$APPBIN" "$@"

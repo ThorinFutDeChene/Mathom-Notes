@@ -2,6 +2,7 @@
 set -eu
 
 ARCH="$(dpkg --print-architecture)"
+MULTIARCH="$(dpkg-architecture -qDEB_HOST_MULTIARCH)"
 
 ROOT="$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
 VERSION="$(tr -d '[:space:]' < "$ROOT/VERSION")"
@@ -20,10 +21,11 @@ fi
 PACKAGING="$ROOT/packaging"
 BUILD="$ROOT/build-native"
 DEBROOT="$PACKAGING/mathom-native-debroot"
+APPROOT="$DEBROOT/opt/mathom"
 OUTPUT="$PACKAGING/mathom_${PACKAGE_VERSION}_${ARCH}.deb"
 
 echo "=== Mathom Notes $VERSION ==="
-echo "=== Construction Debian native Ubuntu 26.04 ==="
+echo "=== Construction native conformite /opt/mathom ==="
 
 rm -rf "$BUILD" "$DEBROOT"
 
@@ -35,7 +37,7 @@ cmake \
     -B "$BUILD" \
     -G Ninja \
     -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/usr \
+    -DCMAKE_INSTALL_PREFIX=/opt/mathom \
     -DBUILD_TESTING=OFF \
     -DBUILD_DEVTOOLS=OFF \
     -DENABLE_GPG=OFF \
@@ -52,9 +54,62 @@ echo "=== 3/6 Installation dans l'arborescence Debian ==="
 
 DESTDIR="$DEBROOT" cmake --install "$BUILD"
 
-mkdir -p "$DEBROOT/DEBIAN"
+if [ ! -x "$APPROOT/bin/mathom" ]; then
+    echo "Erreur : /opt/mathom/bin/mathom introuvable." >&2
+    exit 1
+fi
 
-# Icône native validée pour Ubuntu / MATE / Lubuntu.
+# All application executables, internal libraries and resources stay in /opt.
+# The Debian launcher and desktop/host integration keep their Linux paths.
+install -Dm755 \
+    "$ROOT/packaging/debian/mathom-wrapper" \
+    "$DEBROOT/usr/bin/mathom"
+
+DESKTOP="$APPROOT/share/applications/fr.thorinux.mathom.desktop"
+if [ ! -f "$DESKTOP" ]; then
+    echo "Erreur : fichier desktop introuvable." >&2
+    exit 1
+fi
+install -Dm644 \
+    "$DESKTOP" \
+    "$DEBROOT/usr/share/applications/fr.thorinux.mathom.desktop"
+rm -f "$DESKTOP"
+
+METAINFO="$APPROOT/share/metainfo/fr.thorinux.mathom.metainfo.xml"
+if [ -f "$METAINFO" ]; then
+    install -Dm644 \
+        "$METAINFO" \
+        "$DEBROOT/usr/share/metainfo/fr.thorinux.mathom.metainfo.xml"
+    rm -f "$METAINFO"
+fi
+
+MIME="$APPROOT/share/mime/packages/basket.xml"
+if [ -f "$MIME" ]; then
+    install -Dm644 \
+        "$MIME" \
+        "$DEBROOT/usr/share/mime/packages/basket.xml"
+    rm -f "$MIME"
+fi
+
+if [ -d "$APPROOT/share/icons" ]; then
+    mkdir -p "$DEBROOT/usr/share/icons"
+    cp -a "$APPROOT/share/icons/." "$DEBROOT/usr/share/icons/"
+    rm -rf "$APPROOT/share/icons"
+fi
+
+# KDE's thumbnailer runs outside Mathom and therefore requires a host plugin.
+if [ -d "$APPROOT/lib" ]; then
+    find "$APPROOT/lib" -type f \
+        -path '*/kf6/thumbcreator/*' -name '*.so' |
+    while IFS= read -r plugin; do
+        install -Dm755 \
+            "$plugin" \
+            "$DEBROOT/usr/lib/$MULTIARCH/qt6/plugins/kf6/thumbcreator/$(basename "$plugin")"
+        rm -f "$plugin"
+    done
+fi
+
+# Exact official application logo (unchanged).
 install -Dm644 \
     "$ROOT/resources/icons/app/mathom.png" \
     "$DEBROOT/usr/share/icons/hicolor/48x48/apps/fr.thorinux.mathom.png"
@@ -66,6 +121,8 @@ install -Dm644 \
 sed -i \
     's|^Icon=.*$|Icon=/usr/share/pixmaps/fr.thorinux.mathom.png|' \
     "$DEBROOT/usr/share/applications/fr.thorinux.mathom.desktop"
+
+mkdir -p "$DEBROOT/DEBIAN"
 
 install -Dm755 \
     "$ROOT/packaging/debian/postinst" \
@@ -81,7 +138,7 @@ echo "=== 4/6 Calcul automatique des dépendances ==="
 ELF_LIST="$PACKAGING/mathom-native-elf-list.txt"
 : > "$ELF_LIST"
 
-find "$DEBROOT/usr/bin" "$DEBROOT/usr/lib" -type f 2>/dev/null |
+find "$APPROOT/bin" "$APPROOT/lib" "$DEBROOT/usr/lib" -type f 2>/dev/null |
 while IFS= read -r binary; do
     if file -b "$binary" | grep -q '^ELF '; then
         printf '%s\n' "$binary"
@@ -100,7 +157,7 @@ if [ "$#" -eq 0 ]; then
 fi
 
 LIBBASKET="$(
-    find "$DEBROOT/usr/lib" \
+    find "$APPROOT/lib" \
         -type f \
         -name 'libLibBasket.so.*' \
         | head -n 1
@@ -200,17 +257,20 @@ test "$(dpkg-deb -f "$OUTPUT" Architecture)" = "$ARCH"
 CONTENTS_LIST="$PACKAGING/mathom-native-deb-contents.txt"
 dpkg-deb -c "$OUTPUT" > "$CONTENTS_LIST"
 
-if grep -q './opt/mathom' "$CONTENTS_LIST"; then
-    echo "Erreur : runtime autonome /opt/mathom encore présent."
+grep -q './opt/mathom/bin/mathom' "$CONTENTS_LIST"
+grep -q './usr/bin/mathom' "$CONTENTS_LIST"
+grep -q './usr/share/applications/fr.thorinux.mathom.desktop' "$CONTENTS_LIST"
+grep -q './usr/share/pixmaps/fr.thorinux.mathom.png' "$CONTENTS_LIST"
+
+if find "$DEBROOT/usr/lib" -type f -name 'libLibBasket.so*' \
+    -print | grep -q .; then
+    echo "Erreur : LibBasket doit etre installee sous /opt/mathom." >&2
     exit 1
 fi
 
-grep -q './usr/bin/mathom' "$CONTENTS_LIST"
-grep -q './usr/share/applications/fr.thorinux.mathom.desktop' "$CONTENTS_LIST"
-
 # Every shipped translation catalog must be installed in the native package.
 # Check the staging tree: it is the exact filesystem tree passed to dpkg-deb.
-LOCALE_ROOT="$DEBROOT/usr/share/locale"
+LOCALE_ROOT="$APPROOT/share/locale"
 for catalog in "$ROOT"/po/*/basket.po; do
     [ -f "$catalog" ] || continue
     lang="$(basename "$(dirname "$catalog")")"
